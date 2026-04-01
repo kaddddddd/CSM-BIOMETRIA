@@ -1,0 +1,110 @@
+<Page x:Class="CSMBiometricoWPF.Views.Pages.VerificacionPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>  <!-- Header -->
+            <RowDefinition Height="*"/>   <!-- Contenido -->
+        </Grid.RowDefinitions>
+
+        <!-- Header verde -->
+        <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
+            <Grid>
+                <TextBlock Text="Verificación Biométrica" Style="{StaticResource LblTituloHeader}"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                            VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Button x:Name="btnIniciar" Content="▶  Iniciar Captura"
+                            Style="{StaticResource BtnPrimario}"
+                            Height="32" Width="150" Margin="0,0,8,0"
+                            Click="BtnIniciar_Click"/>
+                    <Button x:Name="btnDetener" Content="⏹  Detener"
+                            Style="{StaticResource BtnPeligro}"
+                            Height="32" Width="110" IsEnabled="False"
+                            Click="BtnDetener_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Área central -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="320"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Tarjeta principal: huella + estado -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,16,0">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Imagen de huella -->
+                    <Border BorderBrush="#007864" BorderThickness="3" CornerRadius="4"
+                            HorizontalAlignment="Center" Padding="4" Margin="0,0,0,16">
+                        <Image x:Name="imgHuella" Width="210" Height="210"
+                               Stretch="Uniform"/>
+                    </Border>
+
+                    <!-- Estado del lector -->
+                    <TextBlock x:Name="lblEstadoLector"
+                               Text="Lector no inicializado"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="#607D8B" HorizontalAlignment="Center"
+                               Margin="0,0,0,8"/>
+
+                    <!-- Mensaje -->
+                    <TextBlock x:Name="lblMensaje"
+                               Text="Presione 'Iniciar Captura' para comenzar."
+                               FontSize="12" Foreground="#888"
+                               HorizontalAlignment="Center" TextWrapping="Wrap"
+                               MaxWidth="320" TextAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Panel de resultado (derecha) -->
+            <Border Grid.Column="1" x:Name="pnlResultado"
+                    Visibility="Collapsed" CornerRadius="6" Padding="20">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#E8F5E9"/>
+                    </Style>
+                </Border.Style>
+                <StackPanel VerticalAlignment="Center">
+                    <!-- Foto del estudiante -->
+                    <Border BorderBrush="White" BorderThickness="3"
+                            HorizontalAlignment="Center" Margin="0,0,0,16"
+                            Width="110" Height="140">
+                        <Image x:Name="imgEstudiante" Stretch="UniformToFill"/>
+                    </Border>
+
+                    <!-- Indicador estado (colorido) -->
+                    <Border x:Name="brdEstadoIngreso" CornerRadius="20" Padding="12,6"
+                            HorizontalAlignment="Center" Margin="0,0,0,12">
+                        <TextBlock x:Name="lblEstadoIngreso" Text="A TIEMPO"
+                                   FontSize="14" FontWeight="Bold" Foreground="White"/>
+                    </Border>
+
+                    <TextBlock x:Name="lblNombreEstudiante"
+                               Text="—" FontSize="17" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" TextWrapping="Wrap"
+                               TextAlignment="Center" Margin="0,0,0,6"/>
+
+                    <TextBlock x:Name="lblIdentificacion"
+                               Text="" FontSize="12" Foreground="#555"
+                               HorizontalAlignment="Center" Margin="0,0,0,4"/>
+
+                    <TextBlock x:Name="lblGradoGrupo"
+                               Text="" FontSize="12" Foreground="#555"
+                               HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+                    <Border Height="1" Background="#00000020" Margin="0,0,0,12"/>
+
+                    <TextBlock x:Name="lblHoraIngreso"
+                               Text="" FontSize="22" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" Foreground="#333"/>
+                    <TextBlock Text="Hora de ingreso" FontSize="11" Foreground="#888"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+
+# SQLite database (se genera automáticamente al ejecutar)
+*.db
+*.db-shm
+*.db-wal
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docview
+
+# NuGet
+packages/
+*.nupkg
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Claude CLI
+claude.exe

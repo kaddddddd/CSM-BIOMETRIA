@@ -1,0 +1,182 @@
+<Window x:Class="CSMBiometricoWPF.Views.Dialogs.HorariosSedeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Horarios de Sede"
+        Width="530" Height="490"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F5F7FA"
+        Loaded="Window_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>   <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Contenido -->
+            <RowDefinition Height="52"/>   <!-- Botón cerrar -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#007864" Padding="18,0">
+            <TextBlock x:Name="lblTitulo" Text="Horarios"
+                       FontFamily="Segoe UI Light" FontSize="18"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Tabla de horarios -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,12">
+            <StackPanel>
+                <!-- Encabezado de columnas -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Día" FontWeight="SemiBold" FontSize="12" Foreground="#007864"/>
+                    <TextBlock Grid.Column="1" Text="Entrada" FontWeight="SemiBold" FontSize="12" Foreground="#007864" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="Lím. tardanza" FontWeight="SemiBold" FontSize="12" Foreground="#007864" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text="Cierre" FontWeight="SemiBold" FontSize="12" Foreground="#007864" HorizontalAlignment="Center"/>
+                </Grid>
+                <Border Height="1" Background="#E0E0E0" Margin="0,0,0,8"/>
+
+                <!-- LUNES -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Lunes" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtLunesE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtLunesT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtLunesC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="LUNES"/>
+                </Grid>
+
+                <!-- MARTES -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Martes" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtMartesE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtMartesT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtMartesC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="MARTES"/>
+                </Grid>
+
+                <!-- MIERCOLES -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Miércoles" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtMiercolesE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtMiercolesT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtMiercolesC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="MIERCOLES"/>
+                </Grid>
+
+                <!-- JUEVES -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Jueves" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtJuevesE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtJuevesT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtJuevesC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="JUEVES"/>
+                </Grid>
+
+                <!-- VIERNES -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Viernes" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtViernesE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtViernesT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtViernesC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="VIERNES"/>
+                </Grid>
+
+                <!-- SABADO -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Sábado" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtSabadoE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtSabadoT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtSabadoC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="SABADO"/>
+                </Grid>
+
+                <!-- DOMINGO -->
+                <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Domingo" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="txtDomingoE" Grid.Column="1" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtDomingoT" Grid.Column="2" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <TextBox x:Name="txtDomingoC" Grid.Column="3" Height="28" Margin="3,0" Style="{StaticResource TxtBase}" ToolTip="HH:mm"/>
+                    <Button Grid.Column="4" Content="💾" Height="28" Margin="3,0"
+                            Style="{StaticResource BtnPrimario}" FontSize="13"
+                            Click="BtnGuardar_Click" Tag="DOMINGO"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Botón cerrar -->
+        <Border Grid.Row="2" Background="White" Padding="16,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="4" ShadowDepth="-1" Opacity="0.08" Direction="90"/>
+            </Border.Effect>
+            <Button Content="Cerrar" Style="{StaticResource BtnSecundario}"
+                    Width="100" Height="34" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Click="BtnCerrar_Click"/>
+        </Border>
+    </Grid>
+</Window>

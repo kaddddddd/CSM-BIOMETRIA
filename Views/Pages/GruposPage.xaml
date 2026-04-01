@@ -1,0 +1,66 @@
+<Page x:Class="CSMBiometricoWPF.Views.Pages.GruposPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>  <!-- Header -->
+            <RowDefinition Height="50"/>  <!-- Toolbar -->
+            <RowDefinition Height="*"/>   <!-- Grid -->
+            <RowDefinition Height="35"/>  <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
+            <TextBlock Text="Grupos" Style="{StaticResource LblTituloHeader}"/>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="1" Background="#007864" Padding="10,7">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="btnNuevo" Content="✚  Nuevo Grupo" Style="{StaticResource BtnPrimario}"
+                        Background="#009678" Height="35" Width="140" Margin="0,0,8,0"
+                        Click="BtnNuevo_Click"/>
+                <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
+                        Width="110" Height="35"
+                        Click="BtnRefrescar_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- DataGrid -->
+        <DataGrid x:Name="grid" Grid.Row="2"
+                  Style="{StaticResource GridBase}"
+                  ColumnHeaderStyle="{StaticResource GridHeaderStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID"     Binding="{Binding IdGrupo}"    Width="60"/>
+                <DataGridTextColumn Header="Nombre" Binding="{Binding NombreGrupo}" Width="*"/>
+                <DataGridTemplateColumn x:Name="colEditar" Header="" Width="60">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="✎" Background="Transparent" BorderThickness="0"
+                                    Foreground="#007864" FontSize="16" Cursor="Hand"
+                                    Click="BtnEditar_Click" Tag="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn x:Name="colEliminar" Header="" Width="60">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="🗑" Background="Transparent" BorderThickness="0"
+                                    Foreground="#C62828" FontSize="15" Cursor="Hand"
+                                    Click="BtnEliminar_Click" Tag="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="3" Background="#F5F5F5" Padding="16,0">
+            <TextBlock x:Name="lblTotal" Text="Mostrando 0 registros"
+                       VerticalAlignment="Center" FontSize="12"
+                       HorizontalAlignment="Right"/>
+        </Border>
+    </Grid>
+</Page>

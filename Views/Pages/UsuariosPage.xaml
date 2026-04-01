@@ -1,0 +1,81 @@
+<Page x:Class="CSMBiometricoWPF.Views.Pages.UsuariosPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>  <!-- Header -->
+            <RowDefinition Height="50"/>  <!-- Toolbar -->
+            <RowDefinition Height="*"/>   <!-- Contenido -->
+            <RowDefinition Height="35"/>  <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
+            <TextBlock Text="Usuarios del Sistema" Style="{StaticResource LblTituloHeader}"/>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="1" Background="#007864" Padding="10,7">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="✚  Nuevo Usuario" Style="{StaticResource BtnPrimario}"
+                        Background="#009678" Height="35" Width="150" Margin="0,0,8,0"
+                        Click="BtnNuevo_Click"/>
+                <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
+                        Width="110" Height="35"
+                        Click="BtnRefrescar_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Panel de acceso denegado -->
+        <Border x:Name="pnlDenegado" Grid.Row="2" Grid.RowSpan="2"
+                Background="#F5F7FA" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="⛔" FontSize="64" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                <TextBlock Text="Acceso denegado"
+                           FontSize="22" FontWeight="SemiBold" Foreground="#C62828"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Solo los administradores SUPERADMIN pueden gestionar usuarios."
+                           FontSize="13" Foreground="#888" HorizontalAlignment="Center"
+                           Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- DataGrid de usuarios -->
+        <DataGrid x:Name="grid" Grid.Row="2"
+                  Style="{StaticResource GridBase}"
+                  ColumnHeaderStyle="{StaticResource GridHeaderStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID"             Binding="{Binding IdUsuario}"      Width="50"/>
+                <DataGridTextColumn Header="Nombre completo" Binding="{Binding NombreCompleto}" Width="*"/>
+                <DataGridTextColumn Header="Usuario"        Binding="{Binding Username}"       Width="120"/>
+                <DataGridTextColumn Header="Rol"            Binding="{Binding NombreRol}"      Width="120"/>
+                <DataGridTextColumn Header="Institución"    Binding="{Binding NombreInstitucion}" Width="140"/>
+                <DataGridTextColumn Header="Estado"         Binding="{Binding EstadoStr}"      Width="80"/>
+                <DataGridTextColumn Header="Último acceso"  Binding="{Binding UltimoLoginStr}" Width="130"/>
+                <DataGridTemplateColumn Header="" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="✎" Background="Transparent" BorderThickness="0"
+                                        Foreground="#007864" FontSize="16" Cursor="Hand"
+                                        Width="36" Click="BtnEditar_Click" Tag="{Binding}"/>
+                                <Button Content="🗑" Background="Transparent" BorderThickness="0"
+                                        Foreground="#C62828" FontSize="14" Cursor="Hand"
+                                        Width="36" Click="BtnEliminar_Click" Tag="{Binding}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="3" Background="#F5F5F5" Padding="16,0">
+            <TextBlock x:Name="lblTotal" Text="Mostrando 0 registros"
+                       VerticalAlignment="Center" FontSize="12"
+                       HorizontalAlignment="Right"/>
+        </Border>
+    </Grid>
+</Page>

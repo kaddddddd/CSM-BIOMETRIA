@@ -1,0 +1,74 @@
+<Window x:Class="CSMBiometricoWPF.Views.Dialogs.EditarUsuarioDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Usuario"
+        Width="460" Height="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>   <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Campos -->
+            <RowDefinition Height="52"/>   <!-- Botones -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#007864" Padding="18,0">
+            <TextBlock x:Name="lblTitulo" Text="Nuevo Usuario"
+                       FontFamily="Segoe UI Light" FontSize="18"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Campos -->
+        <StackPanel Grid.Row="1" Margin="20,14">
+            <!-- Nombre completo -->
+            <TextBlock Text="Nombre completo *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtNombre" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+            <!-- Username -->
+            <TextBlock Text="Nombre de usuario *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtUsername" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+            <!-- Email -->
+            <TextBlock Text="Email" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtEmail" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+            <!-- Rol -->
+            <TextBlock Text="Rol *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cmbRol" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+
+            <!-- Institución -->
+            <TextBlock Text="Institución" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <ComboBox x:Name="cmbInstitucion" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+
+            <!-- Contraseña -->
+            <TextBlock x:Name="lblPassword" Text="Contraseña *"
+                       FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <PasswordBox x:Name="pwdPassword" Height="32"
+                         Style="{StaticResource PwdBase}" Margin="0,0,0,4"/>
+            <TextBlock x:Name="lblPasswordHint" Text=""
+                       FontSize="10" Foreground="#9E9E9E" Margin="0,0,0,10"/>
+
+            <!-- Estado -->
+            <CheckBox x:Name="chkEstado" Content="Usuario activo"
+                      IsChecked="True" FontSize="13"/>
+        </StackPanel>
+
+        <!-- Botones -->
+        <Border Grid.Row="2" Background="White" Padding="16,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="4" ShadowDepth="-1" Opacity="0.08" Direction="90"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Content="Cancelar" Style="{StaticResource BtnSecundario}"
+                        Width="90" Height="34" Margin="0,0,10,0"
+                        Click="BtnCancelar_Click"/>
+                <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
+                        Width="100" Height="34"
+                        Click="BtnGuardar_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

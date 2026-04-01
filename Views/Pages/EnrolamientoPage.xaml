@@ -1,0 +1,190 @@
+<Page x:Class="CSMBiometricoWPF.Views.Pages.EnrolamientoPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>  <!-- Header -->
+            <RowDefinition Height="*"/>   <!-- Contenido -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
+            <TextBlock Text="Enrolamiento Biométrico" Style="{StaticResource LblTituloHeader}"/>
+        </Border>
+
+        <!-- Contenido en dos columnas -->
+        <Grid Grid.Row="1" Margin="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ═══ Columna izquierda: búsqueda ═══ -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="Buscar Estudiante"
+                               FontSize="14" FontWeight="SemiBold" Foreground="#007864"
+                               Margin="0,0,0,12"/>
+
+                    <!-- Búsqueda -->
+                    <TextBox x:Name="txtBuscar" Height="32"
+                             Style="{StaticResource TxtBase}"
+                             ToolTip="Nombre o identificación"
+                             Margin="0,0,0,8"/>
+                    <Button Content="🔍  Buscar" Style="{StaticResource BtnPrimario}"
+                            Height="32" Margin="0,0,0,12"
+                            Click="BtnBuscar_Click"/>
+
+                    <!-- Lista de resultados -->
+                    <TextBlock Text="Resultados:" FontSize="11" Foreground="#888" Margin="0,0,0,4"/>
+                    <ListBox x:Name="lstResultados" Height="160"
+                             BorderBrush="#BDBDBD" BorderThickness="1"
+                             SelectionChanged="LstResultados_SelectionChanged"
+                             FontSize="12"/>
+
+                    <!-- Info del estudiante seleccionado -->
+                    <Border x:Name="pnlInfoEstudiante" Visibility="Collapsed"
+                            Background="#E8F5E9" CornerRadius="4" Padding="10" Margin="0,12,0,0">
+                        <StackPanel>
+                            <TextBlock x:Name="lblNombreEst"  Text="" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="lblIdEst"      Text="" FontSize="11" Foreground="#555" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="lblGradoEst"   Text="" FontSize="11" Foreground="#555"/>
+                            <TextBlock x:Name="lblHuellaEst"  Text="" FontSize="11" Foreground="#777" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ Columna derecha: proceso de enrolamiento ═══ -->
+            <Border Grid.Column="1" Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>   <!-- Estado lector -->
+                        <RowDefinition Height="Auto"/>   <!-- Indicadores de paso -->
+                        <RowDefinition Height="*"/>      <!-- Imágenes de huellas -->
+                        <RowDefinition Height="Auto"/>   <!-- Instrucción -->
+                        <RowDefinition Height="Auto"/>   <!-- Botones -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Estado del lector -->
+                    <Border Grid.Row="0" Background="#F5F7FA" CornerRadius="4" Padding="10,8" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Estado: " FontSize="12" Foreground="#555" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="lblEstadoLector" Text="No inicializado"
+                                       FontSize="12" FontWeight="SemiBold" Foreground="#607D8B"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="  |  " FontSize="12" Foreground="#CCC" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="lblMensaje" Text=""
+                                       FontSize="12" Foreground="#555" VerticalAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Indicadores de pasos -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <!-- Paso 1: Centro -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,0,16,0">
+                            <Border x:Name="paso1" Width="44" Height="44" CornerRadius="22"
+                                    Background="#E0E0E0" HorizontalAlignment="Center">
+                                <TextBlock Text="1" FontSize="18" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Centro" FontSize="11" Foreground="#666"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <!-- Paso 2: Derecha -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,0,16,0">
+                            <Border x:Name="paso2" Width="44" Height="44" CornerRadius="22"
+                                    Background="#E0E0E0" HorizontalAlignment="Center">
+                                <TextBlock Text="2" FontSize="18" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Derecha" FontSize="11" Foreground="#666"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <!-- Paso 3: Izquierda -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,0,16,0">
+                            <Border x:Name="paso3" Width="44" Height="44" CornerRadius="22"
+                                    Background="#E0E0E0" HorizontalAlignment="Center">
+                                <TextBlock Text="3" FontSize="18" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Izquierda" FontSize="11" Foreground="#666"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <!-- Paso 4: Confirmación -->
+                        <StackPanel HorizontalAlignment="Center">
+                            <Border x:Name="paso4" Width="44" Height="44" CornerRadius="22"
+                                    Background="#E0E0E0" HorizontalAlignment="Center">
+                                <TextBlock Text="4" FontSize="18" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Confirm." FontSize="11" Foreground="#666"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Imágenes de las 4 huellas capturadas -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border BorderBrush="#BDBDBD" BorderThickness="1" Margin="6" Padding="2"
+                                CornerRadius="3">
+                            <Image x:Name="imgHuella1" Width="120" Height="140" Stretch="Uniform"/>
+                        </Border>
+                        <Border BorderBrush="#BDBDBD" BorderThickness="1" Margin="6" Padding="2"
+                                CornerRadius="3">
+                            <Image x:Name="imgHuella2" Width="120" Height="140" Stretch="Uniform"/>
+                        </Border>
+                        <Border BorderBrush="#BDBDBD" BorderThickness="1" Margin="6" Padding="2"
+                                CornerRadius="3">
+                            <Image x:Name="imgHuella3" Width="120" Height="140" Stretch="Uniform"/>
+                        </Border>
+                        <Border BorderBrush="#BDBDBD" BorderThickness="1" Margin="6" Padding="2"
+                                CornerRadius="3">
+                            <Image x:Name="imgHuella4" Width="120" Height="140" Stretch="Uniform"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Instrucción actual -->
+                    <Border Grid.Row="3" Background="#FFF8E1" CornerRadius="4"
+                            Padding="12,8" Margin="0,12,0,0">
+                        <TextBlock x:Name="lblInstruccion"
+                                   Text="Seleccione un estudiante e inicie el enrolamiento."
+                                   FontSize="13" Foreground="#F57F17"
+                                   TextWrapping="Wrap" TextAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Botones de control -->
+                    <StackPanel Grid.Row="4" Orientation="Horizontal"
+                                HorizontalAlignment="Center" Margin="0,16,0,0">
+                        <Button x:Name="btnIniciar" Content="▶  Iniciar Enrolamiento"
+                                Style="{StaticResource BtnPrimario}"
+                                Height="36" Width="180" Margin="0,0,8,0"
+                                Click="BtnIniciar_Click"/>
+                        <Button x:Name="btnCancelar" Content="✕  Cancelar"
+                                Style="{StaticResource BtnSecundario}"
+                                Height="36" Width="100" Margin="0,0,8,0"
+                                IsEnabled="False"
+                                Click="BtnCancelar_Click"/>
+                        <Button x:Name="btnGuardar" Content="💾  Guardar Huella"
+                                Style="{StaticResource BtnPrimario}"
+                                Height="36" Width="150" Margin="0,0,8,0"
+                                IsEnabled="False"
+                                Click="BtnGuardar_Click"/>
+                        <Button x:Name="btnReintentar" Content="🔄  Reintentar"
+                                Style="{StaticResource BtnNaranja}"
+                                Height="36" Width="120" IsEnabled="False"
+                                Click="BtnReintentar_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

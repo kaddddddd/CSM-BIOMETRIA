@@ -1,0 +1,102 @@
+<Window x:Class="CSMBiometricoWPF.Views.Dialogs.EditarEstudianteDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Estudiante"
+        Width="700" Height="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>   <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Campos -->
+            <RowDefinition Height="52"/>   <!-- Botones -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#007864" Padding="18,0">
+            <TextBlock x:Name="lblTitulo" Text="Nuevo Estudiante"
+                       FontFamily="Segoe UI Light" FontSize="18"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Campos en layout de 2 columnas + foto -->
+        <Grid Grid.Row="1" Margin="20,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="120"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Columna izquierda -->
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Nombre *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtNombre" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Apellidos *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtApellidos" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Identificación *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtIdentificacion" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Teléfono" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtTelefono" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Email" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <TextBox x:Name="txtEmail" Height="32" Style="{StaticResource TxtBase}" Margin="0,0,0,10"/>
+            </StackPanel>
+
+            <!-- Columna derecha -->
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Institución *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <ComboBox x:Name="cmbInstitucion" Height="32" Style="{StaticResource CmbBase}"
+                          Margin="0,0,0,10"
+                          SelectionChanged="CmbInstitucion_Changed"/>
+
+                <TextBlock Text="Sede *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <ComboBox x:Name="cmbSede" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Grado *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <ComboBox x:Name="cmbGrado" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Grupo *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <ComboBox x:Name="cmbGrupo" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Estado" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+                <ComboBox x:Name="cmbEstado" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+            </StackPanel>
+
+            <!-- Foto (columna derecha) -->
+            <StackPanel Grid.Column="4" VerticalAlignment="Top">
+                <TextBlock Text="Foto" FontSize="11" Foreground="#757575"
+                           HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                <Border BorderBrush="#BDBDBD" BorderThickness="1"
+                        Width="100" Height="130" HorizontalAlignment="Center">
+                    <Image x:Name="imgFoto" Stretch="UniformToFill"/>
+                </Border>
+                <Button Content="📷  Foto"
+                        Style="{StaticResource BtnSecundario}"
+                        Height="28" Margin="0,8,0,0" FontSize="11"
+                        Click="BtnFoto_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Botones -->
+        <Border Grid.Row="2" Background="White" Padding="16,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="4" ShadowDepth="-1" Opacity="0.08" Direction="90"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Content="Cancelar" Style="{StaticResource BtnSecundario}"
+                        Width="90" Height="34" Margin="0,0,10,0"
+                        Click="BtnCancelar_Click"/>
+                <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
+                        Width="100" Height="34"
+                        Click="BtnGuardar_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

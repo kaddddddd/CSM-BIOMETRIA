@@ -1,0 +1,176 @@
+<Window x:Class="CSMBiometricoWPF.Views.KioskWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CSM — Control de Asistencia"
+        WindowStyle="None" WindowState="Maximized"
+        ResizeMode="NoResize"
+        KeyDown="Window_KeyDown"
+        Background="#0D1117">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80"/>  <!-- Franja superior -->
+            <RowDefinition Height="*"/>   <!-- Centro -->
+            <RowDefinition Height="36"/>  <!-- Franja inferior -->
+        </Grid.RowDefinitions>
+
+        <!-- ── Franja superior ─────────────────────────────── -->
+        <Border Grid.Row="0" Background="#15141B">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="0" ShadowDepth="2" Color="#2196F3" Opacity="1" Direction="270"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="220"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="40,0">
+                    <TextBlock Text="CONTROL DE ASISTENCIA"
+                               FontFamily="Segoe UI Light" FontSize="26"
+                               Foreground="White"/>
+                    <TextBlock Text="Sistema Biométrico CSM"
+                               FontFamily="Segoe UI" FontSize="10"
+                               Foreground="#6488C8"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock x:Name="lblHora"
+                               FontFamily="Segoe UI Light" FontSize="28"
+                               Foreground="White" TextAlignment="Center"/>
+                    <TextBlock x:Name="lblFecha"
+                               FontFamily="Segoe UI" FontSize="10"
+                               Foreground="#6488C8" TextAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ── Centro ─────────────────────────────────────── -->
+        <Grid Grid.Row="1">
+            <!-- Efecto de pulso (círculo animado) -->
+            <Ellipse x:Name="elpPulso"
+                     Width="280" Height="280"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Margin="0,-50,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#402196F3" Offset="0"/>
+                        <GradientStop Color="#002196F3" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <!-- Círculo del sensor -->
+            <Border x:Name="borderSensor"
+                    Width="220" Height="220"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Margin="0,-50,0,0"
+                    CornerRadius="110"
+                    Background="#151B23"
+                    BorderBrush="#2196F3" BorderThickness="3">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" Color="#2196F3" Opacity="0.5" ShadowDepth="0"/>
+                </Border.Effect>
+
+                <!-- Imagen de la huella -->
+                <Image x:Name="imgHuella"
+                       Width="175" Height="175"
+                       Stretch="Uniform"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Border>
+
+            <!-- Instrucción principal -->
+            <TextBlock x:Name="lblInstruccion"
+                       Text="Coloque su dedo en el sensor"
+                       FontFamily="Segoe UI Light" FontSize="20"
+                       Foreground="#C8DCFF"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       Width="500"
+                       Margin="0,230,0,0"/>
+
+            <!-- Estado del lector -->
+            <TextBlock x:Name="lblEstadoLector"
+                       Text="⟳  Inicializando lector..."
+                       FontFamily="Segoe UI" FontSize="12"
+                       Foreground="#6488C8"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       Width="420"
+                       Margin="0,290,0,0"/>
+
+            <!-- Card de resultado -->
+            <Border x:Name="pnlResultado"
+                    Width="560" Height="115"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Margin="0,390,0,0"
+                    CornerRadius="10"
+                    Visibility="Collapsed"
+                    Background="#1B5E20">
+                <Grid Margin="14,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Foto del estudiante -->
+                    <Image x:Name="imgFotoResultado"
+                           Grid.Column="0"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center"/>
+
+                    <!-- Datos del resultado -->
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="lblNombreResult"
+                                   FontFamily="Segoe UI SemiBold" FontSize="17"
+                                   Foreground="White" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="lblEstadoResult"
+                                   FontFamily="Segoe UI Black" FontSize="17"
+                                   Foreground="White" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="lblDetalleResult"
+                                   FontFamily="Segoe UI" FontSize="10"
+                                   Foreground="#DCEEFF" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ── Franja inferior ────────────────────────────── -->
+        <Border Grid.Row="2" Background="#0A0D12">
+            <TextBlock Text="Acerque su dedo al lector para registrar su ingreso  ·  CSM Biométrico"
+                       FontFamily="Segoe UI" FontSize="10"
+                       Foreground="#3A5070"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- ── Overlay: lector desconectado ──────────────── -->
+        <Border x:Name="pnlLectorError"
+                Grid.RowSpan="3"
+                Background="#E5000000"
+                Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="⚠" FontSize="90"
+                           HorizontalAlignment="Center"
+                           Foreground="#FF4444"/>
+                <TextBlock Text="LECTOR DESCONECTADO"
+                           FontFamily="Segoe UI Black" FontSize="38"
+                           Foreground="#FF5555"
+                           HorizontalAlignment="Center"
+                           Margin="0,16,0,0"/>
+                <TextBlock x:Name="lblReconectando"
+                           Text="Reconectando automáticamente..."
+                           FontFamily="Segoe UI Light" FontSize="20"
+                           Foreground="#AAAAAA"
+                           HorizontalAlignment="Center"
+                           Margin="0,14,0,0"/>
+                <TextBlock Text="Verifique el cable USB del lector biométrico"
+                           FontFamily="Segoe UI" FontSize="14"
+                           Foreground="#666666"
+                           HorizontalAlignment="Center"
+                           Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,117 @@
+<Window x:Class="CSMBiometricoWPF.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CSM Educativo - Control Biométrico"
+        Width="1100" Height="620"
+        MinWidth="900" MinHeight="520"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize">
+
+    <Grid>
+        <!-- Imagen de fondo (lado izquierdo) -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="380"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Fondo verde con imagen -->
+        <Border Grid.Column="0" Background="#007864">
+            <Image x:Name="imgFondo" Stretch="UniformToFill" Opacity="0.9"/>
+        </Border>
+
+        <!-- Panel derecho con overlay oscuro -->
+        <Border Grid.Column="1" Background="#CC00372D">
+            <Grid VerticalAlignment="Center" Margin="30,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/><!-- Título -->
+                    <RowDefinition Height="Auto"/><!-- Subtítulo -->
+                    <RowDefinition Height="12"/>
+                    <RowDefinition Height="1"/>  <!-- Separador -->
+                    <RowDefinition Height="18"/>
+                    <RowDefinition Height="Auto"/><!-- Institución -->
+                    <RowDefinition Height="14"/>
+                    <RowDefinition Height="Auto"/><!-- Usuario -->
+                    <RowDefinition Height="14"/>
+                    <RowDefinition Height="Auto"/><!-- Contraseña -->
+                    <RowDefinition Height="18"/>
+                    <RowDefinition Height="Auto"/><!-- Botón -->
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/><!-- Restablecer -->
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/><!-- Mensaje -->
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="Auto"/><!-- Logo -->
+                </Grid.RowDefinitions>
+
+                <!-- Bienvenido -->
+                <TextBlock Grid.Row="0" Text="¡Bienvenido!"
+                           FontFamily="Segoe UI Light" FontSize="26"
+                           Foreground="White" HorizontalAlignment="Center"/>
+
+                <TextBlock Grid.Row="1" Text="Ingresa tus credenciales para continuar"
+                           FontFamily="Segoe UI" FontSize="11"
+                           Foreground="#C8FFFFFF" HorizontalAlignment="Center"/>
+
+                <!-- Separador -->
+                <Border Grid.Row="3" Height="1" Background="#50FFFFFF" Margin="0"/>
+
+                <!-- ComboBox Institución -->
+                <ComboBox x:Name="cmbInstitucion" Grid.Row="5"
+                          IsEditable="True" Height="36"
+                          Style="{StaticResource CmbBase}"
+                          Background="White"
+                          Text="🏫  Institución">
+                </ComboBox>
+
+                <!-- TextBox Usuario con placeholder -->
+                <Grid Grid.Row="7">
+                    <TextBox x:Name="txtUsuario"
+                             Style="{StaticResource TxtBase}" Height="36"
+                             TextChanged="TxtUsuario_Changed"/>
+                    <TextBlock x:Name="usuarioPlaceholder" Text="👤  Usuario"
+                               Foreground="#999999" FontSize="13" FontFamily="Segoe UI"
+                               VerticalAlignment="Center" Margin="10,0" IsHitTestVisible="False"/>
+                </Grid>
+
+                <!-- PasswordBox Contraseña -->
+                <Grid Grid.Row="9">
+                    <PasswordBox x:Name="txtPassword"
+                                 Style="{StaticResource PwdBase}" Height="36"/>
+                    <TextBlock x:Name="pwdPlaceholder" Text="🔒  Contraseña"
+                               Foreground="#999999" FontSize="13" FontFamily="Segoe UI"
+                               VerticalAlignment="Center" Margin="10,0" IsHitTestVisible="False"/>
+                </Grid>
+
+                <!-- Botón Iniciar Sesión -->
+                <Button x:Name="btnLogin" Grid.Row="11"
+                        Content="Iniciar Sesión" Height="42"
+                        Style="{StaticResource BtnPrimario}"
+                        Background="#8BC34A"
+                        FontSize="14"
+                        Click="BtnLogin_Click"/>
+
+                <!-- Restablecer contraseña -->
+                <TextBlock Grid.Row="13"
+                           Text="Restablecer contraseña"
+                           FontFamily="Segoe UI" FontSize="11"
+                           Foreground="#8BC34A" TextDecorations="Underline"
+                           HorizontalAlignment="Center" Cursor="Hand"
+                           MouseLeftButtonUp="LnkRestablecer_Click"/>
+
+                <!-- Mensaje de error -->
+                <TextBlock x:Name="lblMensaje" Grid.Row="15"
+                           FontFamily="Segoe UI" FontSize="11"
+                           Foreground="#EF5350"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"/>
+
+                <!-- Logo -->
+                <Image x:Name="imgLogo" Grid.Row="17"
+                       Width="150" Height="150"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

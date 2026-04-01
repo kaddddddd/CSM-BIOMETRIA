@@ -1,0 +1,58 @@
+<Window x:Class="CSMBiometricoWPF.Views.Dialogs.EditarInstitucionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Institución"
+        Width="500" Height="330"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>   <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Campos -->
+            <RowDefinition Height="52"/>   <!-- Botones -->
+        </Grid.RowDefinitions>
+
+        <!-- Header verde -->
+        <Border Grid.Row="0" Background="#007864" Padding="18,0">
+            <TextBlock x:Name="lblTitulo" Text="Nueva Institución"
+                       FontFamily="Segoe UI Light" FontSize="18"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Campos -->
+        <StackPanel Grid.Row="1" Margin="20,16">
+            <!-- Nombre -->
+            <TextBlock Text="Nombre *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtNombre" Height="34" Style="{StaticResource TxtBase}" Margin="0,0,0,12"/>
+
+            <!-- Dirección -->
+            <TextBlock Text="Dirección" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtDireccion" Height="34" Style="{StaticResource TxtBase}" Margin="0,0,0,12"/>
+
+            <!-- Teléfono -->
+            <TextBlock Text="Teléfono" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBox x:Name="txtTelefono" Height="34" Style="{StaticResource TxtBase}" Margin="0,0,0,12"/>
+
+            <!-- Estado -->
+            <CheckBox x:Name="chkEstado" Content="Institución activa"
+                      IsChecked="True" FontSize="13"/>
+        </StackPanel>
+
+        <!-- Botones -->
+        <Border Grid.Row="2" Background="White" Padding="16,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="4" ShadowDepth="-1" Opacity="0.08" Direction="90"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Content="Cancelar" Style="{StaticResource BtnSecundario}"
+                        Width="90" Height="34" Margin="0,0,10,0"
+                        Click="BtnCancelar_Click"/>
+                <Button Content="Guardar" Style="{StaticResource BtnPrimario}"
+                        Width="100" Height="34"
+                        Click="BtnGuardar_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

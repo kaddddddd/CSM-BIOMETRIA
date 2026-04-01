@@ -1,0 +1,91 @@
+<Page x:Class="CSMBiometricoWPF.Views.Pages.LogsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="35"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#263238" Padding="10,7">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
+                        Width="120" Height="35" Margin="0,0,8,0"
+                        Click="BtnRefrescar_Click"/>
+                <Button Content="✖  Limpiar filtros" Style="{StaticResource BtnNaranja}"
+                        Width="140" Height="35"
+                        Click="BtnLimpiar_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Filtros -->
+        <Border Grid.Row="1" Background="#ECEFF1" Padding="10,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Nivel:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
+                <ComboBox x:Name="cmbNivel" Width="120" Height="28"
+                          Style="{StaticResource CmbBase}" Margin="0,0,16,0"
+                          SelectionChanged="Filtro_Changed"/>
+
+                <TextBlock Text="Tipo evento:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
+                <ComboBox x:Name="cmbTipo" Width="170" Height="28"
+                          Style="{StaticResource CmbBase}" Margin="0,0,16,0"
+                          SelectionChanged="Filtro_Changed"/>
+
+                <TextBlock Text="Buscar:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
+                <TextBox x:Name="txtBuscar" Width="200" Height="28"
+                         Style="{StaticResource TxtBase}"
+                         TextChanged="TxtBuscar_Changed"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Grid de logs -->
+        <DataGrid x:Name="grid" Grid.Row="2"
+                  Style="{StaticResource GridBase}"
+                  ColumnHeaderStyle="{StaticResource GridHeaderStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Fecha"       Binding="{Binding FechaEvento, StringFormat='dd/MM/yyyy HH:mm:ss'}" Width="160"/>
+                <DataGridTextColumn Header="Nivel"       Binding="{Binding Nivel}"       Width="100"/>
+                <DataGridTextColumn Header="Tipo evento" Binding="{Binding TipoEvento}"  Width="150"/>
+                <DataGridTextColumn Header="Usuario"     Binding="{Binding NombreUsuario}" Width="160"/>
+                <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
+            </DataGrid.Columns>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <!-- Color por nivel de severidad -->
+                        <DataTrigger Binding="{Binding Nivel}" Value="ERROR">
+                            <Setter Property="Background" Value="#FFEBEE"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Nivel}" Value="CRITICO">
+                            <Setter Property="Background" Value="#FFCDD2"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Nivel}" Value="ADVERTENCIA">
+                            <Setter Property="Background" Value="#FFF8E1"/>
+                        </DataTrigger>
+                        <!-- Selección (mayor prioridad al ir después) -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E8F5F2"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#D0EFEA"/>
+                            <Setter Property="Foreground" Value="#003828"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="3" Background="#ECEFF1" Padding="16,0">
+            <TextBlock x:Name="lblTotal" Text="Mostrando 0 registros"
+                       VerticalAlignment="Center" FontSize="12"
+                       HorizontalAlignment="Right"/>
+        </Border>
+    </Grid>
+</Page>
