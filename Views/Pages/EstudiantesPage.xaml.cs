@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ClosedXML.Excel;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
 using CSMBiometricoWPF.Views.Dialogs;
@@ -100,7 +99,7 @@ namespace CSMBiometricoWPF.Views.Pages
             if (dlg.ShowDialog() == true) CargarEstudiantes();
         }
 
-        private void BtnNuevo_Click(object sender, RoutedEventArgs e)   => AbrirFormulario(null);
+        private void BtnNuevo_Click(object sender, RoutedEventArgs e)    => AbrirFormulario(null);
         private void BtnRefrescar_Click(object sender, RoutedEventArgs e) => CargarEstudiantes();
         private void TxtBuscar_Changed(object sender, TextChangedEventArgs e) => FiltrarEstudiantes();
         private void Filtro_Changed(object sender, SelectionChangedEventArgs e) => CargarEstudiantes();
@@ -138,18 +137,45 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                Filter = "CSV|*.csv",
-                FileName = $"estudiantes_{DateTime.Now:yyyyMMdd}.csv"
+                Filter = "Excel|*.xlsx",
+                FileName = $"estudiantes_{DateTime.Now:yyyyMMdd}.xlsx"
             };
             if (dlg.ShowDialog() != true) return;
             try
             {
-                var sb = new StringBuilder();
-                sb.AppendLine("Identificacion,Nombre,Telefono,Sede,Grado,Grupo,Estado");
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Estudiantes");
+
+                var headers = new[] { "Identificación", "Nombre", "Teléfono", "Sede", "Grado", "Grupo", "Estado" };
+                for (int c = 0; c < headers.Length; c++)
+                {
+                    var cell = ws.Cell(1, c + 1);
+                    cell.Value = headers[c];
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Font.FontColor = XLColor.White;
+                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#007864");
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+
+                int row = 2;
                 foreach (var est in _todos)
-                    sb.AppendLine($"{est.Identificacion},{est.NombreCompleto},{est.Telefono},{est.NombreSede},{est.NombreGrado},{est.NombreGrupo},{est.Estado}");
-                File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-                MessageBox.Show("Exportación exitosa:\n" + dlg.FileName, "Exportar",
+                {
+                    ws.Cell(row, 1).Value = est.Identificacion;
+                    ws.Cell(row, 2).Value = est.NombreCompleto;
+                    ws.Cell(row, 3).Value = est.Telefono;
+                    ws.Cell(row, 4).Value = est.NombreSede;
+                    ws.Cell(row, 5).Value = est.NombreGrado;
+                    ws.Cell(row, 6).Value = est.NombreGrupo;
+                    ws.Cell(row, 7).Value = est.Estado;
+                    if (row % 2 == 0)
+                        ws.Row(row).Style.Fill.BackgroundColor = XLColor.FromHtml("#F0FAF8");
+                    row++;
+                }
+
+                ws.Columns().AdjustToContents();
+                wb.SaveAs(dlg.FileName);
+
+                MessageBox.Show("Exportación exitosa:\n" + dlg.FileName, "Exportar Excel",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex) { MessageBox.Show("Error exportando: " + ex.Message); }

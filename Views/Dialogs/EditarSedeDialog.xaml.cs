@@ -16,14 +16,23 @@ namespace CSMBiometricoWPF.Views.Dialogs
             _sede = sede ?? new Sede { Estado = true };
 
             // Cargar instituciones en el ComboBox
-            try
+            cmbInstitucion.DisplayMemberPath = "Nombre";
+            cmbInstitucion.SelectedValuePath = "IdInstitucion";
+            if (!SesionActiva.EsSuperAdmin && SesionActiva.InstitucionActual != null)
             {
-                var instituciones = new InstitucionRepository().ObtenerTodas(soloActivas: true);
-                cmbInstitucion.ItemsSource = instituciones;
-                cmbInstitucion.DisplayMemberPath = "Nombre";
-                cmbInstitucion.SelectedValuePath = "IdInstitucion";
+                cmbInstitucion.ItemsSource = new[] { SesionActiva.InstitucionActual };
+                cmbInstitucion.SelectedIndex = 0;
+                cmbInstitucion.Visibility = System.Windows.Visibility.Collapsed;
+                lblInstitucionLabel.Visibility = System.Windows.Visibility.Collapsed;
             }
-            catch { }
+            else
+            {
+                try
+                {
+                    cmbInstitucion.ItemsSource = new InstitucionRepository().ObtenerTodas(soloActivas: true);
+                }
+                catch { }
+            }
 
             if (sede != null)
             {

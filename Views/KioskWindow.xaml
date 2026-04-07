@@ -29,7 +29,8 @@
                     <TextBlock Text="CONTROL DE ASISTENCIA"
                                FontFamily="Segoe UI Light" FontSize="26"
                                Foreground="White"/>
-                    <TextBlock Text="Sistema Biométrico CSM"
+                    <TextBlock x:Name="lblNombreSede"
+                               Text="Sistema Biométrico CSM"
                                FontFamily="Segoe UI" FontSize="10"
                                Foreground="#6488C8"/>
                 </StackPanel>
@@ -143,6 +144,90 @@
                        FontFamily="Segoe UI" FontSize="10"
                        Foreground="#3A5070"
                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- ── Overlay: selector de sede ────────────────── -->
+        <Border x:Name="pnlSelectorSede"
+                Grid.RowSpan="3"
+                Background="#F0000000"
+                Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="460">
+                <TextBlock Text="SELECCIONE LA SEDE"
+                           FontFamily="Segoe UI Black" FontSize="22"
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="Este kiosk registrará asistencia de la sede seleccionada"
+                           FontFamily="Segoe UI Light" FontSize="13"
+                           Foreground="#8AADDE"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Margin="0,0,0,28"/>
+                <ListBox x:Name="lstSedes"
+                         Background="#1A2433"
+                         BorderBrush="#2C3E55"
+                         BorderThickness="1"
+                         Foreground="White"
+                         FontFamily="Segoe UI"
+                         FontSize="16"
+                         MaxHeight="300"
+                         Margin="0,0,0,20"
+                         MouseDoubleClick="LstSedes_MouseDoubleClick"
+                         SelectionChanged="LstSedes_SelectionChanged">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="16,10"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#2A3F5C"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#1565C0"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+                <Button x:Name="btnConfirmarSede"
+                        Content="CONFIRMAR SEDE"
+                        Click="BtnConfirmarSede_Click"
+                        IsEnabled="False"
+                        Background="#1565C0"
+                        Foreground="White"
+                        FontFamily="Segoe UI SemiBold"
+                        FontSize="15"
+                        Padding="20,12"
+                        BorderThickness="0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#1565C0"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="6"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Background" Value="#2A3A4A"/>
+                                    <Setter Property="Foreground" Value="#556070"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1976D2"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
         </Border>
 
         <!-- ── Overlay: lector desconectado ──────────────── -->

@@ -29,10 +29,12 @@ namespace CSMBiometricoWPF.Views
             new() { Interval = TimeSpan.FromSeconds(5) };
 
         private ServicioBiometrico? _biometrico;
+        private readonly SedeRepository _sedeRepo = new();
 
         // Nombre e ID de institución (independiente de la sesión)
         private string _nombreInstitucion = "INSTITUCIÓN";
         private int?   _idInstitucion;
+        private int?   _idSede;
 
         public PanelEntradaWindow()
         {
@@ -53,15 +55,14 @@ namespace CSMBiometricoWPF.Views
             _timerRefresh.Tick += (_, _) => { ActualizarEstadoConexion(); CargarDatos(); };
             _timerRefresh.Start();
 
-            // Si hay sesión activa, usar esa institución directamente
+            // Si hay sesión activa, usar esa institución directamente y pasar a sede
             if (SesionActiva.InstitucionActual != null)
             {
-                _nombreInstitucion = SesionActiva.InstitucionActual.Nombre?.ToUpper() ?? "INSTITUCIÓN";
-                _idInstitucion     = SesionActiva.InstitucionActual.IdInstitucion;
+                _nombreInstitucion  = SesionActiva.InstitucionActual.Nombre?.ToUpper() ?? "INSTITUCIÓN";
+                _idInstitucion      = SesionActiva.InstitucionActual.IdInstitucion;
                 lblInstitucion.Text = _nombreInstitucion;
                 pnlSelectorInstitucion.Visibility = Visibility.Collapsed;
-                CargarDatos();
-                InicializarLectorAsync();
+                MostrarSelectorSede();
             }
             else
             {
@@ -120,27 +121,26 @@ namespace CSMBiometricoWPF.Views
 
                 if (instituciones.Count == 1)
                 {
-                    // Una sola institución: selección automática
+                    // Una sola institución: selección automática → pasar a sede
                     _nombreInstitucion  = instituciones[0].Nombre.ToUpper();
                     _idInstitucion      = instituciones[0].IdInstitucion;
                     lblInstitucion.Text = _nombreInstitucion;
                     pnlSelectorInstitucion.Visibility = Visibility.Collapsed;
-                    CargarDatos();
-                    InicializarLectorAsync();
+                    MostrarSelectorSede();
                     return;
                 }
 
                 // Varias instituciones: mostrar selector
-                cmbInstitucionSelector.ItemsSource   = instituciones;
+                cmbInstitucionSelector.ItemsSource       = instituciones;
                 cmbInstitucionSelector.DisplayMemberPath = "Nombre";
-                cmbInstitucionSelector.SelectedIndex = 0;
-                pnlSelectorInstitucion.Visibility = Visibility.Visible;
+                cmbInstitucionSelector.SelectedIndex     = 0;
+                pnlSelectorInstitucion.Visibility        = Visibility.Visible;
             }
             catch
             {
                 lblInstitucion.Text = "ERROR DE CONEXIÓN";
                 pnlSelectorInstitucion.Visibility = Visibility.Collapsed;
-                CargarDatos();
+                MostrarSelectorSede();
             }
         }
 
@@ -153,8 +153,63 @@ namespace CSMBiometricoWPF.Views
                 lblInstitucion.Text = _nombreInstitucion;
             }
             pnlSelectorInstitucion.Visibility = Visibility.Collapsed;
+            MostrarSelectorSede();
+        }
+
+        // ── Selector de sede ─────────────────────────────────────────────
+        private void MostrarSelectorSede()
+        {
+            try
+            {
+                var sedes = _idInstitucion.HasValue
+                    ? _sedeRepo.ObtenerPorInstitucion(_idInstitucion.Value)
+                    : _sedeRepo.ObtenerTodas();
+
+                if (sedes.Count == 0)
+                {
+                    // Sin sedes: continuar sin filtro de sede
+                    AplicarSede(null, null);
+                    return;
+                }
+
+                if (sedes.Count == 1)
+                {
+                    // Una sola sede: selección automática
+                    AplicarSede(sedes[0].IdSede, sedes[0].NombreSede);
+                    return;
+                }
+
+                // Varias sedes: mostrar selector
+                cmbSedeSelector.ItemsSource   = sedes;
+                cmbSedeSelector.SelectedIndex = 0;
+                pnlSelectorSede.Visibility    = Visibility.Visible;
+            }
+            catch
+            {
+                AplicarSede(null, null);
+            }
+        }
+
+        private void AplicarSede(int? idSede, string? nombreSede)
+        {
+            _idSede = idSede;
+            pnlSelectorSede.Visibility = Visibility.Collapsed;
+
+            // Actualizar subtítulo del encabezado con la sede seleccionada
+            lblSubtituloSede.Text = nombreSede != null
+                ? $"SEDE: {nombreSede.ToUpper()}  ·  REGISTRO DE INGRESOS"
+                : "CONTROL DE ACCESO  ·  REGISTRO DE INGRESOS";
+
             CargarDatos();
             InicializarLectorAsync();
+        }
+
+        private void BtnAbrirPanelSede_Click(object sender, RoutedEventArgs e)
+        {
+            if (cmbSedeSelector.SelectedItem is Sede sede)
+                AplicarSede(sede.IdSede, sede.NombreSede);
+            else
+                AplicarSede(null, null);
         }
 
         // ── Reloj ───────────────────────────────────────────────────────
@@ -197,7 +252,7 @@ namespace CSMBiometricoWPF.Views
 
             try
             {
-                var registros = _repo.ObtenerPorFecha(DateTime.Today, idInstitucion: _idInstitucion);
+                var registros = _repo.ObtenerPorFecha(DateTime.Today, idSede: _idSede, idInstitucion: _idInstitucion);
 
                 int total     = registros.Count;
                 int aTiempo   = registros.Count(r => r.EstadoIngreso == EstadoIngreso.A_TIEMPO);
@@ -237,6 +292,8 @@ namespace CSMBiometricoWPF.Views
 
             if (_idInstitucion.HasValue)
                 _biometrico.IdInstitucionFiltro = _idInstitucion;
+            if (_idSede.HasValue)
+                _biometrico.IdSedeFiltro = _idSede;
 
             _biometrico.OnCambioEstado           += OnBiometricoCambioEstado;
             _biometrico.OnImagenCapturada        += OnBiometricoImagenCapturada;
@@ -337,9 +394,18 @@ namespace CSMBiometricoWPF.Views
             {
                 if (resultado.Identificado && resultado.Estudiante != null)
                 {
-                    var (estado, _) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
-                    MostrarResultado(resultado.Estudiante, estado);
-                    CargarDatos();
+                    try
+                    {
+                        var (estado, _) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
+                        MostrarResultado(resultado.Estudiante, estado);
+                        CargarDatos();
+                    }
+                    catch (Exception ex)
+                    {
+                        MostrarNoIdentificado();
+                        lblEstadoLector.Text = $"⚠  Error al registrar ingreso: {ex.Message}";
+                        lblEstadoLector.Foreground = new SolidColorBrush(Color.FromRgb(220, 80, 60));
+                    }
                 }
                 else
                 {
@@ -434,6 +500,8 @@ namespace CSMBiometricoWPF.Views
             if (e.Key == Key.F5)      CargarDatos();
             if (e.Key == Key.Enter && pnlSelectorInstitucion.Visibility == Visibility.Visible)
                 BtnAbrirPanel_Click(sender, e);
+            if (e.Key == Key.Enter && pnlSelectorSede.Visibility == Visibility.Visible)
+                BtnAbrirPanelSede_Click(sender, e);
         }
     }
 

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,15 +42,37 @@ namespace CSMBiometricoWPF.Views.Pages
             ("1 semana",      6),
             ("15 días",      14),
             ("30 días",      29),
+            ("Período 1",    -2),
+            ("Período 2",    -3),
+            ("Período 3",    -4),
+            ("Período 4",    -5),
             ("Personalizado",-1),
+        };
+
+        // Fechas fijas de cada período académico (dentro del año en curso)
+        private static readonly (int mesInicio, int diaInicio, int mesFin, int diaFin)[] _fechasPeriodo =
+        {
+            (1,  1,  3, 31),   // P1: ene – mar
+            (4,  1,  6, 30),   // P2: abr – jun
+            (7,  1,  9, 30),   // P3: jul – sep
+            (10, 1, 12, 31),   // P4: oct – dic
         };
 
         private (DateTime desde, DateTime hasta) ObtenerRangoFechas()
         {
             var hoy = DateTime.Today;
             int idx = cmbPeriodo.SelectedIndex < 0 ? 0 : cmbPeriodo.SelectedIndex;
-            if (idx == 4) // Personalizado
+
+            // Períodos académicos (índices 4-7)
+            if (idx >= 4 && idx <= 7)
+            {
+                var (mi, di, mf, df) = _fechasPeriodo[idx - 4];
+                return (new DateTime(hoy.Year, mi, di), new DateTime(hoy.Year, mf, df));
+            }
+
+            if (idx == 8) // Personalizado
                 return (dpDesde.SelectedDate ?? hoy, dpHasta.SelectedDate ?? hoy);
+
             return (hoy.AddDays(-_periodos[idx].dias), hoy);
         }
 
@@ -117,10 +141,6 @@ namespace CSMBiometricoWPF.Views.Pages
                 try { foreach (var i in _repoInst.ObtenerTodas()) cmbInstitucion.Items.Add(i); } catch { }
                 cmbInstitucion.SelectedIndex = 0;
             }
-
-            cmbSede.Items.Add(new Sede { NombreSede = "Todas las sedes" });
-            cmbSede.SelectedIndex = 0;
-            cmbSede.DisplayMemberPath = "NombreSede";
 
             cmbGrado.Items.Add(new Grado { NombreGrado = "Todos los grados" });
             try { foreach (var g in _repoGrado.ObtenerTodos()) cmbGrado.Items.Add(g); } catch { }
@@ -275,84 +295,86 @@ namespace CSMBiometricoWPF.Views.Pages
             try
             {
                 var instEfectiva = InstFiltroEfectivo;
-                int? idSede  = (cmbSede.SelectedItem  as Sede)?.IdSede  is int s && s > 0 ? s : (int?)null;
-                int? idGrado = (cmbGrado.SelectedItem as Grado)?.IdGrado is int g && g > 0 ? g : (int?)null;
+                int? idSede  = (cmbSede.SelectedItem  as Sede)?.IdSede  is int s  && s  > 0 ? s  : (int?)null;
+                int? idGrado = (cmbGrado.SelectedItem as Grado)?.IdGrado is int g  && g  > 0 ? g  : (int?)null;
                 int? idGrupo = (cmbGrupo.SelectedItem as Grupo)?.IdGrupo is int gr && gr > 0 ? gr : (int?)null;
 
                 var (desde, hasta) = ObtenerRangoFechas();
 
-                // Título e columna de fecha según si es rango o día único
-                if (!EsRango)
-                {
-                    lblGridTitulo.Text = desde == DateTime.Today
-                        ? "Registros de hoy"
-                        : $"Registros de {desde:dd/MM/yyyy}";
-                    colFecha.Visibility = System.Windows.Visibility.Collapsed;
-                }
-                else
-                {
-                    lblGridTitulo.Text = $"Registros del {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}";
-                    colFecha.Visibility = System.Windows.Visibility.Visible;
-                }
+                lblGridTitulo.Text = !EsRango
+                    ? (desde == DateTime.Today ? "Asistencia de hoy" : $"Asistencia del {desde:dd/MM/yyyy}")
+                    : $"Asistencia del {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}";
+
+                var todos = _repoEst.ObtenerTodos(idInstitucion: instEfectiva, estado: "ACTIVO");
+                if (idSede.HasValue)  todos = todos.FindAll(e => e.IdSede  == idSede);
+                if (idGrado.HasValue) todos = todos.FindAll(e => e.IdGrado == idGrado);
+                if (idGrupo.HasValue) todos = todos.FindAll(e => e.IdGrupo == idGrupo);
 
                 var registros = _repoReg.ObtenerPorRango(desde, hasta, idSede, idInstitucion: instEfectiva);
 
-                // Aplicar filtros adicionales de grado/grupo (via estudiante)
-                if (idGrado.HasValue || idGrupo.HasValue)
+                var regPorEstDia = registros
+                    .GroupBy(r => (r.IdEstudiante, r.FechaIngreso.Date))
+                    .ToDictionary(g => g.Key, g => g.OrderBy(r => r.EstadoIngreso).First());
+
+                var diasRango = Enumerable
+                    .Range(0, (hasta - desde).Days + 1)
+                    .Select(d => desde.AddDays(d).Date)
+                    .Where(d => d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday)
+                    .ToList();
+
+                var vms = todos.Select(e =>
                 {
-                    var todos = _repoEst.ObtenerTodos(idInstitucion: instEfectiva, estado: "ACTIVO");
-                    if (idSede.HasValue)  todos = todos.FindAll(e => e.IdSede  == idSede);
-                    if (idGrado.HasValue) todos = todos.FindAll(e => e.IdGrado == idGrado);
-                    if (idGrupo.HasValue) todos = todos.FindAll(e => e.IdGrupo == idGrupo);
-                    var ids = new HashSet<int>(todos.ConvertAll(e => e.IdEstudiante));
-                    registros = registros.FindAll(r => ids.Contains(r.IdEstudiante));
-                }
+                    int diasPresentes = 0, diasTarde = 0;
+                    var faltas = new List<FaltaDetalle>();
 
-                if (_filtroActivo == "PRESENTES")
-                    registros = registros.FindAll(r => r.EstadoIngreso == EstadoIngreso.A_TIEMPO);
-                else if (_filtroActivo == "TARDANZAS")
-                    registros = registros.FindAll(r => r.EstadoIngreso == EstadoIngreso.TARDE);
-                else if (_filtroActivo == "AUSENTES")
-                {
-                    var todos = _repoEst.ObtenerTodos(idInstitucion: instEfectiva, estado: "ACTIVO");
-                    if (idSede.HasValue)  todos = todos.FindAll(e => e.IdSede  == idSede);
-                    if (idGrado.HasValue) todos = todos.FindAll(e => e.IdGrado == idGrado);
-                    if (idGrupo.HasValue) todos = todos.FindAll(e => e.IdGrupo == idGrupo);
-
-                    // Ausente = no tiene registro A_TIEMPO ni TARDE (igual que en ActualizarCards)
-                    var idsNoAusentes = new HashSet<int>(registros
-                        .FindAll(r => r.EstadoIngreso == EstadoIngreso.A_TIEMPO || r.EstadoIngreso == EstadoIngreso.TARDE)
-                        .ConvertAll(r => r.IdEstudiante));
-                    var estudiantesAusentes = todos.FindAll(e => !idsNoAusentes.Contains(e.IdEstudiante));
-
-                    // Si tiene registro FUERA_DE_HORARIO se muestra ese; si no tiene ninguno, se crea sintético
-                    var fueraDict = registros
-                        .FindAll(r => r.EstadoIngreso == EstadoIngreso.FUERA_DE_HORARIO)
-                        .ToDictionary(r => r.IdEstudiante);
-
-                    grid.ItemsSource = estudiantesAusentes.Select(e =>
-                        fueraDict.TryGetValue(e.IdEstudiante, out var reg) ? reg :
-                        new RegistroIngreso
+                    foreach (var dia in diasRango)
+                    {
+                        if (regPorEstDia.TryGetValue((e.IdEstudiante, dia), out var reg))
                         {
-                            NombreEstudiante = e.NombreCompleto,
-                            Identificacion   = e.Identificacion,
-                            NombreGrado      = e.NombreGrado,
-                            NombreGrupo      = e.NombreGrupo,
-                            NombreSede       = e.NombreSede,
-                            EstadoIngreso    = EstadoIngreso.FUERA_DE_HORARIO  // IdRegistro=0 → muestra "Ausente"
-                        }).ToList();
-                    return;
-                }
+                            if (reg.EstadoIngreso == EstadoIngreso.A_TIEMPO) diasPresentes++;
+                            else if (reg.EstadoIngreso == EstadoIngreso.TARDE) { diasPresentes++; diasTarde++; }
+                            else faltas.Add(new FaltaDetalle { Fecha = dia, Estado = "Inasistencia" });
+                        }
+                        else
+                        {
+                            faltas.Add(new FaltaDetalle { Fecha = dia, Estado = "Ausente" });
+                        }
+                    }
 
-                grid.ItemsSource = registros;
+                    return new EstudianteDashboardVM
+                    {
+                        NombreEstudiante = e.NombreCompleto,
+                        Identificacion   = e.Identificacion,
+                        NombreGrado      = e.NombreGrado,
+                        NombreGrupo      = e.NombreGrupo,
+                        NombreSede       = e.NombreSede,
+                        DiasPresentes    = diasPresentes,
+                        DiasTarde        = diasTarde,
+                        TotalFaltas      = faltas.Count,
+                        Faltas           = faltas.OrderBy(f => f.Fecha).ToList()
+                    };
+                });
+
+                var filtrados = vms
+                    .Where(v => v.TotalFaltas > 0)
+                    .OrderBy(v => v.NombreEstudiante)
+                    .ToList();
+
+                grid.ItemsSource = filtrados;
             }
             catch (Exception ex) { MessageBox.Show("RefrescarGrid: " + ex.Message, "Error"); }
+        }
+
+        private void BtnExpandir_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is EstudianteDashboardVM vm)
+                vm.Expandido = !vm.Expandido;
         }
 
         private void CmbPeriodo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (pnlFechasCustom == null) return;
-            bool esCustom = cmbPeriodo.SelectedIndex == 4;
+            bool esCustom = cmbPeriodo.SelectedIndex == 8;
             pnlFechasCustom.Visibility = esCustom
                 ? System.Windows.Visibility.Visible
                 : System.Windows.Visibility.Collapsed;
@@ -373,7 +395,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
         private void DpFecha_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_inicializando || cmbPeriodo.SelectedIndex != 4) return;
+            if (_inicializando || cmbPeriodo.SelectedIndex != 8) return;
             _filtroActivo = "TODOS";
             RefrescarTodo();
         }
@@ -392,5 +414,42 @@ namespace CSMBiometricoWPF.Views.Pages
             _filtroActivo = "TODOS";
             RefrescarTodo();
         }
+
+        private void cmbInstitucion_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+    }
+
+    public class FaltaDetalle
+    {
+        public DateTime Fecha          { get; set; }
+        public string FechaStr         => Fecha.ToString("dd/MM/yyyy");
+        public string FechaCorta       => Fecha.ToString("dd/MM");
+        public string DiaSemana        => Fecha.ToString("dddd", new CultureInfo("es-CO"));
+        public string DiaSemanaCorto   => Fecha.ToString("ddd", new CultureInfo("es-CO")).ToUpper();
+        public string Estado           { get; set; }
+    }
+
+    public class EstudianteDashboardVM : INotifyPropertyChanged
+    {
+        public string NombreEstudiante { get; set; }
+        public string Identificacion   { get; set; }
+        public string NombreGrado      { get; set; }
+        public string NombreGrupo      { get; set; }
+        public string NombreSede       { get; set; }
+        public int    DiasPresentes    { get; set; }
+        public int    DiasTarde        { get; set; }
+        public int    TotalFaltas      { get; set; }
+        public List<FaltaDetalle> Faltas { get; set; } = new();
+
+        private bool _expandido;
+        public bool Expandido
+        {
+            get => _expandido;
+            set { _expandido = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Expandido))); }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }

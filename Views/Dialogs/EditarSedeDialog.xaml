@@ -42,7 +42,7 @@
                      Height="34" Style="{StaticResource TxtBase}" Margin="0,0,0,12"/>
 
             <!-- Institución -->
-            <TextBlock Grid.Row="0" Grid.Column="2" Text="Institución *"
+            <TextBlock x:Name="lblInstitucionLabel" Grid.Row="0" Grid.Column="2" Text="Institución *"
                        FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
             <ComboBox Grid.Row="1" Grid.Column="2" x:Name="cmbInstitucion"
                       Height="34" Style="{StaticResource CmbBase}" Margin="0,0,0,12"/>

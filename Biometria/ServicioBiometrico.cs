@@ -100,6 +100,13 @@ namespace CSMBiometricoWPF.Biometria
         /// </summary>
         public int? IdInstitucionFiltro { get; set; }
 
+        /// <summary>
+        /// Filtra las comparaciones biométricas a solo la sede indicada.
+        /// Se aplica después del filtro de institución.
+        /// null = sin filtro de sede.
+        /// </summary>
+        public int? IdSedeFiltro { get; set; }
+
         // ── Modo operación ──────────────────────────────────
         public enum ModoCaptura { Enrolamiento, Identificacion, Prueba }
         private ModoCaptura _modo = ModoCaptura.Identificacion;
@@ -176,14 +183,34 @@ namespace CSMBiometricoWPF.Biometria
 
             // Reintentar Open() hasta 5 veces con pausa entre intentos.
             // El SDK puede tardar en liberar el handle USB de una sesión anterior.
+            // IMPORTANTE: Open() puede lanzar SDKException (DP_FAILURE) cuando el
+            // Reader en _lectoresCol[0] ya no corresponde al dispositivo físico
+            // reconectado — capturar la excepción y tratar como fallo recuperable.
             Constants.ResultCode res = Constants.ResultCode.DP_DEVICE_BUSY;
             const int MAX_INTENTOS_OPEN = 5;
             for (int i = 1; i <= MAX_INTENTOS_OPEN; i++)
             {
-                res = _lector.Open(Constants.CapturePriority.DP_PRIORITY_EXCLUSIVE);
-                if (res == Constants.ResultCode.DP_SUCCESS) break;
-                res = _lector.Open(Constants.CapturePriority.DP_PRIORITY_COOPERATIVE);
-                if (res == Constants.ResultCode.DP_SUCCESS) break;
+                try
+                {
+                    res = _lector.Open(Constants.CapturePriority.DP_PRIORITY_EXCLUSIVE);
+                    if (res == Constants.ResultCode.DP_SUCCESS) break;
+                    res = _lector.Open(Constants.CapturePriority.DP_PRIORITY_COOPERATIVE);
+                    if (res == Constants.ResultCode.DP_SUCCESS) break;
+                }
+                catch (Exception ex)
+                {
+                    // SDK lanzó excepción (ej. DP_FAILURE) en lugar de devolver ResultCode.
+                    // El handle del Reader ya no es válido — marcar como fallo y reintentar.
+                    EmitirMensaje($"Error abriendo lector: {ex.Message.Split('\n')[0]}");
+                    res = Constants.ResultCode.DP_DEVICE_BUSY;
+                    // En el último intento, limpiar _lectoresCol para que el siguiente
+                    // ciclo de reconexión llame GetReaders() con el dispositivo ya estable.
+                    if (i == MAX_INTENTOS_OPEN)
+                    {
+                        _lectoresCol = null;
+                        _lector = null;
+                    }
+                }
                 if (i < MAX_INTENTOS_OPEN)
                 {
                     EmitirMensaje($"Esperando que el sensor se libere... ({i}/{MAX_INTENTOS_OPEN})");
@@ -255,7 +282,7 @@ namespace CSMBiometricoWPF.Biometria
 
             // Esperar a que el sistema operativo y el servicio DPHostSvc terminen de
             // inicializar el dispositivo USB antes de intentar abrirlo
-            Thread.Sleep(2000);
+            Thread.Sleep(1500);
 
             bool ok = Inicializar();
             if (ok)
@@ -479,7 +506,7 @@ namespace CSMBiometricoWPF.Biometria
                         var captureResult = _lector.Capture(
                             Constants.Formats.Fid.ANSI,
                             Constants.CaptureProcessing.DP_IMG_PROC_DEFAULT,
-                            3000,  // timeout: 3 s — permite salir del bloqueo si el lector se desconecta
+                            1500,  // timeout: 1.5 s — detecta desconexión más rápido que 3 s
                             500);  // resolución: 500 dpi (U.are.U 5300)
                         if (!_capturando) break;
                         _erroresConsecutivos = 0;
@@ -587,8 +614,15 @@ namespace CSMBiometricoWPF.Biometria
             // por lo que no se cargan ni almacenan huellas de otras instituciones.
             var huellasAComparar = CacheHuellas.ObtenerCache(IdInstitucionFiltro);
 
+            // Filtro adicional por sede (kiosk por sede)
+            if (IdSedeFiltro.HasValue)
+                huellasAComparar = huellasAComparar
+                    .Where(h => h.IdSede == IdSedeFiltro.Value)
+                    .ToList();
+
             EmitirMensaje($"Identificando... ({huellasAComparar.Count} huellas" +
-                          (IdInstitucionFiltro.HasValue ? $" · institución {IdInstitucionFiltro}" : "") + ")");
+                          (IdInstitucionFiltro.HasValue ? $" · institución {IdInstitucionFiltro}" : "") +
+                          (IdSedeFiltro.HasValue ? $" · sede {IdSedeFiltro}" : "") + ")");
 
             Identificado mejor = null;
             float mejorPuntaje = float.MaxValue;

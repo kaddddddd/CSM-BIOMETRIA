@@ -28,7 +28,6 @@ namespace CSMBiometricoWPF.Views
             ("📊", "Estadística",        new[] { "📊|Dashboard|DASHBOARD" }),
             ("📋", "Registro y Control", new[] { "👨‍🎓|Estudiantes|ESTUDIANTES", "🖐|Enrolamiento|ENROLAMIENTO", "✅|Verificación|VERIFICACION", "📅|Consultar Asistencia|CONSULTA" }),
             ("⚙",  "Configuración",     new[] { "🏛|Instituciones|INSTITUCIONES", "🏫|Sedes|SEDES", "📚|Grados|GRADOS", "👥|Grupos|GRUPOS", "🕐|Horarios|HORARIOS" }),
-            ("📈", "Reportes",           new[] { "📈|Asistencia|REPORTES" }),
             ("🔒", "Seguridad",          new[] { "👤|Usuarios|USUARIOS", "📋|Logs|LOGS" }),
             ("🔧", "Utilidades",         new[] { "🔧|Probar Lector|LECTOR" }),
         };
@@ -204,7 +203,6 @@ namespace CSMBiometricoWPF.Views
                 "ENROLAMIENTO"  => new EnrolamientoPage(),
                 "CONSULTA"      => new ConsultaAsistenciaPage(),
                 "VERIFICACION"  => new VerificacionPage(),
-                "REPORTES"      => new ReportesPage(),
                 "USUARIOS"      => new UsuariosPage(),
                 "LOGS"          => new LogsPage(),
                 "LECTOR"        => new PruebaLectorPage(),

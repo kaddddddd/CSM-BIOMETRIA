@@ -49,15 +49,26 @@ namespace CSMBiometricoWPF.Views.Dialogs
             _cargandoCombos = true;
 
             // Institución
-            cmbInstitucion.Items.Clear();
-            try
-            {
-                foreach (var i in _instRepo.ObtenerTodas(soloActivas: true))
-                    cmbInstitucion.Items.Add(i);
-            }
-            catch { }
             cmbInstitucion.DisplayMemberPath = "Nombre";
             cmbInstitucion.SelectedValuePath = "IdInstitucion";
+            cmbInstitucion.Items.Clear();
+            if (!SesionActiva.EsSuperAdmin && SesionActiva.InstitucionActual != null)
+            {
+                // El usuario está vinculado a una institución: preseleccionarla y ocultar el selector
+                cmbInstitucion.Items.Add(SesionActiva.InstitucionActual);
+                cmbInstitucion.SelectedIndex = 0;
+                cmbInstitucion.Visibility = System.Windows.Visibility.Collapsed;
+                lblInstitucionLabel.Visibility = System.Windows.Visibility.Collapsed;
+            }
+            else
+            {
+                try
+                {
+                    foreach (var i in _instRepo.ObtenerTodas(soloActivas: true))
+                        cmbInstitucion.Items.Add(i);
+                }
+                catch { }
+            }
 
             // Grado
             cmbGrado.Items.Clear();
@@ -99,6 +110,11 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 cmbGrado.SelectedValue = _est.IdGrado;
                 cmbGrupo.SelectedValue = _est.IdGrupo;
                 cmbEstado.SelectedItem = _est.Estado;
+            }
+            else if (!SesionActiva.EsSuperAdmin && SesionActiva.InstitucionActual != null)
+            {
+                // Institución preseleccionada (usuario no-SuperAdmin) y estudiante nuevo: cargar sedes
+                CargarSedes(SesionActiva.InstitucionActual.IdInstitucion);
             }
         }
 

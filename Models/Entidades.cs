@@ -165,6 +165,65 @@ namespace CSMBiometricoWPF.Models
         public TimeSpan HoraCierreIngreso { get; set; }
         public bool Activo { get; set; } = true;
         public string NombreSede { get; set; }
+        public int? IdGrado { get; set; }
+        public string NombreGrado { get; set; }
+    }
+
+    // ─────────────────────────────────────────
+    // FRANJA DE HORARIO (ventana adicional por día)
+    // ─────────────────────────────────────────
+    public class FranjaHorario
+    {
+        public int IdFranja { get; set; }
+        public int IdHorario { get; set; }
+        public string Nombre { get; set; } = "Franja";
+        public TimeSpan HoraInicio { get; set; }
+        public TimeSpan HoraLimiteTarde { get; set; }
+        public TimeSpan HoraCierreIngreso { get; set; }
+        public int Orden { get; set; }
+        public bool Activo { get; set; } = true;
+        public string ResumenStr =>
+            $"{Nombre}: {HoraInicio:hh\\:mm} → {HoraLimiteTarde:hh\\:mm} → {HoraCierreIngreso:hh\\:mm}";
+    }
+
+    // ─────────────────────────────────────────
+    // EXCEPCIÓN DE HORARIO (override por fecha)
+    // ─────────────────────────────────────────
+    public class HorarioExcepcion
+    {
+        public int IdExcepcion { get; set; }
+        public int IdSede { get; set; }
+        public DateTime FechaExcepcion { get; set; }
+        public string Descripcion { get; set; }
+        public bool Activo { get; set; } = true;
+        public List<FranjaExcepcion> Franjas { get; set; } = new();
+        public string NombreSede { get; set; }
+        public string Alcance { get; set; } = "SEDE";   // SEDE | GRADO | INSTITUCION
+        public int? IdGrado { get; set; }
+        public int? IdInstitucion { get; set; }
+        public string NombreGrado { get; set; }
+        public string FechaStr => FechaExcepcion.ToString("dd/MM/yyyy");
+        public string FranjasCount => Franjas.Count == 1 ? "1 franja" : $"{Franjas.Count} franjas";
+        public string AlcanceLabel => Alcance switch
+        {
+            "INSTITUCION" => "Todas las sedes",
+            "GRADO"       => $"Grado: {NombreGrado}",
+            _             => "Esta sede"
+        };
+        public override string ToString() => $"{FechaStr} — {Descripcion}";
+    }
+
+    public class FranjaExcepcion
+    {
+        public int IdFranjaExc { get; set; }
+        public int IdExcepcion { get; set; }
+        public string Nombre { get; set; } = "Franja";
+        public TimeSpan HoraInicio { get; set; }
+        public TimeSpan HoraLimiteTarde { get; set; }
+        public TimeSpan HoraCierreIngreso { get; set; }
+        public int Orden { get; set; }
+        public string ResumenStr =>
+            $"{Nombre}: {HoraInicio:hh\\:mm} → {HoraLimiteTarde:hh\\:mm} → {HoraCierreIngreso:hh\\:mm}";
     }
 
     // ─────────────────────────────────────────
@@ -183,6 +242,7 @@ namespace CSMBiometricoWPF.Models
         public float PuntajeBiometrico { get; set; }
         public bool Sincronizado { get; set; } = true;
         public string Observaciones { get; set; }
+        public bool   EsJustificado => !string.IsNullOrWhiteSpace(Observaciones);
         // Navegación
         public string NombreEstudiante { get; set; }
         public string Identificacion { get; set; }

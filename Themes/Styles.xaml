@@ -45,12 +45,12 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="4">
                         <Grid>
-                            <!-- Overlay semitransparente para hover/pressed -->
+                            <!-- Overlay cubre el botón completo incluyendo padding -->
                             <Border x:Name="overlay" CornerRadius="4" Background="Transparent"/>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -87,13 +87,14 @@
 
     <!-- ── TextBox estilizado ───────────────────────────────── -->
     <Style x:Key="TxtBase" TargetType="TextBox">
-        <Setter Property="FontFamily"      Value="Segoe UI"/>
-        <Setter Property="FontSize"        Value="13"/>
-        <Setter Property="Padding"         Value="8,6"/>
-        <Setter Property="BorderBrush"     Value="#BDBDBD"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background"      Value="White"/>
-        <Setter Property="Foreground"      Value="{StaticResource BrushTexto}"/>
+        <Setter Property="FontFamily"           Value="Segoe UI"/>
+        <Setter Property="FontSize"             Value="13"/>
+        <Setter Property="Padding"              Value="8,0"/>
+        <Setter Property="BorderBrush"          Value="#BDBDBD"/>
+        <Setter Property="BorderThickness"      Value="1"/>
+        <Setter Property="Background"           Value="White"/>
+        <Setter Property="Foreground"           Value="{StaticResource BrushTexto}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -101,8 +102,10 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                            CornerRadius="3"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
@@ -117,13 +120,14 @@
 
     <!-- ── PasswordBox estilizado ───────────────────────────── -->
     <Style x:Key="PwdBase" TargetType="PasswordBox">
-        <Setter Property="FontFamily"      Value="Segoe UI"/>
-        <Setter Property="FontSize"        Value="13"/>
-        <Setter Property="Padding"         Value="8,6"/>
-        <Setter Property="BorderBrush"     Value="#BDBDBD"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background"      Value="White"/>
-        <Setter Property="Foreground"      Value="{StaticResource BrushTexto}"/>
+        <Setter Property="FontFamily"           Value="Segoe UI"/>
+        <Setter Property="FontSize"             Value="13"/>
+        <Setter Property="Padding"              Value="8,0"/>
+        <Setter Property="BorderBrush"          Value="#BDBDBD"/>
+        <Setter Property="BorderThickness"      Value="1"/>
+        <Setter Property="Background"           Value="White"/>
+        <Setter Property="Foreground"           Value="{StaticResource BrushTexto}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="PasswordBox">
@@ -131,8 +135,10 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                            CornerRadius="3"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
@@ -147,14 +153,15 @@
 
     <!-- ── ComboBox estilizado ──────────────────────────────── -->
     <Style x:Key="CmbBase" TargetType="ComboBox">
-        <Setter Property="FontFamily"      Value="Segoe UI"/>
-        <Setter Property="FontSize"        Value="13"/>
-        <Setter Property="Padding"         Value="8,6"/>
-        <Setter Property="BorderBrush"     Value="#BDBDBD"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background"      Value="White"/>
-        <Setter Property="Foreground"      Value="{StaticResource BrushTexto}"/>
-        <Setter Property="Height"          Value="34"/>
+        <Setter Property="FontFamily"             Value="Segoe UI"/>
+        <Setter Property="FontSize"               Value="13"/>
+        <Setter Property="Padding"                Value="8,5"/>
+        <Setter Property="BorderBrush"            Value="#BDBDBD"/>
+        <Setter Property="BorderThickness"        Value="1"/>
+        <Setter Property="Background"             Value="White"/>
+        <Setter Property="Foreground"             Value="{StaticResource BrushTexto}"/>
+        <Setter Property="Height"                 Value="34"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 
     <!-- ── DataGrid estilizado ──────────────────────────────── -->
@@ -174,7 +181,7 @@
         <Setter Property="FontFamily"           Value="Segoe UI"/>
         <Setter Property="FontSize"             Value="13"/>
         <Setter Property="RowHeight"            Value="40"/>
-        <Setter Property="ColumnHeaderHeight"   Value="40"/>
+        <Setter Property="ColumnHeaderHeight"   Value="38"/>
         <Setter Property="RowStyle">
             <Setter.Value>
                 <Style TargetType="DataGridRow">
@@ -240,6 +247,11 @@
         <Setter Property="Background"  Value="{StaticResource BrushVerdePrimario}"/>
         <Setter Property="Padding"     Value="20,0"/>
         <Setter Property="Height"      Value="60"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="8" ShadowDepth="3" Opacity="0.18" Direction="270"/>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ── Texto de título en header ─────────────────────────── -->
@@ -253,10 +265,10 @@
     <!-- ── Texto de subtítulo en header ──────────────────────── -->
     <Style x:Key="LblSubtituloHeader" TargetType="TextBlock">
         <Setter Property="FontFamily"  Value="Segoe UI"/>
-        <Setter Property="FontSize"    Value="11"/>
+        <Setter Property="FontSize"    Value="12"/>
         <Setter Property="Foreground"  Value="#B0E8DE"/>
-        <Setter Property="VerticalAlignment" Value="Bottom"/>
-        <Setter Property="Margin"      Value="0,0,0,8"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Opacity"     Value="0.85"/>
     </Style>
 
     <!-- ── Label de campo de formulario ──────────────────────── -->
@@ -357,13 +369,13 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            Padding="{TemplateBinding Padding}"
                             BorderThickness="3,0,0,0"
                             BorderBrush="Transparent">
                         <Grid>
                             <Border x:Name="overlay" Background="Transparent"/>
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center"/>
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -393,11 +405,12 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                    <Border x:Name="border" Background="{TemplateBinding Background}">
                         <Grid>
                             <Border x:Name="overlay" Background="Transparent"/>
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center"/>
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>

@@ -40,7 +40,7 @@
             <ComboBox x:Name="cmbRol" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
 
             <!-- Institución -->
-            <TextBlock Text="Institución" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
+            <TextBlock x:Name="lblInstitucionLabel" Text="Institución" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
             <ComboBox x:Name="cmbInstitucion" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
 
             <!-- Contraseña -->

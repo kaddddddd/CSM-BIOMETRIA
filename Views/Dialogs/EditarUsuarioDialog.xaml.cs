@@ -56,15 +56,25 @@ namespace CSMBiometricoWPF.Views.Dialogs
 
             // Instituciones
             cmbInstitucion.Items.Clear();
-            cmbInstitucion.Items.Add(new Institucion { IdInstitucion = 0, Nombre = "— Ninguna —" });
-            try
-            {
-                foreach (var inst in new InstitucionRepository().ObtenerTodas(soloActivas: true))
-                    cmbInstitucion.Items.Add(inst);
-            }
-            catch { }
             cmbInstitucion.DisplayMemberPath = "Nombre";
-            cmbInstitucion.SelectedIndex = 0;
+            if (!SesionActiva.EsSuperAdmin && SesionActiva.InstitucionActual != null)
+            {
+                cmbInstitucion.Items.Add(SesionActiva.InstitucionActual);
+                cmbInstitucion.SelectedIndex = 0;
+                cmbInstitucion.Visibility = System.Windows.Visibility.Collapsed;
+                lblInstitucionLabel.Visibility = System.Windows.Visibility.Collapsed;
+            }
+            else
+            {
+                cmbInstitucion.Items.Add(new Institucion { IdInstitucion = 0, Nombre = "— Ninguna —" });
+                try
+                {
+                    foreach (var inst in new InstitucionRepository().ObtenerTodas(soloActivas: true))
+                        cmbInstitucion.Items.Add(inst);
+                }
+                catch { }
+                cmbInstitucion.SelectedIndex = 0;
+            }
 
             if (cmbRol.Items.Count > 0) cmbRol.SelectedIndex = 0;
         }

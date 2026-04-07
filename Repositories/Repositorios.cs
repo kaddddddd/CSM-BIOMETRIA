@@ -818,15 +818,20 @@ namespace CSMBiometricoWPF.Repositories
     {
         public bool Guardar(RegistroIngreso r)
         {
+            // Usamos hora local explícita para evitar desfase UTC vs. hora local del servidor.
+            string fechaLocal = DateTime.Now.ToString("yyyy-MM-dd");
+            string horaLocal  = DateTime.Now.ToString("HH:mm:ss");
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                string sql = @"INSERT INTO registros_ingreso 
+                string sql = @"INSERT INTO registros_ingreso
                     (id_estudiante, id_sede, fecha_ingreso, hora_ingreso, estado_ingreso, puntaje_biometrico)
-                    VALUES (@est,@sede,date('now'),time('now'),@estado,@puntaje)";
+                    VALUES (@est,@sede,@fecha,@hora,@estado,@puntaje)";
                 using (var cmd = new SqliteCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@est", r.IdEstudiante);
-                    cmd.Parameters.AddWithValue("@sede", r.IdSede);
+                    cmd.Parameters.AddWithValue("@est",    r.IdEstudiante);
+                    cmd.Parameters.AddWithValue("@sede",   r.IdSede);
+                    cmd.Parameters.AddWithValue("@fecha",  fechaLocal);
+                    cmd.Parameters.AddWithValue("@hora",   horaLocal);
                     cmd.Parameters.AddWithValue("@estado", r.EstadoIngreso.ToString());
                     cmd.Parameters.AddWithValue("@puntaje", r.PuntajeBiometrico);
                     return cmd.ExecuteNonQuery() > 0;
@@ -836,11 +841,13 @@ namespace CSMBiometricoWPF.Repositories
 
         public bool YaRegistroHoy(int idEstudiante)
         {
+            string hoy = DateTime.Today.ToString("yyyy-MM-dd");
             using (var conn = ConexionDB.ObtenerConexion())
             using (var cmd = new SqliteCommand(
-                "SELECT COUNT(*) FROM registros_ingreso WHERE id_estudiante=@id AND fecha_ingreso=date('now')", conn))
+                "SELECT COUNT(*) FROM registros_ingreso WHERE id_estudiante=@id AND fecha_ingreso=@hoy", conn))
             {
-                cmd.Parameters.AddWithValue("@id", idEstudiante);
+                cmd.Parameters.AddWithValue("@id",  idEstudiante);
+                cmd.Parameters.AddWithValue("@hoy", hoy);
                 return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
             }
         }
@@ -862,7 +869,7 @@ namespace CSMBiometricoWPF.Repositories
                 sql += " ORDER BY v.hora_ingreso DESC";
                 using (var cmd = new SqliteCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@fecha", fecha.Date);
+                    cmd.Parameters.AddWithValue("@fecha", fecha.Date.ToString("yyyy-MM-dd"));
                     if (idSede.HasValue)       cmd.Parameters.AddWithValue("@sede", idSede.Value);
                     if (idInstitucion.HasValue) cmd.Parameters.AddWithValue("@inst", idInstitucion.Value);
                     using (var dr = cmd.ExecuteReader())
@@ -872,7 +879,7 @@ namespace CSMBiometricoWPF.Repositories
                                 IdRegistro = Convert.ToInt32(dr["id_registro"]),
                                 IdEstudiante = Convert.ToInt32(dr["id_estudiante"]),
                                 FechaIngreso = Convert.ToDateTime(dr["fecha_ingreso"]),
-                                HoraIngreso = (TimeSpan)dr["hora_ingreso"],
+                                HoraIngreso = TimeSpan.Parse(dr["hora_ingreso"].ToString()),
                                 EstadoIngreso = (EstadoIngreso)Enum.Parse(typeof(EstadoIngreso), dr["estado_ingreso"].ToString()),
                                 NombreEstudiante = dr["nombre_completo"].ToString(),
                                 Identificacion = dr["identificacion"].ToString(),
@@ -891,18 +898,18 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = @"
-                    SELECT v.*, ri.id_estudiante
+                    SELECT v.*, ri.id_estudiante, ri.observaciones
                     FROM v_registros_ingreso_detalle v
                     INNER JOIN registros_ingreso ri ON v.id_registro = ri.id_registro
                     INNER JOIN sedes s ON ri.id_sede = s.id_sede
-                    WHERE v.fecha_ingreso BETWEEN @desde AND @hasta";
+                    WHERE DATE(v.fecha_ingreso) BETWEEN @desde AND @hasta";
                 if (idSede.HasValue)       sql += " AND ri.id_sede = @sede";
                 if (idInstitucion.HasValue) sql += " AND s.id_institucion = @inst";
                 sql += " ORDER BY v.fecha_ingreso DESC, v.hora_ingreso DESC";
                 using (var cmd = new SqliteCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@desde", desde.Date);
-                    cmd.Parameters.AddWithValue("@hasta", hasta.Date);
+                    cmd.Parameters.AddWithValue("@desde", desde.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@hasta", hasta.Date.ToString("yyyy-MM-dd"));
                     if (idSede.HasValue)       cmd.Parameters.AddWithValue("@sede", idSede.Value);
                     if (idInstitucion.HasValue) cmd.Parameters.AddWithValue("@inst", idInstitucion.Value);
                     using (var dr = cmd.ExecuteReader())
@@ -912,17 +919,29 @@ namespace CSMBiometricoWPF.Repositories
                                 IdRegistro       = Convert.ToInt32(dr["id_registro"]),
                                 IdEstudiante     = Convert.ToInt32(dr["id_estudiante"]),
                                 FechaIngreso     = Convert.ToDateTime(dr["fecha_ingreso"]),
-                                HoraIngreso      = (TimeSpan)dr["hora_ingreso"],
+                                HoraIngreso      = TimeSpan.Parse(dr["hora_ingreso"].ToString()),
                                 EstadoIngreso    = (EstadoIngreso)Enum.Parse(typeof(EstadoIngreso), dr["estado_ingreso"].ToString()),
                                 NombreEstudiante = dr["nombre_completo"].ToString(),
                                 Identificacion   = dr["identificacion"].ToString(),
                                 NombreSede       = dr["nombre_sede"].ToString(),
                                 NombreGrado      = dr["nombre_grado"].ToString(),
-                                NombreGrupo      = dr["nombre_grupo"].ToString()
+                                NombreGrupo      = dr["nombre_grupo"].ToString(),
+                                Observaciones    = dr["observaciones"] as string
                             });
                 }
             }
             return lista;
+        }
+
+        public void ActualizarObservaciones(int idRegistro, string observaciones)
+        {
+            using var conn = ConexionDB.ObtenerConexion();
+            using var cmd  = new SqliteCommand(
+                "UPDATE registros_ingreso SET observaciones = @obs WHERE id_registro = @id", conn);
+            cmd.Parameters.AddWithValue("@obs", string.IsNullOrWhiteSpace(observaciones)
+                ? DBNull.Value : (object)observaciones.Trim());
+            cmd.Parameters.AddWithValue("@id", idRegistro);
+            cmd.ExecuteNonQuery();
         }
 
         public List<RegistroIngreso> ObtenerPorEstudianteYRango(int idEstudiante, DateTime desde, DateTime hasta)
@@ -930,16 +949,16 @@ namespace CSMBiometricoWPF.Repositories
             var lista = new List<RegistroIngreso>();
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                string sql = @"SELECT v.*, ri.id_estudiante
+                string sql = @"SELECT v.*, ri.id_estudiante, ri.observaciones
                                FROM v_registros_ingreso_detalle v
                                INNER JOIN registros_ingreso ri ON v.id_registro = ri.id_registro
-                               WHERE v.fecha_ingreso BETWEEN @desde AND @hasta
+                               WHERE DATE(v.fecha_ingreso) BETWEEN @desde AND @hasta
                                  AND ri.id_estudiante = @est
                                ORDER BY v.fecha_ingreso ASC, v.hora_ingreso ASC";
                 using (var cmd = new SqliteCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@desde", desde.Date);
-                    cmd.Parameters.AddWithValue("@hasta", hasta.Date);
+                    cmd.Parameters.AddWithValue("@desde", desde.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@hasta", hasta.Date.ToString("yyyy-MM-dd"));
                     cmd.Parameters.AddWithValue("@est", idEstudiante);
                     using (var dr = cmd.ExecuteReader())
                         while (dr.Read())
@@ -948,13 +967,14 @@ namespace CSMBiometricoWPF.Repositories
                                 IdRegistro   = Convert.ToInt32(dr["id_registro"]),
                                 IdEstudiante = Convert.ToInt32(dr["id_estudiante"]),
                                 FechaIngreso = Convert.ToDateTime(dr["fecha_ingreso"]),
-                                HoraIngreso  = (TimeSpan)dr["hora_ingreso"],
+                                HoraIngreso  = TimeSpan.Parse(dr["hora_ingreso"].ToString()),
                                 EstadoIngreso = (EstadoIngreso)Enum.Parse(typeof(EstadoIngreso), dr["estado_ingreso"].ToString()),
                                 NombreEstudiante = dr["nombre_completo"].ToString(),
                                 Identificacion   = dr["identificacion"].ToString(),
-                                NombreSede  = dr["nombre_sede"].ToString(),
-                                NombreGrado = dr["nombre_grado"].ToString(),
-                                NombreGrupo = dr["nombre_grupo"].ToString()
+                                NombreSede    = dr["nombre_sede"].ToString(),
+                                NombreGrado   = dr["nombre_grado"].ToString(),
+                                NombreGrupo   = dr["nombre_grupo"].ToString(),
+                                Observaciones = dr["observaciones"] as string
                             });
                 }
             }
@@ -993,60 +1013,74 @@ namespace CSMBiometricoWPF.Repositories
     // ═══════════════════════════════════════════════════
     public class HorarioRepository
     {
-        public List<Horario> ObtenerPorSede(int idSede)
+        /// <summary>
+        /// Devuelve los horarios de una sede. Si idGrado es null retorna los de
+        /// alcance "todos los grados" (id_grado IS NULL); si se indica un grado
+        /// devuelve los específicos de ese grado.
+        /// </summary>
+        public List<Horario> ObtenerPorSede(int idSede, int? idGrado = null)
         {
             var lista = new List<Horario>();
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                string sql = "SELECT h.*, s.nombre_sede FROM horarios h INNER JOIN sedes s ON h.id_sede=s.id_sede WHERE h.id_sede=@id AND h.activo=1";
+                string filtroGrado = idGrado.HasValue
+                    ? "AND h.id_grado=@grado"
+                    : "AND h.id_grado IS NULL";
+                string sql = $@"SELECT h.*, s.nombre_sede,
+                                       COALESCE(g.nombre_grado,'') AS nombre_grado
+                               FROM horarios h
+                               INNER JOIN sedes s ON h.id_sede=s.id_sede
+                               LEFT  JOIN grados g ON h.id_grado=g.id_grado
+                               WHERE h.id_sede=@id AND h.activo=1 {filtroGrado}";
                 using (var cmd = new SqliteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idSede);
+                    if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
                     using (var dr = cmd.ExecuteReader())
                         while (dr.Read())
-                            lista.Add(new Horario
-                            {
-                                IdHorario = Convert.ToInt32(dr["id_horario"]),
-                                IdSede = Convert.ToInt32(dr["id_sede"]),
-                                DiaSemana = (DiaSemana)Enum.Parse(typeof(DiaSemana), dr["dia_semana"].ToString()),
-                                HoraInicio = (TimeSpan)dr["hora_inicio"],
-                                HoraLimiteTarde = (TimeSpan)dr["hora_limite_tarde"],
-                                HoraCierreIngreso = (TimeSpan)dr["hora_cierre_ingreso"],
-                                Activo = Convert.ToBoolean(dr["activo"]),
-                                NombreSede = dr["nombre_sede"].ToString()
-                            });
+                            lista.Add(MapearHorario(dr));
                 }
             }
             return lista;
         }
 
-        public Horario ObtenerHoy(int idSede)
+        /// <summary>
+        /// Devuelve el horario vigente hoy para una sede y, opcionalmente, un grado.
+        /// Prioridad: grado específico > sede genérico (id_grado IS NULL).
+        /// </summary>
+        public Horario ObtenerHoy(int idSede, int? idGrado = null)
         {
             string diaActual = DateTime.Now.DayOfWeek.ToString().ToUpper();
-            // Mapear inglés a español para el enum
             var mapa = new Dictionary<string, string>
             {
                 {"MONDAY","LUNES"},{"TUESDAY","MARTES"},{"WEDNESDAY","MIERCOLES"},
                 {"THURSDAY","JUEVES"},{"FRIDAY","VIERNES"},{"SATURDAY","SABADO"},{"SUNDAY","DOMINGO"}
             };
             string diaEsp = mapa.ContainsKey(diaActual) ? mapa[diaActual] : diaActual;
+
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                string sql = "SELECT * FROM horarios WHERE id_sede=@sede AND dia_semana=@dia AND activo=1 LIMIT 1";
-                using (var cmd = new SqliteCommand(sql, conn))
+                // 1. Horario grado-específico
+                if (idGrado.HasValue)
+                {
+                    string sql1 = "SELECT * FROM horarios WHERE id_sede=@sede AND id_grado=@grado AND dia_semana=@dia AND activo=1 LIMIT 1";
+                    using (var cmd = new SqliteCommand(sql1, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@sede", idSede);
+                        cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+                        cmd.Parameters.AddWithValue("@dia", diaEsp);
+                        using (var dr = cmd.ExecuteReader())
+                            if (dr.Read()) return MapearHorario(dr);
+                    }
+                }
+                // 2. Horario sede genérico
+                string sql2 = "SELECT * FROM horarios WHERE id_sede=@sede AND id_grado IS NULL AND dia_semana=@dia AND activo=1 LIMIT 1";
+                using (var cmd = new SqliteCommand(sql2, conn))
                 {
                     cmd.Parameters.AddWithValue("@sede", idSede);
                     cmd.Parameters.AddWithValue("@dia", diaEsp);
                     using (var dr = cmd.ExecuteReader())
-                        if (dr.Read())
-                            return new Horario
-                            {
-                                IdHorario = Convert.ToInt32(dr["id_horario"]),
-                                IdSede = Convert.ToInt32(dr["id_sede"]),
-                                HoraInicio = (TimeSpan)dr["hora_inicio"],
-                                HoraLimiteTarde = (TimeSpan)dr["hora_limite_tarde"],
-                                HoraCierreIngreso = (TimeSpan)dr["hora_cierre_ingreso"]
-                            };
+                        if (dr.Read()) return MapearHorario(dr);
                 }
             }
             return null;
@@ -1056,19 +1090,428 @@ namespace CSMBiometricoWPF.Repositories
         {
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                string sql = @"INSERT INTO horarios (id_sede, dia_semana, hora_inicio, hora_limite_tarde, hora_cierre_ingreso, activo)
-                    VALUES (@sede,@dia,@hi,@hlt,@hci,1)
-                    ON DUPLICATE KEY UPDATE hora_inicio=@hi, hora_limite_tarde=@hlt, hora_cierre_ingreso=@hci, activo=1";
+                // Verificar si ya existe
+                string chkSql = h.IdGrado.HasValue
+                    ? "SELECT id_horario FROM horarios WHERE id_sede=@sede AND id_grado=@grado AND dia_semana=@dia LIMIT 1"
+                    : "SELECT id_horario FROM horarios WHERE id_sede=@sede AND id_grado IS NULL AND dia_semana=@dia LIMIT 1";
+                int existeId = 0;
+                using (var chk = new SqliteCommand(chkSql, conn))
+                {
+                    chk.Parameters.AddWithValue("@sede", h.IdSede);
+                    chk.Parameters.AddWithValue("@dia", h.DiaSemana.ToString());
+                    if (h.IdGrado.HasValue) chk.Parameters.AddWithValue("@grado", h.IdGrado.Value);
+                    var res = chk.ExecuteScalar();
+                    if (res != null) existeId = Convert.ToInt32(res);
+                }
+
+                string sql = existeId > 0
+                    ? "UPDATE horarios SET hora_inicio=@hi, hora_limite_tarde=@hlt, hora_cierre_ingreso=@hci, activo=1 WHERE id_horario=@id"
+                    : "INSERT INTO horarios (id_sede, id_grado, dia_semana, hora_inicio, hora_limite_tarde, hora_cierre_ingreso, activo) VALUES (@sede,@grado,@dia,@hi,@hlt,@hci,1)";
+
                 using (var cmd = new SqliteCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@sede", h.IdSede);
-                    cmd.Parameters.AddWithValue("@dia", h.DiaSemana.ToString());
-                    cmd.Parameters.AddWithValue("@hi", h.HoraInicio);
-                    cmd.Parameters.AddWithValue("@hlt", h.HoraLimiteTarde);
-                    cmd.Parameters.AddWithValue("@hci", h.HoraCierreIngreso);
+                    cmd.Parameters.AddWithValue("@hi",  h.HoraInicio.ToString(@"hh\:mm"));
+                    cmd.Parameters.AddWithValue("@hlt", h.HoraLimiteTarde.ToString(@"hh\:mm"));
+                    cmd.Parameters.AddWithValue("@hci", h.HoraCierreIngreso.ToString(@"hh\:mm"));
+                    if (existeId > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@id", existeId);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@sede",  h.IdSede);
+                        cmd.Parameters.AddWithValue("@grado", h.IdGrado.HasValue ? (object)h.IdGrado.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@dia",   h.DiaSemana.ToString());
+                    }
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
+        }
+
+        public int? ObtenerIdHorario(int idSede, string diaSemana, int? idGrado = null)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string filtro = idGrado.HasValue ? "AND id_grado=@grado" : "AND id_grado IS NULL";
+                string sql = $"SELECT id_horario FROM horarios WHERE id_sede=@sede AND dia_semana=@dia AND activo=1 {filtro} LIMIT 1";
+                using (var cmd = new SqliteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@sede", idSede);
+                    cmd.Parameters.AddWithValue("@dia", diaSemana);
+                    if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+                    var res = cmd.ExecuteScalar();
+                    return res == null ? null : (int?)Convert.ToInt32(res);
+                }
+            }
+        }
+
+        private static bool TieneColumna(SqliteDataReader dr, string nombre)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+                if (dr.GetName(i).Equals(nombre, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        private static Horario MapearHorario(SqliteDataReader dr) => new Horario
+        {
+            IdHorario         = Convert.ToInt32(dr["id_horario"]),
+            IdSede            = Convert.ToInt32(dr["id_sede"]),
+            IdGrado           = dr["id_grado"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_grado"]),
+            DiaSemana         = dr["dia_semana"] != DBNull.Value
+                                    ? (DiaSemana)Enum.Parse(typeof(DiaSemana), dr["dia_semana"].ToString())
+                                    : default,
+            HoraInicio        = TimeSpan.Parse(dr["hora_inicio"].ToString()),
+            HoraLimiteTarde   = TimeSpan.Parse(dr["hora_limite_tarde"].ToString()),
+            HoraCierreIngreso = TimeSpan.Parse(dr["hora_cierre_ingreso"].ToString()),
+            Activo            = Convert.ToInt32(dr["activo"]) == 1,
+            NombreSede        = TieneColumna(dr, "nombre_sede")  ? dr["nombre_sede"].ToString()  : "",
+            NombreGrado       = TieneColumna(dr, "nombre_grado") && dr["nombre_grado"] != DBNull.Value
+                                    ? dr["nombre_grado"].ToString() : null
+        };
+    }
+
+    // ═══════════════════════════════════════════════════
+    // REPOSITORIO DE FRANJAS DE HORARIO
+    // ═══════════════════════════════════════════════════
+    public class FranjaHorarioRepository
+    {
+        public List<FranjaHorario> ObtenerPorHorario(int idHorario)
+        {
+            var lista = new List<FranjaHorario>();
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string sql = "SELECT * FROM franjas_horario WHERE id_horario=@id AND activo=1 ORDER BY orden, id_franja";
+                using (var cmd = new SqliteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idHorario);
+                    using (var dr = cmd.ExecuteReader())
+                        while (dr.Read())
+                            lista.Add(MapearFranja(dr));
+                }
+            }
+            return lista;
+        }
+
+        public bool Guardar(FranjaHorario f)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string sql;
+                if (f.IdFranja == 0)
+                    sql = @"INSERT INTO franjas_horario (id_horario, nombre, hora_inicio, hora_limite_tarde, hora_cierre_ingreso, orden)
+                            VALUES (@idh, @nom, @hi, @hlt, @hci, @ord)";
+                else
+                    sql = @"UPDATE franjas_horario SET nombre=@nom, hora_inicio=@hi, hora_limite_tarde=@hlt,
+                            hora_cierre_ingreso=@hci, orden=@ord WHERE id_franja=@id";
+                using (var cmd = new SqliteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@idh", f.IdHorario);
+                    cmd.Parameters.AddWithValue("@nom", f.Nombre);
+                    cmd.Parameters.AddWithValue("@hi", f.HoraInicio);
+                    cmd.Parameters.AddWithValue("@hlt", f.HoraLimiteTarde);
+                    cmd.Parameters.AddWithValue("@hci", f.HoraCierreIngreso);
+                    cmd.Parameters.AddWithValue("@ord", f.Orden);
+                    if (f.IdFranja != 0) cmd.Parameters.AddWithValue("@id", f.IdFranja);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool Eliminar(int idFranja)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                using (var cmd = new SqliteCommand("DELETE FROM franjas_horario WHERE id_franja=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idFranja);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        private static FranjaHorario MapearFranja(SqliteDataReader dr) => new FranjaHorario
+        {
+            IdFranja          = Convert.ToInt32(dr["id_franja"]),
+            IdHorario         = Convert.ToInt32(dr["id_horario"]),
+            Nombre            = dr["nombre"].ToString(),
+            HoraInicio        = TimeSpan.Parse(dr["hora_inicio"].ToString()),
+            HoraLimiteTarde   = TimeSpan.Parse(dr["hora_limite_tarde"].ToString()),
+            HoraCierreIngreso = TimeSpan.Parse(dr["hora_cierre_ingreso"].ToString()),
+            Orden             = Convert.ToInt32(dr["orden"]),
+            Activo            = Convert.ToInt32(dr["activo"]) == 1
+        };
+    }
+
+    // ═══════════════════════════════════════════════════
+    // REPOSITORIO DE EXCEPCIONES DE HORARIO
+    // ═══════════════════════════════════════════════════
+    public class HorarioExcepcionRepository
+    {
+        /// <summary>
+        /// Devuelve todas las excepciones visibles para una sede:
+        /// - Excepciones propias de la sede
+        /// - Excepciones de la institución (todas las sedes)
+        /// - Excepciones de grado específico vinculadas a esa sede
+        /// </summary>
+        public List<HorarioExcepcion> ObtenerPorSede(int idSede, int? idInstitucion = null)
+        {
+            var lista = new List<HorarioExcepcion>();
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string sql = @"SELECT e.*,
+                                      COALESCE(s.nombre_sede,'(Todas las sedes)') AS nombre_sede,
+                                      COALESCE(g.nombre_grado,'') AS nombre_grado
+                               FROM horario_excepciones e
+                               LEFT JOIN sedes s ON e.id_sede=s.id_sede
+                               LEFT JOIN grados g ON e.id_grado=g.id_grado
+                               WHERE e.activo=1
+                                 AND (
+                                     e.id_sede=@sede
+                                     OR (e.id_sede IS NULL AND @instId IS NOT NULL AND e.id_institucion=@instId)
+                                 )
+                               ORDER BY e.fecha_excepcion DESC";
+                using (var cmd = new SqliteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@sede", idSede);
+                    cmd.Parameters.AddWithValue("@instId", idInstitucion.HasValue ? (object)idInstitucion.Value : DBNull.Value);
+                    using (var dr = cmd.ExecuteReader())
+                        while (dr.Read())
+                            lista.Add(MapearExcepcion(dr));
+                }
+                foreach (var exc in lista)
+                    exc.Franjas = ObtenerFranjas(conn, exc.IdExcepcion);
+            }
+            return lista;
+        }
+
+        /// <summary>
+        /// Devuelve la excepción más específica para hoy, en orden de prioridad:
+        /// sede+grado > sede > grado (todas las sedes de la institución) > institución completa
+        /// </summary>
+        public HorarioExcepcion ObtenerHoy(int idSede, int? idGrado = null, int? idInstitucion = null)
+        {
+            string hoy = DateTime.Today.ToString("yyyy-MM-dd");
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                // 1. sede + grado específico
+                if (idGrado.HasValue)
+                {
+                    var exc = BuscarExcepcion(conn, hoy, idSede, idGrado.Value, null);
+                    if (exc != null) return exc;
+                }
+                // 2. sede genérica
+                {
+                    var exc = BuscarExcepcion(conn, hoy, idSede, null, null);
+                    if (exc != null) return exc;
+                }
+                // 3. grado (todas las sedes) y 4. institución completa
+                if (idInstitucion.HasValue)
+                {
+                    if (idGrado.HasValue)
+                    {
+                        var exc = BuscarExcepcionInstitucion(conn, hoy, idInstitucion.Value, idGrado.Value);
+                        if (exc != null) return exc;
+                    }
+                    {
+                        var exc = BuscarExcepcionInstitucion(conn, hoy, idInstitucion.Value, null);
+                        if (exc != null) return exc;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private HorarioExcepcion BuscarExcepcion(SqliteConnection conn, string fecha, int idSede, int? idGrado, int? idInstitucion)
+        {
+            string filtroGrado = idGrado.HasValue ? "AND e.id_grado=@grado" : "AND e.id_grado IS NULL";
+            string sql = $@"SELECT e.*,
+                                   COALESCE(s.nombre_sede,'(Todas las sedes)') AS nombre_sede,
+                                   COALESCE(g.nombre_grado,'') AS nombre_grado
+                            FROM horario_excepciones e
+                            LEFT JOIN sedes s ON e.id_sede=s.id_sede
+                            LEFT JOIN grados g ON e.id_grado=g.id_grado
+                            WHERE e.id_sede=@sede AND e.fecha_excepcion=@fecha AND e.activo=1 {filtroGrado} LIMIT 1";
+            using (var cmd = new SqliteCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@sede",  idSede);
+                cmd.Parameters.AddWithValue("@fecha", fecha);
+                if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+                using (var dr = cmd.ExecuteReader())
+                {
+                    if (!dr.Read()) return null;
+                    var exc = MapearExcepcion(dr);
+                    exc.Franjas = ObtenerFranjas(conn, exc.IdExcepcion);
+                    return exc;
+                }
+            }
+        }
+
+        private HorarioExcepcion BuscarExcepcionInstitucion(SqliteConnection conn, string fecha, int idInstitucion, int? idGrado)
+        {
+            string filtroGrado = idGrado.HasValue ? "AND e.id_grado=@grado" : "AND e.id_grado IS NULL";
+            string sql = $@"SELECT e.*,
+                                   '(Todas las sedes)' AS nombre_sede,
+                                   COALESCE(g.nombre_grado,'') AS nombre_grado
+                            FROM horario_excepciones e
+                            LEFT JOIN grados g ON e.id_grado=g.id_grado
+                            WHERE e.id_sede IS NULL AND e.id_institucion=@inst
+                              AND e.fecha_excepcion=@fecha AND e.activo=1 {filtroGrado} LIMIT 1";
+            using (var cmd = new SqliteCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@inst",  idInstitucion);
+                cmd.Parameters.AddWithValue("@fecha", fecha);
+                if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+                using (var dr = cmd.ExecuteReader())
+                {
+                    if (!dr.Read()) return null;
+                    var exc = MapearExcepcion(dr);
+                    exc.Franjas = ObtenerFranjas(conn, exc.IdExcepcion);
+                    return exc;
+                }
+            }
+        }
+
+        public int Guardar(HorarioExcepcion e)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string fecha = e.FechaExcepcion.ToString("yyyy-MM-dd");
+                if (e.IdExcepcion == 0)
+                {
+                    string sql = @"INSERT INTO horario_excepciones
+                                   (id_sede, id_grado, id_institucion, alcance, fecha_excepcion, descripcion)
+                                   VALUES (@sede, @grado, @inst, @alcance, @fecha, @desc);
+                                   SELECT last_insert_rowid()";
+                    using (var cmd = new SqliteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@sede",    e.IdSede > 0 ? (object)e.IdSede : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@grado",   e.IdGrado.HasValue ? (object)e.IdGrado.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@inst",    e.IdInstitucion.HasValue ? (object)e.IdInstitucion.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@alcance", e.Alcance ?? "SEDE");
+                        cmd.Parameters.AddWithValue("@fecha",   fecha);
+                        cmd.Parameters.AddWithValue("@desc",    e.Descripcion);
+                        return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
+                else
+                {
+                    string sql = @"UPDATE horario_excepciones
+                                   SET descripcion=@desc, fecha_excepcion=@fecha,
+                                       id_grado=@grado, alcance=@alcance
+                                   WHERE id_excepcion=@id";
+                    using (var cmd = new SqliteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@desc",    e.Descripcion);
+                        cmd.Parameters.AddWithValue("@fecha",   fecha);
+                        cmd.Parameters.AddWithValue("@grado",   e.IdGrado.HasValue ? (object)e.IdGrado.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@alcance", e.Alcance ?? "SEDE");
+                        cmd.Parameters.AddWithValue("@id",      e.IdExcepcion);
+                        cmd.ExecuteNonQuery();
+                        return e.IdExcepcion;
+                    }
+                }
+            }
+        }
+
+        public bool Eliminar(int idExcepcion)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                using (var cmd = new SqliteCommand("DELETE FROM horario_excepciones WHERE id_excepcion=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idExcepcion);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool GuardarFranja(FranjaExcepcion f)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string sql;
+                if (f.IdFranjaExc == 0)
+                    sql = @"INSERT INTO franjas_excepcion (id_excepcion, nombre, hora_inicio, hora_limite_tarde, hora_cierre_ingreso, orden)
+                            VALUES (@ide, @nom, @hi, @hlt, @hci, @ord)";
+                else
+                    sql = @"UPDATE franjas_excepcion SET nombre=@nom, hora_inicio=@hi, hora_limite_tarde=@hlt,
+                            hora_cierre_ingreso=@hci, orden=@ord WHERE id_franja_exc=@id";
+                using (var cmd = new SqliteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ide", f.IdExcepcion);
+                    cmd.Parameters.AddWithValue("@nom", f.Nombre);
+                    cmd.Parameters.AddWithValue("@hi", f.HoraInicio);
+                    cmd.Parameters.AddWithValue("@hlt", f.HoraLimiteTarde);
+                    cmd.Parameters.AddWithValue("@hci", f.HoraCierreIngreso);
+                    cmd.Parameters.AddWithValue("@ord", f.Orden);
+                    if (f.IdFranjaExc != 0) cmd.Parameters.AddWithValue("@id", f.IdFranjaExc);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool EliminarFranja(int idFranjaExc)
+        {
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                using (var cmd = new SqliteCommand("DELETE FROM franjas_excepcion WHERE id_franja_exc=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idFranjaExc);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        private static List<FranjaExcepcion> ObtenerFranjas(SqliteConnection conn, int idExcepcion)
+        {
+            var lista = new List<FranjaExcepcion>();
+            string sql = "SELECT * FROM franjas_excepcion WHERE id_excepcion=@id ORDER BY orden, id_franja_exc";
+            using (var cmd = new SqliteCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", idExcepcion);
+                using (var dr = cmd.ExecuteReader())
+                    while (dr.Read())
+                        lista.Add(new FranjaExcepcion
+                        {
+                            IdFranjaExc       = Convert.ToInt32(dr["id_franja_exc"]),
+                            IdExcepcion       = Convert.ToInt32(dr["id_excepcion"]),
+                            Nombre            = dr["nombre"].ToString(),
+                            HoraInicio        = TimeSpan.Parse(dr["hora_inicio"].ToString()),
+                            HoraLimiteTarde   = TimeSpan.Parse(dr["hora_limite_tarde"].ToString()),
+                            HoraCierreIngreso = TimeSpan.Parse(dr["hora_cierre_ingreso"].ToString()),
+                            Orden             = Convert.ToInt32(dr["orden"])
+                        });
+            }
+            return lista;
+        }
+
+        private static bool TieneColumna(SqliteDataReader dr, string nombre)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+                if (dr.GetName(i).Equals(nombre, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        private static HorarioExcepcion MapearExcepcion(SqliteDataReader dr)
+        {
+            int? idSede = dr["id_sede"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_sede"]);
+            return new HorarioExcepcion
+            {
+                IdExcepcion    = Convert.ToInt32(dr["id_excepcion"]),
+                IdSede         = idSede ?? 0,
+                FechaExcepcion = DateTime.Parse(dr["fecha_excepcion"].ToString()),
+                Descripcion    = dr["descripcion"].ToString(),
+                Activo         = Convert.ToInt32(dr["activo"]) == 1,
+                NombreSede     = TieneColumna(dr, "nombre_sede")  ? dr["nombre_sede"].ToString()  : "",
+                Alcance        = TieneColumna(dr, "alcance") && dr["alcance"] != DBNull.Value
+                                     ? dr["alcance"].ToString() : "SEDE",
+                IdGrado        = TieneColumna(dr, "id_grado") && dr["id_grado"] != DBNull.Value
+                                     ? Convert.ToInt32(dr["id_grado"]) : (int?)null,
+                IdInstitucion  = TieneColumna(dr, "id_institucion") && dr["id_institucion"] != DBNull.Value
+                                     ? Convert.ToInt32(dr["id_institucion"]) : (int?)null,
+                NombreGrado    = TieneColumna(dr, "nombre_grado") && dr["nombre_grado"] != DBNull.Value
+                                     ? dr["nombre_grado"].ToString() : null
+            };
         }
     }
 

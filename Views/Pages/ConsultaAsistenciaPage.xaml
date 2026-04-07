@@ -6,10 +6,10 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="60"/>   <!-- Header -->
-            <RowDefinition Height="55"/>   <!-- Búsqueda -->
-            <RowDefinition Height="Auto"/> <!-- Info estudiante -->
+            <RowDefinition Height="Auto"/> <!-- Filtros -->
+            <RowDefinition Height="Auto"/> <!-- Tarjeta estudiante -->
             <RowDefinition Height="*"/>    <!-- Grid -->
-            <RowDefinition Height="35"/>   <!-- Status bar -->
+            <RowDefinition Height="32"/>   <!-- Status bar -->
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -17,17 +17,30 @@
             <TextBlock Text="Consulta de Asistencia" Style="{StaticResource LblTituloHeader}"/>
         </Border>
 
-        <!-- Búsqueda por documento + rango de fechas -->
-        <Border Grid.Row="1" Background="#007864" Padding="12,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Buscar:" Foreground="White" VerticalAlignment="Center"
-                           FontSize="13" Margin="0,0,8,0"/>
-                <!-- Popup de selección cuando hay múltiples coincidencias -->
-                <Grid>
-                    <TextBox x:Name="txtDocumento" Width="200" Height="32"
+        <!-- Barra de filtros: búsqueda + período en una sola fila -->
+        <Border Grid.Row="1" Background="White" Padding="20,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.08" Direction="270"/>
+            </Border.Effect>
+            <Grid Height="56">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="300"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Búsqueda -->
+                <TextBlock Grid.Column="0" Text="Estudiante:" VerticalAlignment="Center"
+                           FontSize="12" FontWeight="SemiBold" Foreground="#546E7A" Margin="0,0,10,0"/>
+                <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBox x:Name="txtDocumento" Height="34"
                              Style="{StaticResource TxtBase}" FontSize="13"
+                             ToolTip="Nombre o número de documento"
                              KeyDown="TxtDocumento_KeyDown"/>
-                    <Popup x:Name="popupResultados" PlacementTarget="{Binding ElementName=txtDocumento}"
+                    <Popup x:Name="popupResultados"
+                           PlacementTarget="{Binding ElementName=txtDocumento}"
                            Placement="Bottom" StaysOpen="False">
                         <Border Background="White" BorderBrush="#B2DFDB" BorderThickness="1">
                             <Border.Effect>
@@ -39,68 +52,150 @@
                         </Border>
                     </Popup>
                 </Grid>
-                <Button Content="🔍  Buscar" Style="{StaticResource BtnPrimario}"
-                        Background="#009678" Width="110" Height="32" Margin="8,0,24,0"
+                <Button Grid.Column="2" Content="Buscar" Style="{StaticResource BtnPrimario}"
+                        Width="100" Height="34" Margin="0,0,24,0"
                         Click="BtnBuscar_Click"/>
 
-                <TextBlock Text="Desde:" Foreground="White" VerticalAlignment="Center"
-                           FontSize="13" Margin="0,0,8,0"/>
-                <DatePicker x:Name="dpDesde" Width="130" Height="32" Margin="0,0,16,0"
-                            SelectedDateChanged="Fechas_Changed"/>
+                <!-- Separador -->
+                <Border Grid.Column="3" Width="1" Background="#E0E0E0" Margin="0,12,24,12"/>
 
-                <TextBlock Text="Hasta:" Foreground="White" VerticalAlignment="Center"
-                           FontSize="13" Margin="0,0,8,0"/>
-                <DatePicker x:Name="dpHasta" Width="130" Height="32"
-                            SelectedDateChanged="Fechas_Changed"/>
-            </StackPanel>
-        </Border>
-
-        <!-- Tarjeta de info del estudiante -->
-        <Border x:Name="pnlEstudiante" Grid.Row="2" Visibility="Collapsed"
-                Background="White" Padding="16,10" Margin="0,0,0,1">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.1" Direction="270"/>
-            </Border.Effect>
-            <StackPanel Orientation="Horizontal">
-                <Border Width="44" Height="44" CornerRadius="22" Background="#E0F2EE"
-                        Margin="0,0,14,0" VerticalAlignment="Center">
-                    <TextBlock Text="👤" FontSize="22" HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock x:Name="lblNombre" FontSize="15" FontWeight="SemiBold"
-                               Foreground="#263238"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                        <TextBlock Text="Doc: " FontSize="12" Foreground="#607D8B"/>
-                        <TextBlock x:Name="lblDocumento" FontSize="12" Foreground="#607D8B" Margin="0,0,16,0"/>
-                        <TextBlock Text="Grado: " FontSize="12" Foreground="#607D8B"/>
-                        <TextBlock x:Name="lblGrado" FontSize="12" Foreground="#607D8B" Margin="0,0,16,0"/>
-                        <TextBlock Text="Sede: " FontSize="12" Foreground="#607D8B"/>
-                        <TextBlock x:Name="lblSede" FontSize="12" Foreground="#607D8B"/>
+                <!-- Período -->
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Período:" VerticalAlignment="Center" FontSize="12"
+                               FontWeight="SemiBold" Foreground="#546E7A" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="cmbPeriodo" Width="145" Height="32"
+                              Style="{StaticResource CmbBase}" Margin="0,0,12,0"
+                              SelectionChanged="CmbPeriodo_Changed"/>
+                    <StackPanel x:Name="pnlFechasCustom" Orientation="Horizontal" Visibility="Collapsed">
+                        <TextBlock Text="Desde:" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="#546E7A" Margin="0,0,6,0"/>
+                        <DatePicker x:Name="dpDesde" Width="120" Height="32" Margin="0,0,12,0"
+                                    SelectedDateChanged="Fechas_Changed"/>
+                        <TextBlock Text="Hasta:" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="#546E7A" Margin="0,0,6,0"/>
+                        <DatePicker x:Name="dpHasta" Width="120" Height="32"
+                                    SelectedDateChanged="Fechas_Changed"/>
                     </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- DataGrid agrupado por fecha -->
+        <!-- Tarjeta de estudiante -->
+        <Border x:Name="pnlEstudiante" Grid.Row="2" Visibility="Collapsed"
+                Background="White" Margin="0,0,0,2">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.08" Direction="270"/>
+            </Border.Effect>
+            <Grid>
+                <!-- Acento lateral izquierdo -->
+                <Border Width="5" HorizontalAlignment="Left" Background="#007864"/>
+
+                <Grid Margin="24,14,20,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Avatar -->
+                    <Border Grid.Column="0" Width="52" Height="52" CornerRadius="26"
+                            Background="#007864" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="👤" FontSize="26" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Datos del estudiante -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock x:Name="lblNombre" FontSize="16" FontWeight="Bold"
+                                   Foreground="#1A2B2A" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Background="#E0F2EE" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Doc: " FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock x:Name="lblDocumento" FontSize="11"
+                                               FontWeight="SemiBold" Foreground="#007864"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#E0F2EE" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Grado: " FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock x:Name="lblGrado" FontSize="11"
+                                               FontWeight="SemiBold" Foreground="#007864"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#E0F2EE" CornerRadius="3" Padding="6,2">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Sede: " FontSize="11" Foreground="#546E7A"/>
+                                    <TextBlock x:Name="lblSede" FontSize="11"
+                                               FontWeight="SemiBold" Foreground="#007864"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Badges de resumen -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border CornerRadius="8" Padding="18,8" Margin="0,0,10,0"
+                                Background="#E8F5E9">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="lblTotalAsistencias" Text="0"
+                                           FontSize="22" FontWeight="Black" Foreground="#2E7D32"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Asistencias" FontSize="10" Foreground="#4CAF50"
+                                           FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <Border CornerRadius="8" Padding="18,8" Margin="0,0,10,0"
+                                Background="#FFF3E0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="lblTotalTardanzas" Text="0"
+                                           FontSize="22" FontWeight="Black" Foreground="#E65100"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Tardanzas" FontSize="10" Foreground="#FB8C00"
+                                           FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <Border CornerRadius="8" Padding="18,8"
+                                Background="#FFEBEE">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock x:Name="lblTotalFaltas" Text="0"
+                                           FontSize="22" FontWeight="Black" Foreground="#C62828"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Inasistencias" FontSize="10" Foreground="#E53935"
+                                           FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Grid de registros -->
         <DataGrid x:Name="grid" Grid.Row="3"
                   Style="{StaticResource GridBase}"
-                  ColumnHeaderStyle="{StaticResource GridHeaderStyle}">
+                  ColumnHeaderStyle="{StaticResource GridHeaderStyle}"
+                  MouseDoubleClick="Grid_MouseDoubleClick">
 
-            <!-- Encabezado de grupo (fecha) -->
+            <!-- Agrupamiento por fecha -->
             <DataGrid.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate>
-                            <Border Background="#E0F2EE" Padding="12,6" BorderThickness="0,0,0,1"
-                                    BorderBrush="#B2DFDB">
+                            <Border Background="#F0F9F7" Padding="20,9"
+                                    BorderThickness="0,0,0,1" BorderBrush="#C8E6E0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📅 " FontSize="13"/>
-                                    <TextBlock Text="{Binding Name, StringFormat='{}{0:dddd, dd/MM/yyyy}'}"
-                                               FontWeight="SemiBold" FontSize="13" Foreground="#00695C"/>
-                                    <TextBlock Text=" — " FontSize="13" Foreground="#607D8B"/>
-                                    <TextBlock Text="{Binding ItemCount}" FontSize="13" Foreground="#607D8B"/>
-                                    <TextBlock Text=" registro(s)" FontSize="13" Foreground="#607D8B"/>
+                                    <Border Width="4" Background="#007864" CornerRadius="2" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding Name, StringFormat={}{0:dddd, dd 'de' MMMM yyyy}}"
+                                               FontWeight="Bold" FontSize="13" Foreground="#00695C"
+                                               VerticalAlignment="Center"/>
+                                    <Border Background="#007864" CornerRadius="10" Padding="8,1" Margin="14,0,0,0"
+                                            VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding ItemCount}" FontSize="11"
+                                                       Foreground="White" FontWeight="SemiBold"/>
+                                            <TextBlock Text=" reg." FontSize="11" Foreground="#B2DFDB"/>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -109,27 +204,126 @@
             </DataGrid.GroupStyle>
 
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Hora"   Binding="{Binding HoraIngresoStr}" Width="100"/>
-                <DataGridTextColumn Header="Estado" Binding="{Binding EstadoStr}"      Width="150"/>
-                <DataGridTextColumn Header="Sede"   Binding="{Binding NombreSede}"     Width="*"/>
-                <DataGridTextColumn Header="Grado"  Binding="{Binding NombreGrado}"    Width="90"/>
-                <DataGridTextColumn Header="Grupo"  Binding="{Binding NombreGrupo}"    Width="80"/>
+                <!-- Hora -->
+                <DataGridTextColumn Header="Hora" Binding="{Binding HoraIngresoStr}" Width="90"/>
+
+                <!-- Estado badge -->
+                <DataGridTemplateColumn Header="Estado" Width="140">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="12" Padding="10,3"
+                                    HorizontalAlignment="Left" Margin="4,4" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#C8E6C9"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding EstadoIngreso}" Value="TARDE">
+                                                <Setter Property="Background" Value="#FFE0B2"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding EstadoIngreso}" Value="FUERA_DE_HORARIO">
+                                                <Setter Property="Background" Value="#FFCDD2"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding EstadoIngreso}" Value="YA_REGISTRADO">
+                                                <Setter Property="Background" Value="#E0E0E0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding EstadoStr}" FontSize="11" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#2E7D32"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EstadoIngreso}" Value="TARDE">
+                                                    <Setter Property="Foreground" Value="#BF360C"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding EstadoIngreso}" Value="FUERA_DE_HORARIO">
+                                                    <Setter Property="Foreground" Value="#B71C1C"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding EstadoIngreso}" Value="YA_REGISTRADO">
+                                                    <Setter Property="Foreground" Value="#616161"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Justificación -->
+                <DataGridTemplateColumn Header="Justificación" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid Margin="4,3">
+                                <!-- Justificado: chip verde con el texto -->
+                                <Border CornerRadius="4" Padding="8,3" HorizontalAlignment="Left"
+                                        ToolTip="{Binding Observaciones}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EsJustificado}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="✓ " FontSize="11" Foreground="#2E7D32" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding Observaciones}" FontSize="11"
+                                                   Foreground="#2E7D32" MaxWidth="200"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Border>
+                                <!-- Sin justificar (solo para TARDE o FUERA_DE_HORARIO) -->
+                                <TextBlock Text="Doble clic para justificar" FontSize="11"
+                                           Foreground="#B0BEC5" FontStyle="Italic"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding EsJustificado}" Value="False"/>
+                                                        <Condition Binding="{Binding EsTarde}"       Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding EsJustificado}" Value="False"/>
+                                                        <Condition Binding="{Binding EsAusente}"     Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
 
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding EstadoIngreso}" Value="TARDE">
-                            <Setter Property="Background" Value="#FFF8E1"/>
+                            <Setter Property="Background" Value="#FFFDE7"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding EstadoIngreso}" Value="FUERA_DE_HORARIO">
-                            <Setter Property="Background" Value="#FFEBEE"/>
+                            <Setter Property="Background" Value="#FFF5F5"/>
                         </DataTrigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Background" Value="#E8F5F2"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="#D0EFEA"/>
+                            <Setter Property="Background" Value="#C8E6E0"/>
                             <Setter Property="Foreground" Value="#003828"/>
                         </Trigger>
                     </Style.Triggers>
@@ -138,10 +332,10 @@
         </DataGrid>
 
         <!-- Status bar -->
-        <Border Grid.Row="4" Background="#ECEFF1" Padding="16,0">
-            <TextBlock x:Name="lblTotal"
-                       Text="Ingrese el documento del estudiante y seleccione un rango de fechas"
-                       VerticalAlignment="Center" FontSize="12" HorizontalAlignment="Right"/>
+        <Border Grid.Row="4" Background="#ECEFF1" Padding="20,0">
+            <TextBlock x:Name="lblTotal" VerticalAlignment="Center" FontSize="12"
+                       Foreground="#607D8B"
+                       Text="Busque un estudiante para ver su historial de asistencia"/>
         </Border>
     </Grid>
 </Page>

@@ -46,7 +46,11 @@
       "Bash(find \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\" -type f \\\\\\( -name \"*.sql\" -o -name \"*schema*\" -o -name \"*db*\" \\\\\\) 2>/dev/null | grep -v node_modules)",
       "Bash(find \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\" -maxdepth 3 -type f \\\\\\( -name \"*.sql\" -o -iname \"*database*\" -o -iname \"*schema*\" \\\\\\) 2>/dev/null | grep -v \".vs\\\\|bin\\\\|obj\\\\|packages\")",
       "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build 2>&1 | tail -30)",
-      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.csproj 2>&1 | tail -40)"
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.csproj 2>&1 | tail -40)",
+      "Bash(powershell -Command \"[System.BitConverter]::ToString\\([System.Security.Cryptography.SHA256]::Create\\(\\).ComputeHash\\([System.Text.Encoding]::UTF8.GetBytes\\('Admin123!'\\)\\)\\).Replace\\('-',''\\).ToLower\\(\\)\")",
+      "Bash(powershell -Command \"Remove-Item 'C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\\\\bin\\\\x86\\\\Debug\\\\net8.0-windows\\\\csm_biometrico.db' -Force; if \\(!\\(Test-Path 'C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\\\\bin\\\\x86\\\\Debug\\\\net8.0-windows\\\\csm_biometrico.db'\\)\\) { 'Eliminado correctamente' } else { 'SIGUE EXISTIENDO' }\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build --configuration Debug 2>&1 | tail -40)",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.csproj --configuration Debug 2>&1 | tail -50)"
     ]
   }
 }

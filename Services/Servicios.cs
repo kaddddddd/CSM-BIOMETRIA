@@ -104,14 +104,18 @@ namespace CSMBiometricoWPF.Services
         public static event EventHandler? IngresoRegistrado;
         private readonly RegistroIngresoRepository _registroRepo;
         private readonly HorarioRepository _horarioRepo;
+        private readonly FranjaHorarioRepository _franjaRepo;
+        private readonly HorarioExcepcionRepository _excepcionRepo;
         private readonly LogRepository _logRepo;
         private readonly OfflineService _offlineService;
 
         public AsistenciaService()
         {
-            _registroRepo  = new RegistroIngresoRepository();
-            _horarioRepo   = new HorarioRepository();
-            _logRepo       = new LogRepository();
+            _registroRepo   = new RegistroIngresoRepository();
+            _horarioRepo    = new HorarioRepository();
+            _franjaRepo     = new FranjaHorarioRepository();
+            _excepcionRepo  = new HorarioExcepcionRepository();
+            _logRepo        = new LogRepository();
             _offlineService = new OfflineService();
         }
 
@@ -124,7 +128,7 @@ namespace CSMBiometricoWPF.Services
                     return (EstadoIngreso.YA_REGISTRADO,
                         $"{estudiante.NombreCompleto} ya registró ingreso hoy.");
 
-                var estado = DeterminarEstado(estudiante.IdSede);
+                var estado = DeterminarEstado(estudiante.IdSede, estudiante.IdGrado);
                 var registro = new RegistroIngreso
                 {
                     IdEstudiante      = estudiante.IdEstudiante,
@@ -159,14 +163,64 @@ namespace CSMBiometricoWPF.Services
             }
         }
 
-        private EstadoIngreso DeterminarEstado(int idSede)
+        private EstadoIngreso DeterminarEstado(int idSede, int idGrado)
         {
-            var horario = _horarioRepo.ObtenerHoy(idSede);
-            if (horario == null) return EstadoIngreso.FUERA_DE_HORARIO;
             var ahora = DateTime.Now.TimeOfDay;
-            if (ahora <= horario.HoraLimiteTarde)   return EstadoIngreso.A_TIEMPO;
-            if (ahora <= horario.HoraCierreIngreso) return EstadoIngreso.TARDE;
+            var franjas = ObtenerFranjasVigentes(idSede, idGrado);
+            if (franjas.Count == 0) return EstadoIngreso.FUERA_DE_HORARIO;
+
+            foreach (var f in franjas)
+            {
+                if (ahora >= f.Inicio && ahora <= f.Cierre)
+                    return ahora <= f.LimiteTarde ? EstadoIngreso.A_TIEMPO : EstadoIngreso.TARDE;
+            }
             return EstadoIngreso.FUERA_DE_HORARIO;
+        }
+
+        private record FranjaVigente(TimeSpan Inicio, TimeSpan LimiteTarde, TimeSpan Cierre);
+
+        private List<FranjaVigente> ObtenerFranjasVigentes(int idSede, int idGrado)
+        {
+            var resultado = new List<FranjaVigente>();
+
+            // Obtener institución del estudiante para excepciones a nivel institución
+            int? idInstitucion = null;
+            try
+            {
+                using var conn = Data.ConexionDB.ObtenerConexion();
+                using var cmd = new Microsoft.Data.Sqlite.SqliteCommand(
+                    "SELECT id_institucion FROM sedes WHERE id_sede=@s LIMIT 1", conn);
+                cmd.Parameters.AddWithValue("@s", idSede);
+                var res = cmd.ExecuteScalar();
+                if (res != null) idInstitucion = Convert.ToInt32(res);
+            }
+            catch { }
+
+            // 1. ¿Hay excepción para hoy? (con prioridad sede+grado > sede > institución)
+            var excepcion = _excepcionRepo.ObtenerHoy(idSede, idGrado, idInstitucion);
+            if (excepcion != null && excepcion.Franjas.Count > 0)
+            {
+                foreach (var f in excepcion.Franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
+                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso));
+                return resultado;
+            }
+
+            // 2. Horario semanal normal (grado-específico > sede genérico)
+            var horario = _horarioRepo.ObtenerHoy(idSede, idGrado);
+            if (horario == null) return resultado;
+
+            var franjas = _franjaRepo.ObtenerPorHorario(horario.IdHorario);
+            if (franjas.Count > 0)
+            {
+                foreach (var f in franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
+                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso));
+            }
+            else
+            {
+                resultado.Add(new FranjaVigente(horario.HoraInicio, horario.HoraLimiteTarde, horario.HoraCierreIngreso));
+            }
+
+            return resultado;
         }
     }
 

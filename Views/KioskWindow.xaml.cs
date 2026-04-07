@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -8,6 +9,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using CSMBiometricoWPF.Biometria;
 using CSMBiometricoWPF.Models;
+using CSMBiometricoWPF.Repositories;
 using CSMBiometricoWPF.Services;
 
 namespace CSMBiometricoWPF.Views
@@ -19,6 +21,9 @@ namespace CSMBiometricoWPF.Views
         private readonly DispatcherTimer _timerReloj     = new();
         private readonly DispatcherTimer _timerOcultar   = new() { Interval = TimeSpan.FromSeconds(5) };
         private System.Speech.Synthesis.SpeechSynthesizer? _tts;
+
+        private int? _idSede;
+        private int? _idInstitucion;
 
         public KioskWindow()
         {
@@ -48,6 +53,77 @@ namespace CSMBiometricoWPF.Views
                 IniciarAnimacionPulso();
             };
 
+            // Resolver institución activa
+            if (int.TryParse(
+                    System.Configuration.ConfigurationManager.AppSettings["KioskIdInstitucion"], out int idInstCfg)
+                && idInstCfg > 0)
+                _idInstitucion = idInstCfg;
+            else if (SesionActiva.InstitucionActual != null)
+                _idInstitucion = SesionActiva.InstitucionActual.IdInstitucion;
+
+            MostrarSelectorSede();
+        }
+
+        // ── Selector de sede ────────────────────────────────────────────
+
+        private void MostrarSelectorSede()
+        {
+            try
+            {
+                var repoSede = new SedeRepository();
+                var sedes = _idInstitucion.HasValue
+                    ? repoSede.ObtenerPorInstitucion(_idInstitucion.Value)
+                    : repoSede.ObtenerTodas();
+
+                if (sedes.Count == 0)
+                {
+                    // Sin sedes configuradas: continuar sin filtro de sede
+                    AplicarSede(null, "Sistema Biométrico CSM");
+                    _ = InicializarLectorAsync();
+                    return;
+                }
+
+                if (sedes.Count == 1)
+                {
+                    // Una sola sede: selección automática
+                    AplicarSede(sedes[0].IdSede, sedes[0].NombreSede);
+                    _ = InicializarLectorAsync();
+                    return;
+                }
+
+                // Varias sedes: mostrar selector
+                lstSedes.ItemsSource       = sedes;
+                lstSedes.DisplayMemberPath = "NombreSede";
+                pnlSelectorSede.Visibility = Visibility.Visible;
+            }
+            catch
+            {
+                AplicarSede(null, "Sistema Biométrico CSM");
+                _ = InicializarLectorAsync();
+            }
+        }
+
+        private void AplicarSede(int? idSede, string nombreSede)
+        {
+            _idSede = idSede;
+            lblNombreSede.Text = nombreSede.ToUpper();
+            pnlSelectorSede.Visibility = Visibility.Collapsed;
+        }
+
+        private void LstSedes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            btnConfirmarSede.IsEnabled = lstSedes.SelectedItem != null;
+        }
+
+        private void LstSedes_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (lstSedes.SelectedItem is Sede) BtnConfirmarSede_Click(sender, e);
+        }
+
+        private async void BtnConfirmarSede_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstSedes.SelectedItem is not Sede sede) return;
+            AplicarSede(sede.IdSede, sede.NombreSede);
             await InicializarLectorAsync();
         }
 
@@ -88,18 +164,11 @@ namespace CSMBiometricoWPF.Views
         {
             _biometrico = ServicioBiometrico.Compartido;
 
-            // Filtrar comparaciones por la institución configurada en App.config (KioskIdInstitucion).
-            // Si es 0 o no está configurado, compara contra todas las instituciones.
-            if (int.TryParse(
-                    System.Configuration.ConfigurationManager.AppSettings["KioskIdInstitucion"], out int idInst)
-                && idInst > 0)
-            {
-                _biometrico.IdInstitucionFiltro = idInst;
-            }
-            else if (SesionActiva.InstitucionActual != null)
-            {
-                _biometrico.IdInstitucionFiltro = SesionActiva.InstitucionActual.IdInstitucion;
-            }
+            // Aplicar filtros de institución y sede resueltos en MostrarSelectorSede
+            if (_idInstitucion.HasValue)
+                _biometrico.IdInstitucionFiltro = _idInstitucion;
+            if (_idSede.HasValue)
+                _biometrico.IdSedeFiltro = _idSede;
 
             _biometrico.OnCambioEstado += (s, estado) => Dispatcher.Invoke(() =>
             {
@@ -147,8 +216,25 @@ namespace CSMBiometricoWPF.Views
             {
                 if (resultado.Identificado && resultado.Estudiante != null)
                 {
-                    var (estado, _) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
-                    MostrarResultado(resultado.Estudiante, estado);
+                    try
+                    {
+                        var (estado, _) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
+                        MostrarResultado(resultado.Estudiante, estado);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Error al guardar — mostrar el resultado pero indicar el problema
+                        lblNombreResult.Text       = resultado.Estudiante.NombreCompleto;
+                        lblEstadoResult.Text       = "ERROR AL REGISTRAR";
+                        lblEstadoResult.Foreground = new SolidColorBrush(Colors.OrangeRed);
+                        lblDetalleResult.Text      = ex.Message;
+                        pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(60, 20, 10));
+                        imgFotoResultado.Source    = null;
+                        lblInstruccion.Text        = "Contacte al administrador";
+                        pnlResultado.Visibility    = Visibility.Visible;
+                        _timerOcultar.Stop();
+                        _timerOcultar.Start();
+                    }
                 }
                 else
                 {

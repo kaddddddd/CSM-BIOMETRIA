@@ -20,8 +20,8 @@
                 <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
                         Width="110" Height="35" Margin="0,0,8,0"
                         Click="BtnRefrescar_Click"/>
-                <Button Content="📤  Exportar CSV" Style="{StaticResource BtnNaranja}"
-                        Width="130" Height="35" Margin="0,0,8,0"
+                <Button Content="📤  Exportar Excel" Style="{StaticResource BtnNaranja}"
+                        Width="140" Height="35" Margin="0,0,8,0"
                         Click="BtnExportar_Click"/>
             </StackPanel>
         </Border>
