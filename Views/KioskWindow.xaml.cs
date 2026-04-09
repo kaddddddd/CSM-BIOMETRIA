@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -11,6 +11,7 @@ using CSMBiometricoWPF.Biometria;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
 using CSMBiometricoWPF.Services;
+using CSMBiometricoWPF.Views.Dialogs;
 
 namespace CSMBiometricoWPF.Views
 {
@@ -108,6 +109,7 @@ namespace CSMBiometricoWPF.Views
             _idSede = idSede;
             lblNombreSede.Text = nombreSede.ToUpper();
             pnlSelectorSede.Visibility = Visibility.Collapsed;
+            if (idSede.HasValue) ActualizarInfoFranja();
         }
 
         private void LstSedes_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -135,10 +137,38 @@ namespace CSMBiometricoWPF.Views
             _timerReloj.Start();
         }
 
+        private int _segundosFranjaCheck = 0;
+
         private void ActualizarReloj()
         {
             lblHora.Text  = DateTime.Now.ToString("HH:mm:ss");
             lblFecha.Text = DateTime.Now.ToString("dddd, dd MMM yyyy");
+
+            // Actualizar indicador de franja cada 30 segundos
+            _segundosFranjaCheck++;
+            if (_idSede.HasValue && _segundosFranjaCheck >= 30)
+            {
+                _segundosFranjaCheck = 0;
+                ActualizarInfoFranja();
+            }
+        }
+
+        private void ActualizarInfoFranja()
+        {
+            try
+            {
+                string info = new Repositories.HorarioRepository().ObtenerInfoFranjaActual(_idSede!.Value);
+                if (string.IsNullOrEmpty(info))
+                {
+                    pnlFranjaInfo.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    lblFranjaInfo.Text = info;
+                    pnlFranjaInfo.Visibility = Visibility.Visible;
+                }
+            }
+            catch { pnlFranjaInfo.Visibility = Visibility.Collapsed; }
         }
 
         private void IniciarAnimacionPulso()
@@ -218,8 +248,8 @@ namespace CSMBiometricoWPF.Views
                 {
                     try
                     {
-                        var (estado, _) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
-                        MostrarResultado(resultado.Estudiante, estado);
+                        var (estado, _, nomFranja) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
+                        MostrarResultado(resultado.Estudiante, estado, nomFranja);
                     }
                     catch (Exception ex)
                     {
@@ -261,35 +291,55 @@ namespace CSMBiometricoWPF.Views
             });
         }
 
-        private void MostrarResultado(Estudiante est, EstadoIngreso estado)
+        private void MostrarResultado(Estudiante est, EstadoIngreso estado, string? nomFranja = null)
         {
-            lblNombreResult.Text  = est.NombreCompleto;
-            lblDetalleResult.Text = $"{est.Identificacion}  ·  {est.NombreSede}  ·  {DateTime.Now:HH:mm:ss}";
+            lblNombreResult.Text = est.NombreCompleto;
+
+            // Detalle base: ID · Sede · Hora
+            string detalle = $"{est.Identificacion}  ·  {est.NombreSede}  ·  {DateTime.Now:HH:mm:ss}";
+            // Si viene de una franja específica, añadirla al detalle
+            if (!string.IsNullOrWhiteSpace(nomFranja))
+                detalle += $"  ·  {nomFranja}";
+            lblDetalleResult.Text = detalle;
 
             switch (estado)
             {
                 case EstadoIngreso.A_TIEMPO:
-                    pnlResultado.Background = new SolidColorBrush(Color.FromRgb(27, 94, 32));
-                    lblEstadoResult.Text       = "ACCESO PERMITIDO";
-                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(150, 255, 150));
+                    pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(10, 26, 16));
+                    barAccent.Background       = new SolidColorBrush(Color.FromRgb(76, 175, 80));   // verde vivo
+                    lblIconoResult.Text        = "✅";
+                    lblEstadoResult.Text       = string.IsNullOrWhiteSpace(nomFranja)
+                                                    ? "ACCESO PERMITIDO"
+                                                    : $"ACCESO PERMITIDO  ·  {nomFranja}";
+                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(102, 240, 120));
                     lblInstruccion.Text        = "Bienvenido";
                     break;
                 case EstadoIngreso.TARDE:
-                    pnlResultado.Background = new SolidColorBrush(Color.FromRgb(130, 80, 0));
-                    lblEstadoResult.Text       = "TARDE";
-                    lblEstadoResult.Foreground = new SolidColorBrush(Colors.Yellow);
+                    pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(28, 18, 6));
+                    barAccent.Background       = new SolidColorBrush(Color.FromRgb(255, 152, 0));   // naranja vivo
+                    lblIconoResult.Text        = "⏰";
+                    lblEstadoResult.Text       = string.IsNullOrWhiteSpace(nomFranja)
+                                                    ? "TARDE"
+                                                    : $"TARDE  ·  {nomFranja}";
+                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(255, 183, 77));
                     lblInstruccion.Text        = "Ingreso registrado con tardanza";
                     break;
                 case EstadoIngreso.FUERA_DE_HORARIO:
-                    pnlResultado.Background = new SolidColorBrush(Color.FromRgb(120, 20, 20));
+                    pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(26, 8, 8));
+                    barAccent.Background       = new SolidColorBrush(Color.FromRgb(244, 67, 54));   // rojo vivo
+                    lblIconoResult.Text        = "⛔";
                     lblEstadoResult.Text       = "INASISTENCIA";
-                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(255, 140, 140));
+                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(255, 100, 100));
                     lblInstruccion.Text        = "Registro fuera del horario permitido";
                     break;
                 case EstadoIngreso.YA_REGISTRADO:
-                    pnlResultado.Background = new SolidColorBrush(Color.FromRgb(13, 60, 110));
-                    lblEstadoResult.Text       = "YA REGISTRADO";
-                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(150, 200, 255));
+                    pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(8, 18, 32));
+                    barAccent.Background       = new SolidColorBrush(Color.FromRgb(33, 150, 243));  // azul vivo
+                    lblIconoResult.Text        = "🔁";
+                    lblEstadoResult.Text       = string.IsNullOrWhiteSpace(nomFranja)
+                                                    ? "YA REGISTRADO"
+                                                    : $"YA REGISTRADO  ·  {nomFranja}";
+                    lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(100, 181, 246));
                     lblInstruccion.Text        = "Su ingreso ya fue registrado hoy";
                     break;
             }
@@ -306,7 +356,9 @@ namespace CSMBiometricoWPF.Views
 
         private void MostrarNoIdentificado()
         {
-            pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(100, 15, 15));
+            pnlResultado.Background    = new SolidColorBrush(Color.FromRgb(22, 6, 6));
+            barAccent.Background       = new SolidColorBrush(Color.FromRgb(183, 28, 28));          // rojo oscuro
+            lblIconoResult.Text        = "✋";
             lblNombreResult.Text       = "Huella no registrada";
             lblEstadoResult.Text       = "ACCESO DENEGADO";
             lblEstadoResult.Foreground = new SolidColorBrush(Color.FromRgb(255, 120, 120));
@@ -323,7 +375,7 @@ namespace CSMBiometricoWPF.Views
             // Ctrl+Alt+Q para salir del kiosk
             if (e.Key == Key.Q && Keyboard.IsKeyDown(Key.LeftCtrl) && Keyboard.IsKeyDown(Key.LeftAlt))
             {
-                if (MessageBox.Show("¿Cerrar el sistema de acceso?", "Salir del kiosk",
+                if (CustomMessageBox.Show("¿Cerrar el sistema de acceso?", "Salir del kiosk",
                     MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                     Application.Current.Shutdown();
             }

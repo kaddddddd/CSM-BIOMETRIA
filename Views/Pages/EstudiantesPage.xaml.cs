@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -73,7 +73,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando estudiantes: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando estudiantes: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -117,7 +117,7 @@ namespace CSMBiometricoWPF.Views.Pages
         private void BtnEliminar_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not Estudiante est) return;
-            var r = MessageBox.Show(
+            var r = CustomMessageBox.Show(
                 $"¿Desea retirar al estudiante \"{est.NombreCompleto}\"?\n\nSe marcará como RETIRADO.",
                 "Confirmar retiro", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
@@ -128,7 +128,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al retirar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al retirar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -175,10 +175,10 @@ namespace CSMBiometricoWPF.Views.Pages
                 ws.Columns().AdjustToContents();
                 wb.SaveAs(dlg.FileName);
 
-                MessageBox.Show("Exportación exitosa:\n" + dlg.FileName, "Exportar Excel",
+                CustomMessageBox.Show("Exportación exitosa:\n" + dlg.FileName, "Exportar Excel",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch (Exception ex) { MessageBox.Show("Error exportando: " + ex.Message); }
+            catch (Exception ex) { CustomMessageBox.Show("Error exportando: " + ex.Message); }
         }
     }
 }

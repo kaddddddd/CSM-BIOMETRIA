@@ -83,6 +83,7 @@ namespace CSMBiometricoWPF.Services
                 "ESTUDIANTES"   => esSuperAdmin || esAdministrador,
                 "ENROLAMIENTO"  => esSuperAdmin || esAdministrador,
                 "REPORTES"      => esSuperAdmin || esAdministrador,
+                "PERIODOS"      => esSuperAdmin || esAdministrador,
                 "CONSULTA"      => true,
                 "VERIFICACION"  => true,
                 "DASHBOARD"     => true,
@@ -119,22 +120,58 @@ namespace CSMBiometricoWPF.Services
             _offlineService = new OfflineService();
         }
 
-        public (EstadoIngreso Estado, string Mensaje) RegistrarIngreso(
+        public (EstadoIngreso Estado, string Mensaje, string? NombreFranja) RegistrarIngreso(
             Estudiante estudiante, float puntajeBiometrico)
         {
             try
             {
-                if (_registroRepo.YaRegistroHoy(estudiante.IdEstudiante))
-                    return (EstadoIngreso.YA_REGISTRADO,
-                        $"{estudiante.NombreCompleto} ya registró ingreso hoy.");
+                var ahora   = DateTime.Now.TimeOfDay;
+                var franjas = ObtenerFranjasVigentes(estudiante.IdSede, estudiante.IdGrado, estudiante.IdGrupo);
 
-                var estado = DeterminarEstado(estudiante.IdSede, estudiante.IdGrado);
+                // Franja activa en este momento
+                var franjaActiva = franjas.FirstOrDefault(f => ahora >= f.Inicio && ahora <= f.Cierre);
+
+                // Si llegó antes del inicio de la franja (llegada anticipada),
+                // buscar la próxima franja del día y registrar como A_TIEMPO.
+                bool esLlegadaAnticipada = false;
+                if (franjaActiva == null)
+                {
+                    var proxima = franjas.Where(f => ahora < f.Inicio).OrderBy(f => f.Inicio).FirstOrDefault();
+                    if (proxima != null)
+                    {
+                        franjaActiva      = proxima;
+                        esLlegadaAnticipada = true;
+                    }
+                }
+
+                // Verificar duplicado:
+                // - Llegada anticipada o sin franja: revisar todo el día (evita doble registro
+                //   si llega antes de la franja y luego vuelve a intentarlo dentro de ella).
+                // - Dentro de franja activa: revisar solo esa ventana horaria.
+                bool yaRegistrado = (franjaActiva == null || esLlegadaAnticipada)
+                    ? _registroRepo.YaRegistroHoy(estudiante.IdEstudiante)
+                    : _registroRepo.YaRegistroEnFranja(estudiante.IdEstudiante, franjaActiva.Inicio, franjaActiva.Cierre);
+
+                if (yaRegistrado)
+                    return (EstadoIngreso.YA_REGISTRADO,
+                        $"{estudiante.NombreCompleto} ya registró ingreso hoy.",
+                        franjaActiva?.EsFranja == true ? franjaActiva.Nombre : null);
+
+                EstadoIngreso estado;
+                if (franjaActiva == null)
+                    estado = EstadoIngreso.FUERA_DE_HORARIO;
+                else if (esLlegadaAnticipada)
+                    estado = EstadoIngreso.A_TIEMPO;          // llegó antes de hora = puntual
+                else
+                    estado = ahora <= franjaActiva.LimiteTarde ? EstadoIngreso.A_TIEMPO : EstadoIngreso.TARDE;
+
                 var registro = new RegistroIngreso
                 {
                     IdEstudiante      = estudiante.IdEstudiante,
                     IdSede            = estudiante.IdSede,
                     EstadoIngreso     = estado,
-                    PuntajeBiometrico = puntajeBiometrico
+                    PuntajeBiometrico = puntajeBiometrico,
+                    NombreFranja      = franjaActiva?.EsFranja == true ? franjaActiva.Nombre : null
                 };
 
                 if (Data.ConexionDB.EstaConectado)
@@ -144,17 +181,20 @@ namespace CSMBiometricoWPF.Services
 
                 IngresoRegistrado?.Invoke(this, EventArgs.Empty);
 
+                // Nombre de franja solo cuando es una franja extra (no el horario habitual)
+                string? nomFranja = franjaActiva?.EsFranja == true ? franjaActiva.Nombre : null;
+
                 string msg = estado switch
                 {
-                    EstadoIngreso.A_TIEMPO        => $"✅ {estudiante.NombreCompleto} - A TIEMPO",
-                    EstadoIngreso.TARDE           => $"⚠️ {estudiante.NombreCompleto} - TARDE",
+                    EstadoIngreso.A_TIEMPO         => $"✅ {estudiante.NombreCompleto} - A TIEMPO",
+                    EstadoIngreso.TARDE            => $"⚠️ {estudiante.NombreCompleto} - TARDE",
                     EstadoIngreso.FUERA_DE_HORARIO => $"❌ {estudiante.NombreCompleto} - INASISTENCIA",
-                    _                             => ""
+                    _                              => ""
                 };
 
                 _logRepo.Registrar(TipoEvento.REGISTRO_ASISTENCIA,
                     $"Ingreso: {estudiante.Identificacion} - {estado}");
-                return (estado, msg);
+                return (estado, msg, nomFranja);
             }
             catch (Exception ex)
             {
@@ -163,23 +203,9 @@ namespace CSMBiometricoWPF.Services
             }
         }
 
-        private EstadoIngreso DeterminarEstado(int idSede, int idGrado)
-        {
-            var ahora = DateTime.Now.TimeOfDay;
-            var franjas = ObtenerFranjasVigentes(idSede, idGrado);
-            if (franjas.Count == 0) return EstadoIngreso.FUERA_DE_HORARIO;
+        private record FranjaVigente(TimeSpan Inicio, TimeSpan LimiteTarde, TimeSpan Cierre, string Nombre = "Horario habitual", bool EsFranja = false);
 
-            foreach (var f in franjas)
-            {
-                if (ahora >= f.Inicio && ahora <= f.Cierre)
-                    return ahora <= f.LimiteTarde ? EstadoIngreso.A_TIEMPO : EstadoIngreso.TARDE;
-            }
-            return EstadoIngreso.FUERA_DE_HORARIO;
-        }
-
-        private record FranjaVigente(TimeSpan Inicio, TimeSpan LimiteTarde, TimeSpan Cierre);
-
-        private List<FranjaVigente> ObtenerFranjasVigentes(int idSede, int idGrado)
+        private List<FranjaVigente> ObtenerFranjasVigentes(int idSede, int idGrado, int idGrupo)
         {
             var resultado = new List<FranjaVigente>();
 
@@ -201,23 +227,25 @@ namespace CSMBiometricoWPF.Services
             if (excepcion != null && excepcion.Franjas.Count > 0)
             {
                 foreach (var f in excepcion.Franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
-                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso));
+                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso, f.Nombre, true));
                 return resultado;
             }
 
-            // 2. Horario semanal normal (grado-específico > sede genérico)
-            var horario = _horarioRepo.ObtenerHoy(idSede, idGrado);
+            // 2. Horario semanal normal (grupo+grado > grado > sede general)
+            var horario = _horarioRepo.ObtenerHoy(idSede, idGrado, idGrupo);
             if (horario == null) return resultado;
 
             var franjas = _franjaRepo.ObtenerPorHorario(horario.IdHorario);
             if (franjas.Count > 0)
             {
+                // Cualquier FranjaHorario explícitamente configurada se marca como EsFranja=true
                 foreach (var f in franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
-                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso));
+                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso, f.Nombre, true));
             }
             else
             {
-                resultado.Add(new FranjaVigente(horario.HoraInicio, horario.HoraLimiteTarde, horario.HoraCierreIngreso));
+                // Sin franjas adicionales: usa el horario habitual directamente
+                resultado.Add(new FranjaVigente(horario.HoraInicio, horario.HoraLimiteTarde, horario.HoraCierreIngreso, "Horario habitual", false));
             }
 
             return resultado;

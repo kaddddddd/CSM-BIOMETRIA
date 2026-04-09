@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -44,7 +44,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando franjas: " + ex.Message);
+                CustomMessageBox.Show("Error cargando franjas: " + ex.Message);
             }
         }
 
@@ -147,7 +147,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
         private void BtnEliminarFranja_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not FranjaHorario f) return;
-            var r = MessageBox.Show($"¿Eliminar la franja '{f.Nombre}'?", "Confirmar",
+            var r = CustomMessageBox.Show($"¿Eliminar la franja '{f.Nombre}'?", "Confirmar",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (r != MessageBoxResult.Yes) return;
 
@@ -159,7 +159,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error eliminando franja: " + ex.Message);
+                CustomMessageBox.Show("Error eliminando franja: " + ex.Message);
             }
         }
 
@@ -172,14 +172,14 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 !TimeSpan.TryParse(txtNuevoTarde.Text, out var tarde) ||
                 !TimeSpan.TryParse(txtNuevoCierre.Text, out var cierre))
             {
-                MessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 13:00)", "Validación",
+                CustomMessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 13:00)", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (tarde < entrada || cierre < tarde)
             {
-                MessageBox.Show("Las horas deben ir en orden: Entrada ≤ Límite tardanza ≤ Cierre.", "Validación",
+                CustomMessageBox.Show("Las horas deben ir en orden: Entrada ≤ Límite tardanza ≤ Cierre.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -205,7 +205,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando franja: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error guardando franja: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

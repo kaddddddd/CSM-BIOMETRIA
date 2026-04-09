@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -83,7 +83,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando excepciones: " + ex.Message);
+                CustomMessageBox.Show("Error cargando excepciones: " + ex.Message);
             }
         }
 
@@ -180,19 +180,19 @@ namespace CSMBiometricoWPF.Views.Dialogs
         {
             if (dpFecha.SelectedDate == null)
             {
-                MessageBox.Show("Seleccione una fecha.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.Show("Seleccione una fecha.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             string desc = txtDescripcion.Text.Trim();
             if (string.IsNullOrEmpty(desc))
             {
-                MessageBox.Show("Ingrese una descripción.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.Show("Ingrese una descripción.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             string alcance = AlcanceActual;
             if (alcance == "GRADO" && cmbGradoExc.SelectedItem == null)
             {
-                MessageBox.Show("Seleccione un grado.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.Show("Seleccione un grado.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -216,7 +216,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando excepción: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error guardando excepción: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -224,7 +224,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
         private void BtnEliminarExcepcion_Click(object sender, RoutedEventArgs e)
         {
             if (_excepcionSeleccionada == null) return;
-            var r = MessageBox.Show(
+            var r = CustomMessageBox.Show(
                 $"¿Eliminar la excepción del {_excepcionSeleccionada.FechaStr}?\nSe eliminarán también todas sus franjas.",
                 "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (r != MessageBoxResult.Yes) return;
@@ -240,7 +240,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error eliminando excepción: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error eliminando excepción: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -255,13 +255,13 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 !TimeSpan.TryParse(txtFranjaTarde.Text, out var tarde) ||
                 !TimeSpan.TryParse(txtFranjaCierre.Text, out var cierre))
             {
-                MessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 13:00)", "Validación",
+                CustomMessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 13:00)", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (tarde < entrada || cierre < tarde)
             {
-                MessageBox.Show("Las horas deben ir en orden: Entrada ≤ Límite tardanza ≤ Cierre.", "Validación",
+                CustomMessageBox.Show("Las horas deben ir en orden: Entrada ≤ Límite tardanza ≤ Cierre.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -288,7 +288,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando franja: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error guardando franja: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -296,7 +296,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
         private void BtnEliminarFranja_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not FranjaExcepcion f) return;
-            var r = MessageBox.Show($"¿Eliminar la franja '{f.Nombre}'?", "Confirmar",
+            var r = CustomMessageBox.Show($"¿Eliminar la franja '{f.Nombre}'?", "Confirmar",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (r != MessageBoxResult.Yes) return;
             try
@@ -305,7 +305,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 new LogRepository().Registrar(TipoEvento.CRUD, $"Franja de excepción eliminada: {f.Nombre}");
                 CargarExcepciones();
             }
-            catch (Exception ex) { MessageBox.Show("Error eliminando franja: " + ex.Message); }
+            catch (Exception ex) { CustomMessageBox.Show("Error eliminando franja: " + ex.Message); }
         }
 
         private void TimeInput_PreviewTextInput(object sender, TextCompositionEventArgs e)

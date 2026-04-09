@@ -119,57 +119,94 @@
                 </Style>
             </DataGrid.RowStyle>
 
-            <!-- Detalle expandible: faltas del estudiante -->
+            <!-- Detalle expandible: lista vertical de faltas -->
             <DataGrid.RowDetailsTemplate>
                 <DataTemplate>
-                    <Border Background="#FFFDE7" Padding="50,8,16,10"
-                            BorderThickness="0,0,0,1" BorderBrush="#FFE082">
+                    <Border Background="#FFFDE7" Padding="60,10,24,12"
+                            BorderThickness="0,0,0,1" BorderBrush="#FFE082"
+                            HorizontalAlignment="Stretch">
                         <StackPanel>
-                            <!-- Encabezado con conteo -->
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+
+                            <!-- Encabezado -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Inasistencias: " FontSize="11"
                                            FontWeight="SemiBold" Foreground="#555"/>
                                 <TextBlock Text="{Binding TotalFaltas}" FontSize="11"
-                                           FontWeight="Bold" Foreground="#C62828"/>
+                                           FontWeight="Bold" Foreground="#C62828" Margin="0,0,12,0"/>
+                                <TextBlock FontSize="11" Foreground="#E65100" FontStyle="Italic"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TieneFaltasFranja}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                    <Run Text="(incluye "/>
+                                    <Run Text="{Binding FaltasFranjaCount, Mode=OneWay}"/>
+                                    <Run Text=" por franja)"/>
+                                </TextBlock>
                             </StackPanel>
 
-                            <!-- Chips en WrapPanel con scroll vertical limitado -->
-                            <ScrollViewer MaxHeight="90" VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding Faltas}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border CornerRadius="4" Padding="7,4" Margin="0,0,6,5">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#FFCDD2"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Estado}" Value="Inasistencia">
-                                                                <Setter Property="Background" Value="#FFE0B2"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding DiaSemanaCorto}"
-                                                               FontSize="9" Foreground="#888"
-                                                               HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding FechaCorta}"
-                                                               FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="#B71C1C"
-                                                               HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
+                            <!-- UniformGrid: 6 columnas fijas, chips bajan automáticamente -->
+                            <ItemsControl ItemsSource="{Binding Faltas}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="6"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="6" Margin="3" Padding="8,5">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#FFCDD2"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EsFranja}" Value="True">
+                                                            <Setter Property="Background" Value="#FFE0B2"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="{Binding FechaCorta}"
+                                                           FontSize="11" FontWeight="Bold"
+                                                           HorizontalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#B71C1C"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding EsFranja}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#BF360C"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding EtiquetaFalta}"
+                                                           FontSize="9" TextWrapping="Wrap"
+                                                           HorizontalAlignment="Center" TextAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#C62828"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding EsFranja}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#E65100"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
+                            <!-- Sin inasistencias -->
                             <TextBlock Text="Sin inasistencias en este período"
                                        FontSize="11" Foreground="#888">
                                 <TextBlock.Style>
@@ -183,6 +220,7 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+
                         </StackPanel>
                     </Border>
                 </DataTemplate>

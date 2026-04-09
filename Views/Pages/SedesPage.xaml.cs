@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -76,7 +76,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando sedes: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando sedes: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -120,7 +120,7 @@ namespace CSMBiometricoWPF.Views.Pages
             if ((sender as Button)?.Tag is not SedeVm vm) return;
 
             string accion = vm.EsActiva ? "desactivar" : "activar";
-            var r = MessageBox.Show(
+            var r = CustomMessageBox.Show(
                 $"¿Desea {accion} la sede \"{vm.NombreSede}\"?",
                 "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
@@ -140,7 +140,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al {accion}: " + ex.Message, "Error",
+                CustomMessageBox.Show($"Error al {accion}: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

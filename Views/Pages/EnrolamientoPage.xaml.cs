@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
@@ -9,6 +9,7 @@ using CSMBiometricoWPF.Biometria;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
 using CSMBiometricoWPF.Services;
+using CSMBiometricoWPF.Views.Dialogs;
 
 namespace CSMBiometricoWPF.Views.Pages
 {
@@ -66,12 +67,12 @@ namespace CSMBiometricoWPF.Views.Pages
                 lstResultados.ItemsSource = lista;
                 lstResultados.DisplayMemberPath = "NombreCompleto";
                 if (lista.Count == 0)
-                    MessageBox.Show("No se encontraron estudiantes.", "Búsqueda",
+                    CustomMessageBox.Show("No se encontraron estudiantes.", "Búsqueda",
                         MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error en búsqueda: " + ex.Message);
+                CustomMessageBox.Show("Error en búsqueda: " + ex.Message);
             }
         }
 
@@ -107,13 +108,13 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             if (_estudianteSeleccionado == null)
             {
-                MessageBox.Show("Seleccione un estudiante primero.", "Validación",
+                CustomMessageBox.Show("Seleccione un estudiante primero.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (_estudianteSeleccionado.TieneHuella)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     $"{_estudianteSeleccionado.NombreCompleto} ya tiene una huella registrada.",
                     "Huella existente", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
@@ -244,7 +245,7 @@ namespace CSMBiometricoWPF.Views.Pages
                 new LogRepository().Registrar(TipoEvento.ENROLAMIENTO,
                     $"Huella enrolada: {_estudianteSeleccionado.NombreCompleto} ({_estudianteSeleccionado.Identificacion})");
 
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     $"Huella de {_estudianteSeleccionado.NombreCompleto} guardada correctamente.",
                     "Enrolamiento exitoso", MessageBoxButton.OK, MessageBoxImage.Information);
 
@@ -258,7 +259,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando huella: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error guardando huella: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

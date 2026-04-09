@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -154,7 +154,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando imagen: " + ex.Message);
+                CustomMessageBox.Show("Error cargando imagen: " + ex.Message);
             }
         }
 
@@ -181,28 +181,28 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 string.IsNullOrWhiteSpace(txtApellidos.Text) ||
                 string.IsNullOrWhiteSpace(txtIdentificacion.Text))
             {
-                MessageBox.Show("Nombre, Apellidos e Identificación son obligatorios.", "Validación",
+                CustomMessageBox.Show("Nombre, Apellidos e Identificación son obligatorios.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (cmbInstitucion.SelectedItem is not Institucion inst)
             {
-                MessageBox.Show("Seleccione una institución.", "Validación",
+                CustomMessageBox.Show("Seleccione una institución.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning); return;
             }
             if (cmbSede.SelectedItem is not Sede sede)
             {
-                MessageBox.Show("Seleccione una sede.", "Validación",
+                CustomMessageBox.Show("Seleccione una sede.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning); return;
             }
             if (cmbGrado.SelectedItem is not Grado grado)
             {
-                MessageBox.Show("Seleccione un grado.", "Validación",
+                CustomMessageBox.Show("Seleccione un grado.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning); return;
             }
             if (cmbGrupo.SelectedItem is not Grupo grupo)
             {
-                MessageBox.Show("Seleccione un grupo.", "Validación",
+                CustomMessageBox.Show("Seleccione un grupo.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning); return;
             }
 
@@ -226,7 +226,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al guardar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

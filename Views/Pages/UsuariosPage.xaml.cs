@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -55,7 +55,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando usuarios: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando usuarios: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -90,11 +90,11 @@ namespace CSMBiometricoWPF.Views.Pages
             if ((sender as Button)?.Tag is not UsuarioVm vm) return;
             if (vm.IdUsuario == SesionActiva.UsuarioActual?.IdUsuario)
             {
-                MessageBox.Show("No puedes desactivar tu propia cuenta.", "Operación no permitida",
+                CustomMessageBox.Show("No puedes desactivar tu propia cuenta.", "Operación no permitida",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            var r = MessageBox.Show(
+            var r = CustomMessageBox.Show(
                 $"¿Desactivar al usuario \"{vm.Username}\"?",
                 "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
@@ -106,7 +106,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al desactivar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al desactivar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

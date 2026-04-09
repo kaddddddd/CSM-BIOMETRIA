@@ -3,39 +3,62 @@
      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
      Background="#F5F7FA">
 
-   <Grid>
+    <Page.Resources>
+        <!-- TextBox de hora: centrado y con fondo suave -->
+        <Style x:Key="TxtHora" TargetType="TextBox" BasedOn="{StaticResource TxtBase}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="60"/>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="56"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
-            <TextBlock Text="Horarios por Sede y Grado" Style="{StaticResource LblTituloHeader}"/>
+            <TextBlock Text="Horarios por Sede, Grado y Grupo"
+                       Style="{StaticResource LblTituloHeader}"/>
         </Border>
 
-        <!-- Filtros -->
-        <Border Grid.Row="1" Background="White" Padding="16,0">
+        <!-- Barra de filtros -->
+        <Border Grid.Row="1" Background="White" Padding="20,0">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.08" Direction="270"/>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.08" Direction="270"/>
             </Border.Effect>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Institución:" VerticalAlignment="Center" FontSize="12"
-                           Margin="0,0,8,0" Foreground="#546E7A"/>
-                <ComboBox x:Name="cmbInstitucion" Width="180" Height="32"
-                          Style="{StaticResource CmbBase}" Margin="0,0,12,0"
+
+                <TextBlock Text="Institución:" Style="{StaticResource LblFiltro}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="cmbInstitucion" Width="190" Height="32"
+                          Style="{StaticResource CmbBase}" Margin="0,0,14,0"
                           SelectionChanged="CmbInstitucion_Changed"/>
-                <TextBlock Text="Sede:" VerticalAlignment="Center" FontSize="12"
-                           Margin="0,0,8,0" Foreground="#546E7A"/>
-                <ComboBox x:Name="cmbSede" Width="160" Height="32"
-                          Style="{StaticResource CmbBase}" Margin="0,0,12,0"
+
+                <Border Width="1" Background="#E0E0E0" Margin="0,8,14,8"/>
+
+                <TextBlock Text="Sede:" Style="{StaticResource LblFiltro}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="cmbSede" Width="170" Height="32"
+                          Style="{StaticResource CmbBase}" Margin="0,0,14,0"
                           SelectionChanged="CmbSede_Changed"/>
-                <TextBlock Text="Grado:" VerticalAlignment="Center" FontSize="12"
-                           Margin="0,0,8,0" Foreground="#546E7A"/>
-                <ComboBox x:Name="cmbGrado" Width="140" Height="32"
-                          Style="{StaticResource CmbBase}" Margin="0,0,12,0"
+
+                <Border Width="1" Background="#E0E0E0" Margin="0,8,14,8"/>
+
+                <TextBlock Text="Grado:" Style="{StaticResource LblFiltro}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="cmbGrado" Width="150" Height="32"
+                          Style="{StaticResource CmbBase}" Margin="0,0,14,0"
                           SelectionChanged="CmbGrado_Changed"/>
+
+                <TextBlock Text="Grupo:" Style="{StaticResource LblFiltro}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="cmbGrupo" Width="160" Height="32"
+                          Style="{StaticResource CmbBase}" Margin="0,0,16,0"
+                          SelectionChanged="CmbGrupo_Changed"/>
+
+                <Border Width="1" Background="#E0E0E0" Margin="0,8,14,8"/>
+
                 <Button x:Name="btnVerExcepciones" Content="📅  Días especiales"
                         Height="32" Padding="12,0" Style="{StaticResource BtnSecundario}"
                         Visibility="Collapsed" Click="BtnVerExcepciones_Click"
@@ -43,194 +66,231 @@
             </StackPanel>
         </Border>
 
-        <!-- Área de horarios -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="20">
+        <!-- Área de contenido -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="24,20">
             <StackPanel>
 
                 <!-- Mensaje vacío -->
-                <TextBlock x:Name="lblSeleccioneSede"
-                           Text="Seleccione una institución y una sede para ver y editar sus horarios."
-                           FontSize="14" Foreground="#9E9E9E"
-                           HorizontalAlignment="Center" Margin="0,48,0,0"/>
+                <Border x:Name="lblSeleccioneSede" Padding="0,60,0,0">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="📅" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                        <TextBlock Text="Seleccione una institución y una sede para ver y editar sus horarios."
+                                   FontSize="14" Foreground="#9E9E9E" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
                 <!-- Panel de días -->
                 <Border x:Name="pnlHorarios" Visibility="Collapsed"
-                        Style="{StaticResource Card}" Margin="0,0,0,16">
+                        Background="White" CornerRadius="10"
+                        Margin="0,0,0,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.08"/>
+                    </Border.Effect>
                     <StackPanel>
 
-                        <!-- Aviso de formato -->
-                        <Border Background="#FFF8E1" CornerRadius="4" Padding="10,7" Margin="0,0,0,8">
+                        <!-- Info de ámbito -->
+                        <Border x:Name="pnlInfoAmbito" Background="#E8F5F1" CornerRadius="10,10,0,0"
+                                Padding="20,12">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="⏰" FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <TextBlock FontSize="11.5" Foreground="#795548" VerticalAlignment="Center"
-                                           TextWrapping="Wrap">
-                                    <Run FontWeight="SemiBold">Formato de hora: HH:mm</Run>
-                                    <Run>  —  Ej: 07:30 · 08:00 · 13:30.  Solo se permiten números y el carácter ":"</Run>
-                                </TextBlock>
+                                <TextBlock Text="📋" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="lblInfoAmbito" FontSize="12" Foreground="#005040"
+                                           FontWeight="SemiBold" VerticalAlignment="Center"
+                                           TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Info de ámbito -->
-                        <Border x:Name="pnlInfoAmbito" Background="#E8F5F1" CornerRadius="4"
-                                Padding="10,6" Margin="0,0,0,8">
-                            <TextBlock x:Name="lblInfoAmbito" FontSize="11.5" Foreground="#005040"
-                                       TextWrapping="Wrap"/>
-                        </Border>
+                        <StackPanel Margin="20,16,20,20">
 
-                        <!-- Encabezado de columnas -->
-                        <Border Background="#E8F5F1" CornerRadius="4" Padding="8,9" Margin="0,0,0,6">
-                            <Grid>
+                            <!-- Aviso de formato -->
+                            <Border Background="#FFF8E1" CornerRadius="6" Padding="14,9" Margin="0,0,0,16">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⏰" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock FontSize="11.5" Foreground="#795548" VerticalAlignment="Center">
+                                        <Run FontWeight="SemiBold">Formato HH:mm</Run>
+                                        <Run>  —  Ej: 07:30 · 08:00 · 13:30</Run>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Encabezado de columnas -->
+                            <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="110"/>
                                     <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="88"/>
-                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Día"
-                                           FontWeight="SemiBold" FontSize="12" Foreground="#005040"/>
-                                <StackPanel Grid.Column="1" HorizontalAlignment="Center"
-                                            ToolTip="Hora exacta a partir de la cual se registra la entrada (HH:mm)">
-                                    <TextBlock Text="Hora de entrada" FontWeight="SemiBold" FontSize="12" Foreground="#005040" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="(puntual)" FontSize="10" Foreground="#607D8B" HorizontalAlignment="Center"/>
+                                           FontSize="11" FontWeight="Bold"
+                                           Foreground="#546E7A" VerticalAlignment="Bottom"/>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Center" Margin="4,0">
+                                    <Border Background="#E8F5E9" CornerRadius="4" Padding="8,4">
+                                        <TextBlock Text="Entrada puntual" FontSize="11" FontWeight="Bold"
+                                                   Foreground="#2E7D32" HorizontalAlignment="Center"/>
+                                    </Border>
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" HorizontalAlignment="Center"
-                                            ToolTip="Hasta esta hora la entrada se marca como TARDE (HH:mm)">
-                                    <TextBlock Text="Límite tardanza" FontWeight="SemiBold" FontSize="12" Foreground="#005040" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="(se marca tarde)" FontSize="10" Foreground="#607D8B" HorizontalAlignment="Center"/>
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Center" Margin="4,0">
+                                    <Border Background="#FFF8E1" CornerRadius="4" Padding="8,4">
+                                        <TextBlock Text="Límite tardanza" FontSize="11" FontWeight="Bold"
+                                                   Foreground="#F57F17" HorizontalAlignment="Center"/>
+                                    </Border>
                                 </StackPanel>
-                                <StackPanel Grid.Column="3" HorizontalAlignment="Center"
-                                            ToolTip="Después de esta hora ya no se permite el ingreso (HH:mm)">
-                                    <TextBlock Text="Cierre de ingreso" FontWeight="SemiBold" FontSize="12" Foreground="#005040" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="(sin acceso)" FontSize="10" Foreground="#607D8B" HorizontalAlignment="Center"/>
+                                <StackPanel Grid.Column="3" HorizontalAlignment="Center" Margin="4,0">
+                                    <Border Background="#FFEBEE" CornerRadius="4" Padding="8,4">
+                                        <TextBlock Text="Cierre ingreso" FontSize="11" FontWeight="Bold"
+                                                   Foreground="#C62828" HorizontalAlignment="Center"/>
+                                    </Border>
                                 </StackPanel>
-                                <TextBlock Grid.Column="5" Text="+ Jornada"
-                                           FontWeight="SemiBold" FontSize="11" Foreground="#005040"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                <TextBlock Grid.Column="4" Text="Acción"
+                                           FontSize="11" FontWeight="Bold"
+                                           Foreground="#546E7A" HorizontalAlignment="Center"
+                                           VerticalAlignment="Bottom"/>
+                                <TextBlock Grid.Column="5" Text="Jornada extra"
+                                           FontSize="11" FontWeight="Bold"
+                                           Foreground="#546E7A" HorizontalAlignment="Center"
+                                           VerticalAlignment="Bottom"
                                            ToolTip="Agregar jornada adicional (ej: jornada tarde)"/>
                             </Grid>
-                        </Border>
 
-                        <!-- ── Días de semana ─────────────────────────────── -->
+                            <!-- Separador -->
+                            <Border Height="1" Background="#E8ECED" Margin="0,0,0,8"/>
 
-                        <!-- LUNES -->
-                        <Border Background="White" CornerRadius="3" Padding="8,5" Margin="0,2">
-                            <Grid x:Name="rowLunes">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="88"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="3" Height="18" Background="#009678" CornerRadius="2" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Lunes" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBox x:Name="txtLunesEntrada"  Grid.Column="1" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora de entrada puntual  (HH:mm  ej: 07:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtLunesTarde"    Grid.Column="2" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde  (HH:mm  ej: 08:00)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtLunesCierre"   Grid.Column="3" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora en que se cierra el acceso  (HH:mm  ej: 08:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <Button Grid.Column="4" Content="Guardar" Height="34" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="LUNES"/>
-                                <Button Grid.Column="5" Content="+ Jornada" Height="34" Margin="2,0" Padding="10,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Lunes (ej: jornada tarde)" Click="BtnFranjas_Click" Tag="LUNES"/>
-                            </Grid>
-                        </Border>
+                            <!-- LUNES -->
+                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
+                                </Border.Effect>
+                                <Grid x:Name="rowLunes">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="4" Height="20" Background="#009678" CornerRadius="2" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Lunes" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="txtLunesEntrada"  Grid.Column="1" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora de entrada puntual (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtLunesTarde"    Grid.Column="2" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtLunesCierre"   Grid.Column="3" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora en que se cierra el acceso (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <Button Grid.Column="4" Content="Guardar" Height="36" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="LUNES"/>
+                                    <Button Grid.Column="5" Content="＋ Jornada" Height="36" Margin="4,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Lunes" Click="BtnFranjas_Click" Tag="LUNES"/>
+                                </Grid>
+                            </Border>
 
-                        <!-- MARTES -->
-                        <Border Background="#F8FCFA" CornerRadius="3" Padding="8,5" Margin="0,2">
-                            <Grid x:Name="rowMartes">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="88"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="3" Height="18" Background="#009678" CornerRadius="2" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Martes" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBox x:Name="txtMartesEntrada"  Grid.Column="1" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora de entrada puntual  (HH:mm  ej: 07:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtMartesTarde"    Grid.Column="2" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde  (HH:mm  ej: 08:00)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtMartesCierre"   Grid.Column="3" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora en que se cierra el acceso  (HH:mm  ej: 08:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <Button Grid.Column="4" Content="Guardar" Height="34" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="MARTES"/>
-                                <Button Grid.Column="5" Content="+ Jornada" Height="34" Margin="2,0" Padding="10,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Martes" Click="BtnFranjas_Click" Tag="MARTES"/>
-                            </Grid>
-                        </Border>
+                            <!-- MARTES -->
+                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
+                                </Border.Effect>
+                                <Grid x:Name="rowMartes">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="4" Height="20" Background="#009678" CornerRadius="2" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Martes" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="txtMartesEntrada"  Grid.Column="1" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora de entrada puntual (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtMartesTarde"    Grid.Column="2" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtMartesCierre"   Grid.Column="3" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora en que se cierra el acceso (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <Button Grid.Column="4" Content="Guardar" Height="36" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="MARTES"/>
+                                    <Button Grid.Column="5" Content="＋ Jornada" Height="36" Margin="4,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Martes" Click="BtnFranjas_Click" Tag="MARTES"/>
+                                </Grid>
+                            </Border>
 
-                        <!-- MIERCOLES -->
-                        <Border Background="White" CornerRadius="3" Padding="8,5" Margin="0,2">
-                            <Grid x:Name="rowMiercoles">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="88"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="3" Height="18" Background="#009678" CornerRadius="2" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Miércoles" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBox x:Name="txtMiercolesEntrada" Grid.Column="1" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora de entrada puntual  (HH:mm  ej: 07:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtMiercolesTarde"   Grid.Column="2" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde  (HH:mm  ej: 08:00)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtMiercolesCierre"  Grid.Column="3" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora en que se cierra el acceso  (HH:mm  ej: 08:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <Button Grid.Column="4" Content="Guardar" Height="34" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="MIERCOLES"/>
-                                <Button Grid.Column="5" Content="+ Jornada" Height="34" Margin="2,0" Padding="10,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Miércoles" Click="BtnFranjas_Click" Tag="MIERCOLES"/>
-                            </Grid>
-                        </Border>
+                            <!-- MIÉRCOLES -->
+                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
+                                </Border.Effect>
+                                <Grid x:Name="rowMiercoles">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="4" Height="20" Background="#009678" CornerRadius="2" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Miércoles" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="txtMiercolesEntrada" Grid.Column="1" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora de entrada puntual (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtMiercolesTarde"   Grid.Column="2" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtMiercolesCierre"  Grid.Column="3" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora en que se cierra el acceso (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <Button Grid.Column="4" Content="Guardar" Height="36" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="MIERCOLES"/>
+                                    <Button Grid.Column="5" Content="＋ Jornada" Height="36" Margin="4,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Miércoles" Click="BtnFranjas_Click" Tag="MIERCOLES"/>
+                                </Grid>
+                            </Border>
 
-                        <!-- JUEVES -->
-                        <Border Background="#F8FCFA" CornerRadius="3" Padding="8,5" Margin="0,2">
-                            <Grid x:Name="rowJueves">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="88"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="3" Height="18" Background="#009678" CornerRadius="2" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Jueves" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBox x:Name="txtJuevesEntrada"  Grid.Column="1" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora de entrada puntual  (HH:mm  ej: 07:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtJuevesTarde"    Grid.Column="2" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde  (HH:mm  ej: 08:00)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtJuevesCierre"   Grid.Column="3" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora en que se cierra el acceso  (HH:mm  ej: 08:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <Button Grid.Column="4" Content="Guardar" Height="34" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="JUEVES"/>
-                                <Button Grid.Column="5" Content="+ Jornada" Height="34" Margin="2,0" Padding="10,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Jueves" Click="BtnFranjas_Click" Tag="JUEVES"/>
-                            </Grid>
-                        </Border>
+                            <!-- JUEVES -->
+                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
+                                </Border.Effect>
+                                <Grid x:Name="rowJueves">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="4" Height="20" Background="#009678" CornerRadius="2" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Jueves" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="txtJuevesEntrada"  Grid.Column="1" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora de entrada puntual (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtJuevesTarde"    Grid.Column="2" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtJuevesCierre"   Grid.Column="3" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora en que se cierra el acceso (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <Button Grid.Column="4" Content="Guardar" Height="36" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="JUEVES"/>
+                                    <Button Grid.Column="5" Content="＋ Jornada" Height="36" Margin="4,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Jueves" Click="BtnFranjas_Click" Tag="JUEVES"/>
+                                </Grid>
+                            </Border>
 
-                        <!-- VIERNES -->
-                        <Border Background="White" CornerRadius="3" Padding="8,5" Margin="0,2">
-                            <Grid x:Name="rowViernes">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="88"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="3" Height="18" Background="#009678" CornerRadius="2" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Viernes" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBox x:Name="txtViernesEntrada" Grid.Column="1" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora de entrada puntual  (HH:mm  ej: 07:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtViernesTarde"   Grid.Column="2" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde  (HH:mm  ej: 08:00)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <TextBox x:Name="txtViernesCierre"  Grid.Column="3" Height="34" Margin="4,0" Style="{StaticResource TxtBase}" MaxLength="5" ToolTip="Hora en que se cierra el acceso  (HH:mm  ej: 08:30)" PreviewTextInput="TimeInput_PreviewTextInput"/>
-                                <Button Grid.Column="4" Content="Guardar" Height="34" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="VIERNES"/>
-                                <Button Grid.Column="5" Content="+ Jornada" Height="34" Margin="2,0" Padding="10,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Viernes" Click="BtnFranjas_Click" Tag="VIERNES"/>
-                            </Grid>
-                        </Border>
+                            <!-- VIERNES -->
+                            <Border CornerRadius="6" Padding="12,10" Margin="0" Background="#FAFFFE">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
+                                </Border.Effect>
+                                <Grid x:Name="rowViernes">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="4" Height="20" Background="#009678" CornerRadius="2" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Viernes" FontSize="13" FontWeight="SemiBold" Foreground="#263238" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBox x:Name="txtViernesEntrada" Grid.Column="1" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora de entrada puntual (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtViernesTarde"   Grid.Column="2" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hasta cuándo se permite entrar tarde (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <TextBox x:Name="txtViernesCierre"  Grid.Column="3" Style="{StaticResource TxtHora}" Margin="4,0" MaxLength="5" ToolTip="Hora en que se cierra el acceso (HH:mm)" PreviewTextInput="TimeInput_PreviewTextInput"/>
+                                    <Button Grid.Column="4" Content="Guardar" Height="36" Margin="4,0" Style="{StaticResource BtnPrimario}" FontSize="12" Click="BtnGuardarDia_Click" Tag="VIERNES"/>
+                                    <Button Grid.Column="5" Content="＋ Jornada" Height="36" Margin="4,0" Style="{StaticResource BtnSecundario}" FontSize="12" ToolTip="Agregar jornada adicional para el Viernes" Click="BtnFranjas_Click" Tag="VIERNES"/>
+                                </Grid>
+                            </Border>
 
+                        </StackPanel>
                     </StackPanel>
                 </Border>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>

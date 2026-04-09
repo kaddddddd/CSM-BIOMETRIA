@@ -1,0 +1,45 @@
+<Page x:Class="CSMBiometricoWPF.Views.Pages.PeriodosPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F5F7FA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera -->
+        <Border Grid.Row="0" Background="#007864" Padding="24,16">
+            <StackPanel>
+                <TextBlock Text="📅  Períodos académicos"
+                           FontFamily="Segoe UI Light" FontSize="22"
+                           Foreground="White"/>
+                <TextBlock x:Name="lblSubtitulo"
+                           FontFamily="Segoe UI" FontSize="12"
+                           Foreground="#B0E8DE" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Lista de períodos -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="24,20,24,0">
+            <StackPanel x:Name="pnlPeriodos" MaxWidth="660"/>
+        </ScrollViewer>
+
+        <!-- Botones -->
+        <Border Grid.Row="2" Background="White" Padding="24,12"
+                BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Restablecer predeterminados"
+                        Style="{StaticResource BtnSecundario}"
+                        Height="34" Padding="16,0" Margin="0,0,10,0"
+                        Click="BtnRestablecer_Click"/>
+                <Button Content="Guardar cambios"
+                        Style="{StaticResource BtnPrimario}"
+                        Height="34" Width="150"
+                        Click="BtnGuardar_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>

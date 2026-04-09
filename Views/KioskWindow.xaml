@@ -33,6 +33,18 @@
                                Text="Sistema Biométrico CSM"
                                FontFamily="Segoe UI" FontSize="10"
                                Foreground="#6488C8"/>
+                    <!-- Indicador de franja activa: solo visible cuando hay franja configurada -->
+                    <Border x:Name="pnlFranjaInfo" Visibility="Collapsed"
+                            Background="#1E3A5F" CornerRadius="4"
+                            Padding="8,2" Margin="0,4,0,0"
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⏱ " FontSize="11" Foreground="#64B5F6"/>
+                            <TextBlock x:Name="lblFranjaInfo"
+                                       FontFamily="Segoe UI" FontSize="11"
+                                       Foreground="#90CAF9"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -104,36 +116,57 @@
 
             <!-- Card de resultado -->
             <Border x:Name="pnlResultado"
-                    Width="560" Height="115"
+                    Width="580" Height="120"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Margin="0,390,0,0"
                     CornerRadius="10"
                     Visibility="Collapsed"
-                    Background="#1B5E20">
-                <Grid Margin="14,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="90"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                    Background="#11181F">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="22" ShadowDepth="0" Opacity="0.55" Color="Black"/>
+                </Border.Effect>
+                <Grid>
+                    <!-- Barra de acento lateral (color vivo por estado) -->
+                    <Border x:Name="barAccent"
+                            Width="7"
+                            HorizontalAlignment="Left"
+                            CornerRadius="10,0,0,10"
+                            Background="#4CAF50"/>
 
-                    <!-- Foto del estudiante -->
-                    <Image x:Name="imgFotoResultado"
-                           Grid.Column="0"
-                           Stretch="Uniform"
-                           HorizontalAlignment="Center"/>
+                    <!-- Contenido -->
+                    <Grid Margin="18,10,14,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="36"/>   <!-- ícono de estado -->
+                            <ColumnDefinition Width="85"/>   <!-- foto -->
+                            <ColumnDefinition Width="*"/>    <!-- datos -->
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Datos del resultado -->
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="lblNombreResult"
-                                   FontFamily="Segoe UI SemiBold" FontSize="17"
-                                   Foreground="White" TextWrapping="Wrap"/>
-                        <TextBlock x:Name="lblEstadoResult"
-                                   FontFamily="Segoe UI Black" FontSize="17"
-                                   Foreground="White" Margin="0,4,0,0"/>
-                        <TextBlock x:Name="lblDetalleResult"
-                                   FontFamily="Segoe UI" FontSize="10"
-                                   Foreground="#DCEEFF" Margin="0,4,0,0"/>
-                    </StackPanel>
+                        <!-- Ícono de estado -->
+                        <TextBlock x:Name="lblIconoResult"
+                                   Grid.Column="0"
+                                   Text="✅" FontSize="24"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+
+                        <!-- Foto del estudiante -->
+                        <Image x:Name="imgFotoResultado"
+                               Grid.Column="1"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Center"/>
+
+                        <!-- Datos del resultado -->
+                        <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="lblNombreResult"
+                                       FontFamily="Segoe UI SemiBold" FontSize="17"
+                                       Foreground="White" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="lblEstadoResult"
+                                       FontFamily="Segoe UI Black" FontSize="17"
+                                       Foreground="White" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="lblDetalleResult"
+                                       FontFamily="Segoe UI" FontSize="10"
+                                       Foreground="#DCEEFF" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>

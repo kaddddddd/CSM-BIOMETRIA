@@ -89,7 +89,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
                 try
                 {
-                    var (estado, mensaje) = _asistenciaService.RegistrarIngreso(
+                    var (estado, mensaje, _) = _asistenciaService.RegistrarIngreso(
                         resultado.Estudiante, resultado.Puntaje);
                     MostrarResultado(resultado.Estudiante, estado);
                     lblMensaje.Text = mensaje;

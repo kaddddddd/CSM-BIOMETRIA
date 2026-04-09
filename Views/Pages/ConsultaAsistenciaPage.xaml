@@ -252,6 +252,50 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
+                <!-- Franja horaria -->
+                <DataGridTemplateColumn Header="Franja horaria" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid Margin="4,3">
+                                <!-- Chip azul visible solo cuando hay franja -->
+                                <Border CornerRadius="10" Padding="10,3"
+                                        Background="#E3F2FD" HorizontalAlignment="Left">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TieneFranja}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⏱ " FontSize="11" Foreground="#1565C0"/>
+                                        <TextBlock Text="{Binding NombreFranja}"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#1565C0"/>
+                                    </StackPanel>
+                                </Border>
+                                <!-- Guión discreto cuando no hay franja -->
+                                <TextBlock Text="—" FontSize="11" Foreground="#CFD8DC"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TieneFranja}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
                 <!-- Justificación -->
                 <DataGridTemplateColumn Header="Justificación" Width="*">
                     <DataGridTemplateColumn.CellTemplate>

@@ -42,8 +42,10 @@ namespace CSMBiometricoWPF.Data
             }
             // Programmatic migrations (need conditional logic)
             MigrarHorariosConGrado(conn);
+            MigrarHorariosConGrupo(conn);
             MigrarExcepcionesConAlcance(conn);
             MigrarExcepcionesConUniqueGrado(conn);
+            MigrarRegistrosConNombreFranja(conn);
         }
 
         private static bool ColumnaExiste(SqliteConnection conn, string tabla, string columna)
@@ -102,6 +104,20 @@ namespace CSMBiometricoWPF.Data
             }
         }
 
+        private static void MigrarHorariosConGrupo(SqliteConnection conn)
+        {
+            AgregarColumna(conn, "horarios", "id_grupo", "INTEGER REFERENCES grupos(id_grupo)");
+            try
+            {
+                new SqliteCommand(
+                    @"CREATE UNIQUE INDEX IF NOT EXISTS uix_horario_sede_grado_grupo_dia
+                      ON horarios(id_sede, id_grado, id_grupo, dia_semana)
+                      WHERE id_grado IS NOT NULL AND id_grupo IS NOT NULL",
+                    conn).ExecuteNonQuery();
+            }
+            catch { }
+        }
+
         private static void MigrarExcepcionesConAlcance(SqliteConnection conn)
         {
             AgregarColumna(conn, "horario_excepciones", "id_grado",       "INTEGER");
@@ -155,6 +171,11 @@ namespace CSMBiometricoWPF.Data
             {
                 new SqliteCommand("PRAGMA foreign_keys=ON", conn).ExecuteNonQuery();
             }
+        }
+
+        private static void MigrarRegistrosConNombreFranja(SqliteConnection conn)
+        {
+            AgregarColumna(conn, "registros_ingreso", "nombre_franja", "TEXT");
         }
 
         private static IEnumerable<string> GetMigraciones() => new[]
@@ -216,6 +237,17 @@ namespace CSMBiometricoWPF.Data
                 hora_cierre_ingreso TEXT NOT NULL,
                 orden INTEGER DEFAULT 0,
                 FOREIGN KEY (id_excepcion) REFERENCES horario_excepciones(id_excepcion) ON DELETE CASCADE
+            )",
+            @"CREATE TABLE IF NOT EXISTS periodos_academicos (
+                id_periodo     INTEGER PRIMARY KEY,
+                id_institucion INTEGER,
+                nombre         TEXT NOT NULL,
+                mes_inicio     INTEGER NOT NULL,
+                dia_inicio     INTEGER NOT NULL,
+                mes_fin        INTEGER NOT NULL,
+                dia_fin        INTEGER NOT NULL,
+                orden          INTEGER DEFAULT 0,
+                FOREIGN KEY (id_institucion) REFERENCES instituciones(id_institucion) ON DELETE CASCADE
             )",
         };
 

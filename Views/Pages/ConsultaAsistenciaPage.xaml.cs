@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,19 +17,15 @@ namespace CSMBiometricoWPF.Views.Pages
         private readonly RegistroIngresoRepository _repoReg = new();
         private Estudiante? _estudianteActual;
 
-        private static readonly (string label, int dias, int mesI, int diaI, int mesF, int diaF)[] _opciones =
+        private static readonly (string label, int dias)[] _opcionesFijas =
         {
-            ("Hoy",           0,  0,  0,  0,  0),
-            ("1 semana",      6,  0,  0,  0,  0),
-            ("15 días",      14,  0,  0,  0,  0),
-            ("30 días",      29,  0,  0,  0,  0),
-            ("Período 1",    -1,  1,  1,  3, 31),
-            ("Período 2",    -1,  4,  1,  6, 30),
-            ("Período 3",    -1,  7,  1,  9, 30),
-            ("Período 4",    -1, 10,  1, 12, 31),
-            ("Personalizado",-2,  0,  0,  0,  0),
+            ("Hoy",      0),
+            ("1 semana", 6),
+            ("15 días", 14),
+            ("30 días", 29),
         };
 
+        private List<PeriodoAcademico> _periodosDB = new();
         private bool _iniciando;
 
         public ConsultaAsistenciaPage()
@@ -39,9 +36,15 @@ namespace CSMBiometricoWPF.Views.Pages
 
         private void IniciarCombo()
         {
-            _iniciando = true;
+            _iniciando  = true;
+            _periodosDB = new PeriodoAcademicoRepository()
+                .ObtenerPorInstitucion(SesionActiva.InstitucionActual?.IdInstitucion);
+
             cmbPeriodo.Items.Clear();
-            foreach (var o in _opciones) cmbPeriodo.Items.Add(o.label);
+            foreach (var o in _opcionesFijas) cmbPeriodo.Items.Add(o.label);
+            foreach (var p in _periodosDB)    cmbPeriodo.Items.Add(p.Nombre);
+            cmbPeriodo.Items.Add("Personalizado");
+
             cmbPeriodo.SelectedIndex = 1; // 1 semana por defecto
             _iniciando = false;
             AplicarPeriodo();
@@ -50,24 +53,25 @@ namespace CSMBiometricoWPF.Views.Pages
         private void AplicarPeriodo()
         {
             if (cmbPeriodo.SelectedIndex < 0) return;
-            var hoy = DateTime.Today;
-            var op  = _opciones[cmbPeriodo.SelectedIndex];
+            var hoy          = DateTime.Today;
+            int idx          = cmbPeriodo.SelectedIndex;
+            int totalFijas   = _opcionesFijas.Length;
+            bool esCustom    = idx == totalFijas + _periodosDB.Count;
 
-            pnlFechasCustom.Visibility = op.dias == -2
-                ? Visibility.Visible : Visibility.Collapsed;
-
-            if (op.dias == -2) return; // fechas manuales
+            pnlFechasCustom.Visibility = esCustom ? Visibility.Visible : Visibility.Collapsed;
+            if (esCustom) return;
 
             _iniciando = true;
-            if (op.dias >= 0)
+            if (idx < totalFijas)
             {
-                dpDesde.SelectedDate = hoy.AddDays(-op.dias);
+                dpDesde.SelectedDate = hoy.AddDays(-_opcionesFijas[idx].dias);
                 dpHasta.SelectedDate = hoy;
             }
             else
             {
-                dpDesde.SelectedDate = new DateTime(hoy.Year, op.mesI, op.diaI);
-                dpHasta.SelectedDate = new DateTime(hoy.Year, op.mesF, op.diaF);
+                var p = _periodosDB[idx - totalFijas];
+                dpDesde.SelectedDate = new DateTime(hoy.Year, p.MesInicio, p.DiaInicio);
+                dpHasta.SelectedDate = new DateTime(hoy.Year, p.MesFin,    p.DiaFin);
             }
             _iniciando = false;
             CargarRegistros();
@@ -170,7 +174,11 @@ namespace CSMBiometricoWPF.Views.Pages
             var dlg = new JustificarAsistenciaDialog(reg) { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() != true) return;
 
-            _repoReg.ActualizarObservaciones(reg.IdRegistro, dlg.Observacion);
+            if (dlg.NuevoEstado != reg.EstadoIngreso)
+                _repoReg.ActualizarEstadoYObservaciones(reg.IdRegistro, dlg.NuevoEstado, dlg.Observacion);
+            else
+                _repoReg.ActualizarObservaciones(reg.IdRegistro, dlg.Observacion);
+
             CargarRegistros();
         }
 

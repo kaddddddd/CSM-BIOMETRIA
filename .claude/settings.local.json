@@ -50,7 +50,23 @@
       "Bash(powershell -Command \"[System.BitConverter]::ToString\\([System.Security.Cryptography.SHA256]::Create\\(\\).ComputeHash\\([System.Text.Encoding]::UTF8.GetBytes\\('Admin123!'\\)\\)\\).Replace\\('-',''\\).ToLower\\(\\)\")",
       "Bash(powershell -Command \"Remove-Item 'C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\\\\bin\\\\x86\\\\Debug\\\\net8.0-windows\\\\csm_biometrico.db' -Force; if \\(!\\(Test-Path 'C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\\\\bin\\\\x86\\\\Debug\\\\net8.0-windows\\\\csm_biometrico.db'\\)\\) { 'Eliminado correctamente' } else { 'SIGUE EXISTIENDO' }\")",
       "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build --configuration Debug 2>&1 | tail -40)",
-      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.csproj --configuration Debug 2>&1 | tail -50)"
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.csproj --configuration Debug 2>&1 | tail -50)",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && powershell -ExecutionPolicy Bypass -File replace_msgbox.ps1)",
+      "Bash(cd \"C:/Users/Karen/source/repos/CSM/CSMBiometricoWPF\" && dotnet build --no-restore 2>&1 | tail -30)",
+      "Bash(cd \"C:/Users/Karen/source/repos/CSM/CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln 2>&1 | tail -40)",
+      "Bash(cd \"C:/Users/Karen/source/repos/CSM/CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln 2>&1 | tail -20)",
+      "Bash(cd \"C:/Users/Karen/source/repos/CSM/CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln 2>&1 | grep -E \"error|Error|warning CS\" | grep -v \"warning CS\" | head -20)",
+      "Bash(cd \"C:/Users/Karen/source/repos/CSM/CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln 2>&1 | grep -E \"^.*error\" | grep -v \"warning\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build --no-restore -v quiet 2>&1 | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.csproj --no-restore -v quiet 2>&1 | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build --no-restore 2>&1 | tail -30)",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln --no-restore 2>&1 | tail -30)",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln --no-restore 2>&1 | grep -E \"error|Error|0 Errores\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln --no-restore 2>&1 | grep -E \"^.*error CS|0 Errores|[0-9]+ Errores\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln --no-restore 2>&1 | grep \"error CS\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln --no-restore 2>&1 | grep -i \"error\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\\\\bin\\\\x86\\\\Debug\\\\net8.0-windows\" && sqlite3 csm_biometrico.db \"SELECT COUNT\\(*\\) FROM registros_ingreso;\")",
+      "Bash(cd \"C:\\\\Users\\\\Karen\\\\source\\\\repos\\\\CSM\\\\CSMBiometricoWPF\" && dotnet build CSMBiometricoWPF.sln --no-restore 2>&1 | grep -i \"error CS\")"
     ]
   }
 }

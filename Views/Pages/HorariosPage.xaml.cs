@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -17,10 +17,12 @@ namespace CSMBiometricoWPF.Views.Pages
         private readonly InstitucionRepository _instRepo = new();
         private readonly SedeRepository _sedeRepo = new();
         private readonly GradoRepository _gradoRepo = new();
+        private readonly GrupoRepository _grupoRepo = new();
         private bool _cargandoFiltros = false;
         private int _idSedeActual = 0;
         private Sede _sedeActual = null;
         private int? _idGradoActual = null;   // null = "Todos los grados"
+        private int? _idGrupoActual = null;   // null = "Todos los grupos"
 
         private Dictionary<string, (TextBox entrada, TextBox tarde, TextBox cierre)> _campos;
         private Dictionary<string, Horario> _horariosCargados = new();
@@ -49,6 +51,9 @@ namespace CSMBiometricoWPF.Views.Pages
             try { foreach (var g in _gradoRepo.ObtenerTodos()) cmbGrado.Items.Add(g); } catch { }
             cmbGrado.DisplayMemberPath = "NombreGrado";
             cmbGrado.SelectedIndex = 0;
+
+            // Cargar grupos (una sola vez)
+            CargarComboGrupos();
             _cargandoFiltros = false;
 
             // Cargar instituciones
@@ -111,6 +116,34 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             if (_cargandoFiltros) return;
             _idGradoActual = (cmbGrado.SelectedItem is Grado g && g.IdGrado > 0) ? g.IdGrado : (int?)null;
+
+            // Al cambiar grado, resetear grupo
+            _cargandoFiltros = true;
+            CargarComboGrupos();
+            _cargandoFiltros = false;
+
+            if (_idSedeActual > 0) CargarHorarios();
+        }
+
+        private void CargarComboGrupos()
+        {
+            cmbGrupo.Items.Clear();
+            cmbGrupo.Items.Add(new Grupo { IdGrupo = 0, NombreGrupo = "Todos los grupos" });
+            // Solo mostrar grupos si hay un grado seleccionado
+            if (_idGradoActual.HasValue)
+            {
+                try { foreach (var gr in _grupoRepo.ObtenerTodos()) cmbGrupo.Items.Add(gr); } catch { }
+            }
+            cmbGrupo.DisplayMemberPath = "NombreGrupo";
+            cmbGrupo.SelectedIndex = 0;
+            _idGrupoActual = null;
+            cmbGrupo.IsEnabled = _idGradoActual.HasValue;
+        }
+
+        private void CmbGrupo_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_cargandoFiltros) return;
+            _idGrupoActual = (cmbGrupo.SelectedItem is Grupo gr && gr.IdGrupo > 0) ? gr.IdGrupo : (int?)null;
             if (_idSedeActual > 0) CargarHorarios();
         }
 
@@ -133,7 +166,7 @@ namespace CSMBiometricoWPF.Views.Pages
                     kv.Value.cierre.Text = "";
                 }
 
-                var horarios = _horarioRepo.ObtenerPorSede(_idSedeActual, _idGradoActual);
+                var horarios = _horarioRepo.ObtenerPorSede(_idSedeActual, _idGradoActual, _idGrupoActual);
                 foreach (var h in horarios)
                 {
                     string dia = h.DiaSemana.ToString();
@@ -147,17 +180,21 @@ namespace CSMBiometricoWPF.Views.Pages
                 }
 
                 // Banner informativo de ámbito
-                if (_idGradoActual.HasValue && cmbGrado.SelectedItem is Grado gsel)
-                    lblInfoAmbito.Text = $"Mostrando horario específico para: {gsel.NombreGrado}  (si no hay uno definido, al ingresar se usa el horario general de la sede)";
+                if (_idGradoActual.HasValue && _idGrupoActual.HasValue
+                    && cmbGrado.SelectedItem is Grado gselGrupo
+                    && cmbGrupo.SelectedItem is Grupo grsel)
+                    lblInfoAmbito.Text = $"Horario específico para: {gselGrupo.NombreGrado} – Grupo {grsel.NombreGrupo}  (prioridad más alta)";
+                else if (_idGradoActual.HasValue && cmbGrado.SelectedItem is Grado gsel)
+                    lblInfoAmbito.Text = $"Horario del grado: {gsel.NombreGrado}  (aplica a grupos de este grado sin horario propio)";
                 else
-                    lblInfoAmbito.Text = "Horario general de la sede  (aplica a todos los grados que no tengan horario propio)";
+                    lblInfoAmbito.Text = "Horario general de la sede  (aplica a todos los grados/grupos sin horario propio)";
 
                 pnlHorarios.Visibility = Visibility.Visible;
                 lblSeleccioneSede.Visibility = Visibility.Collapsed;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando horarios: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando horarios: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -172,7 +209,7 @@ namespace CSMBiometricoWPF.Views.Pages
                 !TimeSpan.TryParse(campos.tarde.Text,   out var tarde)   ||
                 !TimeSpan.TryParse(campos.cierre.Text,  out var cierre))
             {
-                MessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 07:30)", "Validación",
+                CustomMessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 07:30)", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -183,6 +220,7 @@ namespace CSMBiometricoWPF.Views.Pages
                 {
                     IdSede            = _idSedeActual,
                     IdGrado           = _idGradoActual,
+                    IdGrupo           = _idGrupoActual,
                     DiaSemana         = (DiaSemana)Enum.Parse(typeof(DiaSemana), dia),
                     HoraInicio        = entrada,
                     HoraLimiteTarde   = tarde,
@@ -191,18 +229,22 @@ namespace CSMBiometricoWPF.Views.Pages
                 };
                 _horarioRepo.Guardar(horario);
                 new LogRepository().Registrar(TipoEvento.CRUD,
-                    $"Horario guardado: sede {_idSedeActual} grado {_idGradoActual?.ToString() ?? "todos"} - {dia}");
+                    $"Horario guardado: sede {_idSedeActual} grado {_idGradoActual?.ToString() ?? "todos"} grupo {_idGrupoActual?.ToString() ?? "todos"} - {dia}");
                 CargarHorarios();
 
-                string ambito = _idGradoActual.HasValue
-                    ? $"(grado {(cmbGrado.SelectedItem as Grado)?.NombreGrado})"
-                    : "(todos los grados)";
-                MessageBox.Show($"Horario de {dia} {ambito} guardado correctamente.", "Guardado",
+                string ambito;
+                if (_idGradoActual.HasValue && _idGrupoActual.HasValue)
+                    ambito = $"(grado {(cmbGrado.SelectedItem as Grado)?.NombreGrado} – grupo {(cmbGrupo.SelectedItem as Grupo)?.NombreGrupo})";
+                else if (_idGradoActual.HasValue)
+                    ambito = $"(grado {(cmbGrado.SelectedItem as Grado)?.NombreGrado})";
+                else
+                    ambito = "(todos los grados)";
+                CustomMessageBox.Show($"Horario de {dia} {ambito} guardado correctamente.", "Guardado",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando horario: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error guardando horario: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -214,7 +256,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
             if (!_horariosCargados.TryGetValue(dia, out var horario))
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     $"Primero guarda el horario base del {dia} antes de agregar jornadas adicionales.",
                     "Sin horario base", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,7 +56,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando horarios: " + ex.Message);
+                CustomMessageBox.Show("Error cargando horarios: " + ex.Message);
             }
         }
 
@@ -69,7 +69,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 !TimeSpan.TryParse(c.tarde.Text,   out var tarde)   ||
                 !TimeSpan.TryParse(c.cierre.Text,  out var cierre))
             {
-                MessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 07:30)", "Validación",
+                CustomMessageBox.Show("Formato de hora inválido. Use HH:mm (ej: 07:30)", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -88,12 +88,12 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 _repo.Guardar(horario);
                 new LogRepository().Registrar(TipoEvento.CRUD,
                     $"Horario guardado: {_sede.NombreSede} - {dia}");
-                MessageBox.Show($"Horario de {dia} guardado.", "Guardado",
+                CustomMessageBox.Show($"Horario de {dia} guardado.", "Guardado",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando horario: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error guardando horario: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

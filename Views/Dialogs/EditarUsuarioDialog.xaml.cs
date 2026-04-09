@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Windows;
 using CSMBiometricoWPF.Models;
@@ -83,19 +83,19 @@ namespace CSMBiometricoWPF.Views.Dialogs
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre completo es obligatorio.", "Validación",
+                CustomMessageBox.Show("El nombre completo es obligatorio.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 txtNombre.Focus(); return;
             }
             if (string.IsNullOrWhiteSpace(txtUsername.Text))
             {
-                MessageBox.Show("El nombre de usuario es obligatorio.", "Validación",
+                CustomMessageBox.Show("El nombre de usuario es obligatorio.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 txtUsername.Focus(); return;
             }
             if (cmbRol.SelectedItem is not Rol rol)
             {
-                MessageBox.Show("Seleccione un rol.", "Validación",
+                CustomMessageBox.Show("Seleccione un rol.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning); return;
             }
 
@@ -103,7 +103,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             string password = pwdPassword.Password;
             if (_usuario.IdUsuario == 0 && string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("La contraseña es obligatoria para nuevos usuarios.", "Validación",
+                CustomMessageBox.Show("La contraseña es obligatoria para nuevos usuarios.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning); return;
             }
 
@@ -125,7 +125,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al guardar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

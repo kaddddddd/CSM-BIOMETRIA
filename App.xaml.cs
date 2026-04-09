@@ -1,7 +1,10 @@
-using System;
+﻿using System;
+using System.Globalization;
+using System.Threading;
 using System.Windows;
 using CSMBiometricoWPF.Data;
 using CSMBiometricoWPF.Views;
+using CSMBiometricoWPF.Views.Dialogs;
 
 namespace CSMBiometricoWPF
 {
@@ -13,6 +16,14 @@ namespace CSMBiometricoWPF
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            var cultura = new CultureInfo("es-CO");
+            Thread.CurrentThread.CurrentCulture   = cultura;
+            Thread.CurrentThread.CurrentUICulture = cultura;
+            FrameworkElement.LanguageProperty.OverrideMetadata(
+                typeof(FrameworkElement),
+                new FrameworkPropertyMetadata(
+                    System.Windows.Markup.XmlLanguage.GetLanguage(cultura.IetfLanguageTag)));
 
             // Detectar modo por argumentos de línea de comandos
             foreach (var arg in e.Args)
@@ -28,14 +39,14 @@ namespace CSMBiometricoWPF
             {
                 if (_modoKiosk || _modoPanel)
                 {
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         "Sin conexión a la base de datos.\nLlame al administrador del sistema.",
                         "Error de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
                     Shutdown();
                     return;
                 }
 
-                var resultado = MessageBox.Show(
+                var resultado = CustomMessageBox.Show(
                     "⚠ No se pudo acceder a la base de datos SQLite.\n\n" +
                     "El sistema funcionará en MODO OFFLINE.\n" +
                     "Los registros se sincronizarán cuando se restablezca el acceso.\n\n" +

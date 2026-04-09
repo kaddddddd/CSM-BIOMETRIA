@@ -167,6 +167,8 @@ namespace CSMBiometricoWPF.Models
         public string NombreSede { get; set; }
         public int? IdGrado { get; set; }
         public string NombreGrado { get; set; }
+        public int? IdGrupo { get; set; }
+        public string NombreGrupo { get; set; }
     }
 
     // ─────────────────────────────────────────
@@ -242,6 +244,8 @@ namespace CSMBiometricoWPF.Models
         public float PuntajeBiometrico { get; set; }
         public bool Sincronizado { get; set; } = true;
         public string Observaciones { get; set; }
+        public string NombreFranja { get; set; }
+        public bool TieneFranja => !string.IsNullOrWhiteSpace(NombreFranja);
         public bool   EsJustificado => !string.IsNullOrWhiteSpace(Observaciones);
         // Navegación
         public string NombreEstudiante { get; set; }
@@ -303,6 +307,31 @@ namespace CSMBiometricoWPF.Models
     }
 
     // ─────────────────────────────────────────
+    // PERÍODO ACADÉMICO
+    // ─────────────────────────────────────────
+    public class PeriodoAcademico
+    {
+        public int    IdPeriodo     { get; set; }
+        public int?   IdInstitucion { get; set; }
+        public string Nombre        { get; set; } = "";
+        public int    MesInicio     { get; set; }
+        public int    DiaInicio     { get; set; }
+        public int    MesFin        { get; set; }
+        public int    DiaFin        { get; set; }
+        public int    Orden         { get; set; }
+
+        public string RangoStr =>
+            $"{NombreMes(MesInicio)} {DiaInicio} – {NombreMes(MesFin)} {DiaFin}";
+
+        private static string NombreMes(int m) => m switch
+        {
+            1=>"Ene", 2=>"Feb", 3=>"Mar", 4=>"Abr",
+            5=>"May", 6=>"Jun", 7=>"Jul", 8=>"Ago",
+            9=>"Sep", 10=>"Oct", 11=>"Nov", 12=>"Dic", _=>""
+        };
+    }
+
+    // ─────────────────────────────────────────
     // SESIÓN ACTIVA (Singleton)
     // ─────────────────────────────────────────
     public static class SesionActiva
@@ -319,4 +348,5 @@ namespace CSMBiometricoWPF.Models
             InstitucionActual = null;
         }
     }
+
 }

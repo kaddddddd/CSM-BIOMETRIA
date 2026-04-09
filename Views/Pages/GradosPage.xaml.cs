@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,7 +37,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando grados: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando grados: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -64,7 +64,7 @@ namespace CSMBiometricoWPF.Views.Pages
         private void BtnEliminar_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not Grado g) return;
-            var r = MessageBox.Show(
+            var r = CustomMessageBox.Show(
                 $"¿Eliminar el grado \"{g.NombreGrado}\"?",
                 "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
@@ -76,7 +76,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al eliminar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al eliminar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

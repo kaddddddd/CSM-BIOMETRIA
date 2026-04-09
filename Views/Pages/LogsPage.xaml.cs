@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
+using CSMBiometricoWPF.Views.Dialogs;
 
 namespace CSMBiometricoWPF.Views.Pages
 {
@@ -48,7 +49,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando logs: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando logs: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

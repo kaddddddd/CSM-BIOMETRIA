@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Services;
 using CSMBiometricoWPF.Views.Pages;
+using CSMBiometricoWPF.Views.Dialogs;
 
 namespace CSMBiometricoWPF.Views
 {
@@ -27,7 +28,7 @@ namespace CSMBiometricoWPF.Views
         {
             ("📊", "Estadística",        new[] { "📊|Dashboard|DASHBOARD" }),
             ("📋", "Registro y Control", new[] { "👨‍🎓|Estudiantes|ESTUDIANTES", "🖐|Enrolamiento|ENROLAMIENTO", "✅|Verificación|VERIFICACION", "📅|Consultar Asistencia|CONSULTA" }),
-            ("⚙",  "Configuración",     new[] { "🏛|Instituciones|INSTITUCIONES", "🏫|Sedes|SEDES", "📚|Grados|GRADOS", "👥|Grupos|GRUPOS", "🕐|Horarios|HORARIOS" }),
+            ("⚙",  "Configuración",     new[] { "🏛|Instituciones|INSTITUCIONES", "🏫|Sedes|SEDES", "📚|Grados|GRADOS", "👥|Grupos|GRUPOS", "🕐|Horarios|HORARIOS", "📅|Períodos académicos|PERIODOS" }),
             ("🔒", "Seguridad",          new[] { "👤|Usuarios|USUARIOS", "📋|Logs|LOGS" }),
             ("🔧", "Utilidades",         new[] { "🔧|Probar Lector|LECTOR" }),
         };
@@ -206,6 +207,7 @@ namespace CSMBiometricoWPF.Views
                 "USUARIOS"      => new UsuariosPage(),
                 "LOGS"          => new LogsPage(),
                 "LECTOR"        => new PruebaLectorPage(),
+                "PERIODOS"      => new PeriodosPage(),
                 _               => null
             };
 
@@ -338,7 +340,7 @@ namespace CSMBiometricoWPF.Views
         // ── Cerrar sesión ───────────────────────────────────────────────
         private void BtnCerrarSesion_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("¿Desea cerrar sesión?", "Confirmar",
+            if (CustomMessageBox.Show("¿Desea cerrar sesión?", "Confirmar",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 _auth.Logout();

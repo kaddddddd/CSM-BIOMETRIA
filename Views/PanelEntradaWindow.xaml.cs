@@ -396,8 +396,8 @@ namespace CSMBiometricoWPF.Views
                 {
                     try
                     {
-                        var (estado, _) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
-                        MostrarResultado(resultado.Estudiante, estado);
+                        var (estado, _, nomFranja) = _asistencia.RegistrarIngreso(resultado.Estudiante, resultado.Puntaje);
+                        MostrarResultado(resultado.Estudiante, estado, nomFranja);
                         CargarDatos();
                     }
                     catch (Exception ex)
@@ -414,10 +414,13 @@ namespace CSMBiometricoWPF.Views
             });
         }
 
-        private void MostrarResultado(Estudiante est, EstadoIngreso estado)
+        private void MostrarResultado(Estudiante est, EstadoIngreso estado, string? nomFranja = null)
         {
-            lblNombreResult.Text  = est.NombreCompleto;
-            lblDetalleResult.Text = $"{est.Identificacion}  ·  {est.NombreSede}  ·  {DateTime.Now:HH:mm:ss}";
+            lblNombreResult.Text = est.NombreCompleto;
+            string detalle = $"{est.Identificacion}  ·  {est.NombreSede}  ·  {DateTime.Now:HH:mm:ss}";
+            if (!string.IsNullOrWhiteSpace(nomFranja))
+                detalle += $"  ·  {nomFranja}";
+            lblDetalleResult.Text = detalle;
 
             Color colorFondo;
             Color colorBadge;
@@ -429,19 +432,19 @@ namespace CSMBiometricoWPF.Views
                 case EstadoIngreso.A_TIEMPO:
                     colorFondo  = Color.FromRgb(27, 94, 32);
                     colorBadge  = Color.FromRgb(46, 125, 50);
-                    textoEstado = "✓  ACCESO PERMITIDO";
+                    textoEstado = string.IsNullOrWhiteSpace(nomFranja) ? "✓  ACCESO PERMITIDO" : $"✓  ACCESO PERMITIDO  ·  {nomFranja}";
                     instruccion = "Bienvenido";
                     break;
                 case EstadoIngreso.TARDE:
                     colorFondo  = Color.FromRgb(130, 80, 0);
                     colorBadge  = Color.FromRgb(230, 81, 0);
-                    textoEstado = "⚠  TARDE";
+                    textoEstado = string.IsNullOrWhiteSpace(nomFranja) ? "⚠  TARDE" : $"⚠  TARDE  ·  {nomFranja}";
                     instruccion = "Ingreso registrado con tardanza";
                     break;
                 case EstadoIngreso.YA_REGISTRADO:
                     colorFondo  = Color.FromRgb(13, 60, 110);
                     colorBadge  = Color.FromRgb(21, 101, 192);
-                    textoEstado = "●  YA REGISTRADO";
+                    textoEstado = string.IsNullOrWhiteSpace(nomFranja) ? "●  YA REGISTRADO" : $"●  YA REGISTRADO  ·  {nomFranja}";
                     instruccion = "Su ingreso ya fue registrado hoy";
                     break;
                 default:

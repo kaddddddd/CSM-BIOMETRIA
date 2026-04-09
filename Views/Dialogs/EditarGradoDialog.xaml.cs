@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
@@ -28,14 +28,14 @@ namespace CSMBiometricoWPF.Views.Dialogs
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre es obligatorio.", "Validación",
+                CustomMessageBox.Show("El nombre es obligatorio.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 txtNombre.Focus();
                 return;
             }
             if (!int.TryParse(txtOrden.Text.Trim(), out int orden) || orden < 1)
             {
-                MessageBox.Show("El orden debe ser un número entero positivo.", "Validación",
+                CustomMessageBox.Show("El orden debe ser un número entero positivo.", "Validación",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 txtOrden.Focus();
                 return;
@@ -52,7 +52,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al guardar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

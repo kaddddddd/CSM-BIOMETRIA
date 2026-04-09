@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -59,7 +59,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando instituciones: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error cargando instituciones: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -87,7 +87,7 @@ namespace CSMBiometricoWPF.Views.Pages
         private void BtnEliminar_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.Tag is not InstitucionVm vm) return;
-            var r = MessageBox.Show(
+            var r = CustomMessageBox.Show(
                 $"¿Desactivar la institución \"{vm.Nombre}\"?",
                 "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
@@ -99,7 +99,7 @@ namespace CSMBiometricoWPF.Views.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al eliminar: " + ex.Message, "Error",
+                CustomMessageBox.Show("Error al eliminar: " + ex.Message, "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
