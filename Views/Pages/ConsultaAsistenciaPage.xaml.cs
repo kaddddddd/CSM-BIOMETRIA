@@ -168,17 +168,12 @@ namespace CSMBiometricoWPF.Views.Pages
         private void Grid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (grid.SelectedItem is not RegistroIngreso reg) return;
-            if (reg.EstadoIngreso == EstadoIngreso.A_TIEMPO ||
-                reg.EstadoIngreso == EstadoIngreso.YA_REGISTRADO) return;
+            if (reg.EstadoIngreso == EstadoIngreso.YA_REGISTRADO) return;
 
             var dlg = new JustificarAsistenciaDialog(reg) { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() != true) return;
 
-            if (dlg.NuevoEstado != reg.EstadoIngreso)
-                _repoReg.ActualizarEstadoYObservaciones(reg.IdRegistro, dlg.NuevoEstado, dlg.Observacion);
-            else
-                _repoReg.ActualizarObservaciones(reg.IdRegistro, dlg.Observacion);
-
+            _repoReg.ActualizarCompleto(reg.IdRegistro, dlg.NuevoEstado, dlg.Observacion, dlg.NuevoNombreFranja);
             CargarRegistros();
         }
 

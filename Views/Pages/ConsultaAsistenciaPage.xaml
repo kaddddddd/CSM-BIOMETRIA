@@ -322,7 +322,7 @@
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
                                 </Border>
-                                <!-- Sin justificar (solo para TARDE o FUERA_DE_HORARIO) -->
+                                <!-- Sin justificar (TARDE o FUERA_DE_HORARIO) -->
                                 <TextBlock Text="Doble clic para justificar" FontSize="11"
                                            Foreground="#B0BEC5" FontStyle="Italic"
                                            VerticalAlignment="Center">
@@ -341,6 +341,25 @@
                                                     <MultiDataTrigger.Conditions>
                                                         <Condition Binding="{Binding EsJustificado}" Value="False"/>
                                                         <Condition Binding="{Binding EsAusente}"     Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <!-- A tiempo sin observación: invitar a editar -->
+                                <TextBlock Text="Doble clic para editar" FontSize="11"
+                                           Foreground="#CFD8DC" FontStyle="Italic"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding EsJustificado}"  Value="False"/>
+                                                        <Condition Binding="{Binding EstadoIngreso}"  Value="A_TIEMPO"/>
                                                     </MultiDataTrigger.Conditions>
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                 </MultiDataTrigger>

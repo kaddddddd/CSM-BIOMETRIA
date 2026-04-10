@@ -1,7 +1,7 @@
 <Window x:Class="CSMBiometricoWPF.Views.Dialogs.JustificarAsistenciaDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Justificar registro" Width="460" Height="360"
+        Title="Justificar registro" Width="460" Height="440"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         ShowInTaskbar="False" Background="#F5F7FA">
 
@@ -54,11 +54,12 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Opción de corrección de estado (solo para FUERA_DE_HORARIO) -->
+            <!-- Opción de corrección de estado (FUERA_DE_HORARIO y TARDE) -->
             <Border x:Name="pnlCorreccion" Grid.Row="0"
                     Background="#E8F5E9" CornerRadius="6" Padding="12,8"
                     Margin="0,0,0,10" Visibility="Collapsed">
@@ -67,12 +68,34 @@
                           FontSize="12" Foreground="#2E7D32" FontWeight="SemiBold"/>
             </Border>
 
-            <TextBlock Grid.Row="1"
-                       Text="Motivo de la justificación"
+            <!-- Campo de franja/jornada -->
+            <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                <TextBlock Text="Franja / Jornada  (dejar vacío para quitar)"
+                           FontSize="11" FontWeight="SemiBold" Foreground="#546E7A"
+                           Margin="0,0,0,6"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" BorderBrush="#B2DFDB" BorderThickness="1.5"
+                            CornerRadius="6" Background="White">
+                        <TextBox x:Name="txtFranja" BorderThickness="0" Background="Transparent"
+                                 FontSize="13" Foreground="#263238" Padding="10,6"
+                                 VerticalContentAlignment="Center" MaxLength="80"/>
+                    </Border>
+                    <Button Grid.Column="1" Content="✕" Width="34" Height="34" Margin="6,0,0,0"
+                            Style="{StaticResource BtnSecundario}" ToolTip="Quitar franja"
+                            Click="BtnLimpiarFranja_Click"/>
+                </Grid>
+            </StackPanel>
+
+            <TextBlock Grid.Row="2"
+                       Text="Observación / motivo"
                        FontSize="11" FontWeight="SemiBold" Foreground="#546E7A"
                        Margin="0,0,0,6"/>
 
-            <Border Grid.Row="2" BorderBrush="#B2DFDB" BorderThickness="1.5"
+            <Border Grid.Row="3" BorderBrush="#B2DFDB" BorderThickness="1.5"
                     CornerRadius="6" Background="White">
                 <TextBox x:Name="txtObservacion"
                          TextWrapping="Wrap" AcceptsReturn="True"
@@ -82,7 +105,7 @@
                          VerticalContentAlignment="Top"/>
             </Border>
 
-            <TextBlock Grid.Row="3" x:Name="lblContador"
+            <TextBlock Grid.Row="4" x:Name="lblContador"
                        FontSize="10" Foreground="#90A4AE"
                        HorizontalAlignment="Right" Margin="0,4,2,0"
                        Text="0 / 200 caracteres"/>

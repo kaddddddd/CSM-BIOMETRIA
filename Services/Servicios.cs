@@ -136,10 +136,11 @@ namespace CSMBiometricoWPF.Services
                 bool esLlegadaAnticipada = false;
                 if (franjaActiva == null)
                 {
-                    var proxima = franjas.Where(f => ahora < f.Inicio).OrderBy(f => f.Inicio).FirstOrDefault();
+                    var proxima = franjas.Where(f => ahora < f.Inicio && (f.Inicio - ahora).TotalMinutes <= 60)
+                                        .OrderBy(f => f.Inicio).FirstOrDefault();
                     if (proxima != null)
                     {
-                        franjaActiva      = proxima;
+                        franjaActiva        = proxima;
                         esLlegadaAnticipada = true;
                     }
                 }
@@ -160,10 +161,12 @@ namespace CSMBiometricoWPF.Services
                 EstadoIngreso estado;
                 if (franjaActiva == null)
                     estado = EstadoIngreso.FUERA_DE_HORARIO;
-                else if (esLlegadaAnticipada)
-                    estado = EstadoIngreso.A_TIEMPO;          // llegó antes de hora = puntual
+                else if (esLlegadaAnticipada || ahora <= franjaActiva.Inicio)
+                    estado = EstadoIngreso.A_TIEMPO;
+                else if (ahora <= franjaActiva.LimiteTarde)
+                    estado = EstadoIngreso.TARDE;
                 else
-                    estado = ahora <= franjaActiva.LimiteTarde ? EstadoIngreso.A_TIEMPO : EstadoIngreso.TARDE;
+                    estado = EstadoIngreso.FUERA_DE_HORARIO;
 
                 var registro = new RegistroIngreso
                 {
@@ -238,9 +241,8 @@ namespace CSMBiometricoWPF.Services
             var franjas = _franjaRepo.ObtenerPorHorario(horario.IdHorario);
             if (franjas.Count > 0)
             {
-                // Cualquier FranjaHorario explícitamente configurada se marca como EsFranja=true
                 foreach (var f in franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
-                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso, f.Nombre, true));
+                    resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso, f.Nombre, false));
             }
             else
             {

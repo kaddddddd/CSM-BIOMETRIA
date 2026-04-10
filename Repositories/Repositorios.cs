@@ -975,6 +975,18 @@ namespace CSMBiometricoWPF.Repositories
             cmd.ExecuteNonQuery();
         }
 
+        public void ActualizarCompleto(int idRegistro, EstadoIngreso nuevoEstado, string observaciones, string? nombreFranja)
+        {
+            using var conn = ConexionDB.ObtenerConexion();
+            using var cmd  = new SqliteCommand(
+                "UPDATE registros_ingreso SET estado_ingreso=@estado, observaciones=@obs, nombre_franja=@franja WHERE id_registro=@id", conn);
+            cmd.Parameters.AddWithValue("@estado", nuevoEstado.ToString());
+            cmd.Parameters.AddWithValue("@obs",    string.IsNullOrWhiteSpace(observaciones) ? DBNull.Value : (object)observaciones.Trim());
+            cmd.Parameters.AddWithValue("@franja", string.IsNullOrWhiteSpace(nombreFranja)  ? DBNull.Value : (object)nombreFranja.Trim());
+            cmd.Parameters.AddWithValue("@id",     idRegistro);
+            cmd.ExecuteNonQuery();
+        }
+
         public List<RegistroIngreso> ObtenerPorEstudianteYRango(int idEstudiante, DateTime desde, DateTime hasta)
         {
             var lista = new List<RegistroIngreso>();
