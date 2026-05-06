@@ -7,22 +7,22 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         SizeToContent="Height"
-        Width="420">
+        Width="400">
 
     <Window.Resources>
         <!-- Botón primario (fondo sólido teal) -->
         <Style x:Key="MsgBtnPrimary" TargetType="Button">
-            <Setter Property="Background"     Value="#007864"/>
-            <Setter Property="Foreground"     Value="White"/>
-            <Setter Property="BorderBrush"    Value="#007864"/>
+            <Setter Property="Background"      Value="#007864"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderBrush"     Value="#007864"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Height"         Value="36"/>
-            <Setter Property="MinWidth"       Value="90"/>
-            <Setter Property="Padding"        Value="18,0"/>
-            <Setter Property="FontFamily"     Value="Segoe UI"/>
-            <Setter Property="FontSize"       Value="13"/>
-            <Setter Property="Cursor"         Value="Hand"/>
-            <Setter Property="Margin"         Value="6,0"/>
+            <Setter Property="Height"          Value="34"/>
+            <Setter Property="MinWidth"        Value="80"/>
+            <Setter Property="Padding"         Value="22,0"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Margin"          Value="5,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -30,7 +30,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
+                                CornerRadius="3"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -47,65 +47,113 @@
             </Setter>
         </Style>
 
-        <!-- Botón secundario (borde teal, fondo blanco) -->
-        <Style x:Key="MsgBtnSecondary" TargetType="Button" BasedOn="{StaticResource MsgBtnPrimary}">
-            <Setter Property="Background"  Value="White"/>
-            <Setter Property="Foreground"  Value="#007864"/>
-            <Setter Property="BorderBrush" Value="#007864"/>
+        <!-- Botón secundario (mismo verde oscuro) -->
+        <Style x:Key="MsgBtnSecondary" TargetType="Button" BasedOn="{StaticResource MsgBtnPrimary}"/>
+
+        <!-- Estilo ProgressBar teal -->
+        <Style x:Key="TealProgress" TargetType="ProgressBar">
+            <Setter Property="Height"     Value="20"/>
+            <Setter Property="Foreground" Value="#007864"/>
+            <Setter Property="Background" Value="#E0F2F1"/>
+            <Setter Property="BorderBrush" Value="#B2DFDB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3">
+                            <Grid>
+                                <Rectangle x:Name="PART_Track"/>
+                                <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                    <Border Background="{TemplateBinding Foreground}" CornerRadius="3"/>
+                                </Decorator>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
-    <!-- Marco exterior con sombra -->
-    <Border x:Name="OuterBorder" Background="White" CornerRadius="8"
-            BorderThickness="2">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="24" ShadowDepth="5" Opacity="0.35" Direction="270"/>
-        </Border.Effect>
-
+    <!-- Marco exterior rectangular con borde de color según tipo -->
+    <Border x:Name="OuterBorder" Background="White" CornerRadius="0" BorderThickness="2">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="52"/>   <!-- Cabecera -->
-                <RowDefinition Height="*"/>    <!-- Cuerpo -->
-                <RowDefinition Height="64"/>   <!-- Botones -->
+                <RowDefinition Height="44"/>   <!-- Cabecera -->
+                <RowDefinition Height="Auto"/> <!-- Cuerpo: icono + mensaje -->
+                <RowDefinition Height="Auto"/> <!-- Extra: input / progress / wait -->
+                <RowDefinition Height="60"/>   <!-- Botones -->
             </Grid.RowDefinitions>
 
-            <!-- ── Cabecera ── -->
+            <!-- ── Cabecera ─────────────────────────────────────────────── -->
             <Border x:Name="HeaderBorder" Grid.Row="0"
-                    Background="#007864" CornerRadius="8,8,0,0" Padding="20,0">
+                    Background="#007864" CornerRadius="0" Padding="16,0"
+                    MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown"
+                    Cursor="SizeAll">
                 <TextBlock x:Name="TitleText"
-                           FontFamily="Segoe UI" FontSize="15" FontWeight="SemiBold"
+                           FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold"
                            Foreground="White" VerticalAlignment="Center"/>
             </Border>
 
-            <!-- ── Cuerpo (icono + mensaje) ── -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal"
-                        VerticalAlignment="Center" Margin="24,20,24,20">
+            <!-- ── Cuerpo: icono + mensaje ────────────────────────────── -->
+            <Grid Grid.Row="1" Margin="20,16,20,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="ColIcon" Width="62"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- Icono circular -->
-                <Grid Width="50" Height="50" Margin="0,0,18,0" VerticalAlignment="Center">
-                    <Ellipse x:Name="IconEllipse"/>
+                <Grid x:Name="IconGrid" Grid.Column="0"
+                      Width="46" Height="46" VerticalAlignment="Center">
+                    <Ellipse x:Name="IconEllipse" Width="46" Height="46"/>
                     <TextBlock x:Name="IconText"
-                               FontFamily="Segoe UI" FontWeight="Bold"
+                               FontFamily="Segoe UI" FontWeight="Bold" FontSize="22"
                                Foreground="White"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </Grid>
 
-                <!-- Texto del mensaje -->
-                <TextBlock x:Name="MessageText"
+                <TextBlock x:Name="MessageText" Grid.Column="1"
                            FontFamily="Segoe UI" FontSize="13"
-                           Foreground="#424242"
-                           TextWrapping="Wrap"
-                           VerticalAlignment="Center"
-                           MaxWidth="294"
-                           LineHeight="21"/>
-            </StackPanel>
+                           Foreground="#222222" TextWrapping="Wrap"
+                           VerticalAlignment="Center" LineHeight="20"/>
+            </Grid>
 
-            <!-- Separador -->
-            <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#E0E0E0"/>
+            <!-- ── Área extra: input / progress / wait ────────────────── -->
+            <Grid Grid.Row="2" Margin="20,0,20,14">
 
-            <!-- ── Botones ── -->
-            <StackPanel x:Name="ButtonsPanel" Grid.Row="2"
+                <!-- Prompt de una línea -->
+                <TextBox x:Name="SingleInput" Height="32" Visibility="Collapsed"
+                         FontFamily="Segoe UI" FontSize="13" Padding="8,4"
+                         BorderBrush="#BDBDBD" BorderThickness="1"
+                         VerticalContentAlignment="Center"/>
+
+                <!-- Prompt multilínea -->
+                <TextBox x:Name="MultiInput" Height="90" Visibility="Collapsed"
+                         FontFamily="Segoe UI" FontSize="13" Padding="8,6"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         BorderBrush="#BDBDBD" BorderThickness="1"/>
+
+                <!-- Barra de progreso determinada -->
+                <StackPanel x:Name="ProgressPanel" Visibility="Collapsed">
+                    <ProgressBar x:Name="TheProgressBar" Style="{StaticResource TealProgress}"
+                                 Minimum="0" Maximum="100" Value="0"/>
+                    <TextBlock x:Name="ProgressLabel"
+                               FontFamily="Segoe UI" FontSize="11" Foreground="#555"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Barra de espera indeterminada -->
+                <ProgressBar x:Name="WaitBar" Style="{StaticResource TealProgress}"
+                             IsIndeterminate="True" Visibility="Collapsed"/>
+            </Grid>
+
+            <!-- ── Separador + Botones ────────────────────────────────── -->
+            <Border x:Name="BtnSeparator" Grid.Row="3"
+                    BorderThickness="0,1,0,0" BorderBrush="#E0E0E0"/>
+            <StackPanel x:Name="ButtonsPanel" Grid.Row="3"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"/>

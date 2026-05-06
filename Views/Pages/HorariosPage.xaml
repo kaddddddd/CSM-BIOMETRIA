@@ -22,15 +22,16 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
-            <TextBlock Text="Horarios por Sede, Grado y Grupo"
-                       Style="{StaticResource LblTituloHeader}"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                           Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <TextBlock Text="Horarios por Sede, Grado y Grupo"
+                           Style="{StaticResource LblTituloHeader}"/>
+            </StackPanel>
         </Border>
 
         <!-- Barra de filtros -->
-        <Border Grid.Row="1" Background="White" Padding="20,0">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.08" Direction="270"/>
-            </Border.Effect>
+        <Border Grid.Row="1" Style="{StaticResource BarraFiltros}">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
                 <TextBlock Text="Institución:" Style="{StaticResource LblFiltro}" Margin="0,0,6,0"/>
@@ -59,10 +60,16 @@
 
                 <Border Width="1" Background="#E0E0E0" Margin="0,8,14,8"/>
 
-                <Button x:Name="btnVerExcepciones" Content="📅  Días especiales"
+                <Button x:Name="btnVerExcepciones"
                         Height="32" Padding="12,0" Style="{StaticResource BtnSecundario}"
                         Visibility="Collapsed" Click="BtnVerExcepciones_Click"
-                        ToolTip="Definir fechas específicas con horario diferente al semanal"/>
+                        ToolTip="Definir fechas específicas con horario diferente al semanal">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Días especiales" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
@@ -73,7 +80,7 @@
                 <!-- Mensaje vacío -->
                 <Border x:Name="lblSeleccioneSede" Padding="0,60,0,0">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="📅" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                        <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Foreground="#9E9E9E"/>
                         <TextBlock Text="Seleccione una institución y una sede para ver y editar sus horarios."
                                    FontSize="14" Foreground="#9E9E9E" HorizontalAlignment="Center"/>
                     </StackPanel>
@@ -92,7 +99,7 @@
                         <Border x:Name="pnlInfoAmbito" Background="#E8F5F1" CornerRadius="10,10,0,0"
                                 Padding="20,12">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="📋" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock x:Name="lblInfoAmbito" FontSize="12" Foreground="#005040"
                                            FontWeight="SemiBold" VerticalAlignment="Center"
                                            TextWrapping="Wrap"/>
@@ -104,7 +111,7 @@
                             <!-- Aviso de formato -->
                             <Border Background="#FFF8E1" CornerRadius="6" Padding="14,9" Margin="0,0,0,16">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⏰" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock FontSize="11.5" Foreground="#795548" VerticalAlignment="Center">
                                         <Run FontWeight="SemiBold">Formato HH:mm</Run>
                                         <Run>  —  Ej: 07:30 · 08:00 · 13:30</Run>
@@ -158,7 +165,7 @@
                             <Border Height="1" Background="#E8ECED" Margin="0,0,0,8"/>
 
                             <!-- LUNES -->
-                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                            <Border x:Name="borderLunes" CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
                                 </Border.Effect>
@@ -184,7 +191,7 @@
                             </Border>
 
                             <!-- MARTES -->
-                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                            <Border x:Name="borderMartes" CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
                                 </Border.Effect>
@@ -210,7 +217,7 @@
                             </Border>
 
                             <!-- MIÉRCOLES -->
-                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                            <Border x:Name="borderMiercoles" CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
                                 </Border.Effect>
@@ -236,7 +243,7 @@
                             </Border>
 
                             <!-- JUEVES -->
-                            <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
+                            <Border x:Name="borderJueves" CornerRadius="6" Padding="12,10" Margin="0,0,0,4" Background="#FAFFFE">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
                                 </Border.Effect>
@@ -262,7 +269,7 @@
                             </Border>
 
                             <!-- VIERNES -->
-                            <Border CornerRadius="6" Padding="12,10" Margin="0" Background="#FAFFFE">
+                            <Border x:Name="borderViernes" CornerRadius="6" Padding="12,10" Margin="0" Background="#FAFFFE">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.05"/>
                                 </Border.Effect>

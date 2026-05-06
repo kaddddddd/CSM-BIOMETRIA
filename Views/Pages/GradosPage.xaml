@@ -13,18 +13,34 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
-            <TextBlock Text="Grados" Style="{StaticResource LblTituloHeader}"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                           Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <TextBlock Text="Grados" Style="{StaticResource LblTituloHeader}"/>
+            </StackPanel>
         </Border>
 
         <!-- Toolbar -->
-        <Border Grid.Row="1" Background="#007864" Padding="10,7">
+        <Border Grid.Row="1" Style="{StaticResource ToolbarAcciones}">
             <StackPanel Orientation="Horizontal">
-                <Button x:Name="btnNuevo" Content="✚  Nuevo Grado" Style="{StaticResource BtnPrimario}"
+                <Button x:Name="btnNuevo" Style="{StaticResource BtnPrimario}"
                         Background="#009678" Height="35" Width="140" Margin="0,0,8,0"
-                        Click="BtnNuevo_Click"/>
-                <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
+                        Click="BtnNuevo_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nuevo Grado" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnSecundario}"
                         Width="110" Height="35"
-                        Click="BtnRefrescar_Click"/>
+                        Click="BtnRefrescar_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Refrescar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
@@ -48,9 +64,11 @@
                 <DataGridTemplateColumn x:Name="colEliminar" Header="" Width="60">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="🗑" Background="Transparent" BorderThickness="0"
-                                    Foreground="#C62828" FontSize="15" Cursor="Hand"
-                                    Click="BtnEliminar_Click" Tag="{Binding}"/>
+                            <Button Background="Transparent" BorderThickness="0"
+                                    Foreground="#C62828" Cursor="Hand"
+                                    Click="BtnEliminar_Click" Tag="{Binding}">
+                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                            </Button>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -58,7 +76,7 @@
         </DataGrid>
 
         <!-- Status bar -->
-        <Border Grid.Row="3" Background="#F5F5F5" Padding="16,0">
+        <Border Grid.Row="3" Style="{StaticResource StatusBar}">
             <TextBlock x:Name="lblTotal" Text="Mostrando 0 registros"
                        VerticalAlignment="Center" FontSize="12"
                        HorizontalAlignment="Right"/>

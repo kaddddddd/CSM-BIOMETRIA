@@ -5,43 +5,53 @@
         WindowState="Maximized"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Background="White"
+        Background="#F0F5F4"
         KeyDown="Window_KeyDown">
+
+    <!--
+        Paleta:
+          Verde principal  #007864
+          Verde oscuro     #005A4A
+          Verde claro bg   #E8F4F1
+          Fondo general    #F0F5F4
+          Panel izquierdo  #FFFFFF
+          Tarjetas stats   #FFFFFF
+          Texto primario   #1C3A33
+          Texto secundario #607D8B
+          Bordes suaves    #D4E6E1
+    -->
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="80"/>  <!-- Encabezado -->
-            <RowDefinition Height="*"/>   <!-- Contenido -->
-            <RowDefinition Height="32"/>  <!-- Pie -->
+            <RowDefinition Height="72"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="36"/>
         </Grid.RowDefinitions>
 
-        <!-- ════════════════════════════════════════
-             ENCABEZADO  (verde institucional)
-             ════════════════════════════════════════ -->
+        <!-- ══════════════════════════════════════════
+             ENCABEZADO  (verde principal)
+             ══════════════════════════════════════════ -->
         <Border Grid.Row="0" Background="#007864">
-            <Grid>
+            <Grid Margin="28,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="240"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Logo + Nombre institución -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal"
-                            VerticalAlignment="Center" Margin="28,0">
-                    <Border Width="50" Height="50" CornerRadius="6"
-                            Background="#005A4A" Margin="0,0,16,0">
-                        <Image x:Name="imgLogo" Stretch="Uniform" Margin="6"/>
+                <!-- Logo + Institución -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="44" Height="44" CornerRadius="8"
+                            Background="#005A4A" Margin="0,0,14,0">
+                        <Image x:Name="imgLogo" Stretch="Uniform" Margin="7"/>
                     </Border>
-
-                    <Rectangle Width="1" Margin="0,10" Fill="#FFFFFF" Opacity="0.3"/>
-
-                    <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Rectangle Width="1" Margin="0,10,14,10" Fill="#FFFFFF" Opacity="0.25"/>
+                    <StackPanel VerticalAlignment="Center">
                         <TextBlock x:Name="lblInstitucion"
-                                   FontFamily="Segoe UI Black" FontSize="22"
+                                   FontFamily="Segoe UI Black" FontSize="18"
                                    Foreground="White"/>
                         <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                            <Ellipse Width="6" Height="6" Fill="#A5D6A7"
-                                     VerticalAlignment="Center" Margin="0,0,7,0"/>
+                            <Ellipse Width="5" Height="5" Fill="#A5D6A7"
+                                     VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBlock x:Name="lblSubtituloSede"
                                        Text="CONTROL DE ACCESO  ·  REGISTRO DE INGRESOS"
                                        FontFamily="Segoe UI" FontSize="10"
@@ -50,342 +60,234 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Fecha + Reloj -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center"
-                            HorizontalAlignment="Center" Margin="0,0,28,0">
+                <!-- Reloj -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock x:Name="lblHora"
-                               FontFamily="Consolas" FontSize="34"
-                               Foreground="White" TextAlignment="Center"
-                               FontWeight="Bold"/>
+                               FontFamily="Consolas" FontSize="32" FontWeight="Bold"
+                               Foreground="White" TextAlignment="Right"/>
                     <TextBlock x:Name="lblFecha"
                                FontFamily="Segoe UI" FontSize="10"
-                               Foreground="#B2DFDB" TextAlignment="Center"
+                               Foreground="#B2DFDB" TextAlignment="Right"
                                Margin="0,2,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
              CONTENIDO PRINCIPAL
-             ════════════════════════════════════════ -->
+             ══════════════════════════════════════════ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="420"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- ── Barra lateral de estadísticas ──────────────── -->
-            <Border Grid.Column="0"
-                    Background="#F5F7FA"
-                    BorderThickness="0,0,1,0" BorderBrush="#E0E0E0">
-                <DockPanel>
+            <!-- ── Panel izquierdo: Lector biométrico ─────────── -->
+            <Border Grid.Column="0" Background="White"
+                    BorderThickness="0,0,1,0" BorderBrush="#D4E6E1">
+                <Grid>
 
-                    <!-- Botones en la parte inferior -->
-                    <StackPanel DockPanel.Dock="Bottom" Margin="16,0,16,16">
+                    <!-- Zona de identificación (estado inactivo) -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Margin="40,0">
 
-                        <!-- Indicador de conexión -->
-                        <Border x:Name="pnlConexion" CornerRadius="8"
-                                Background="White" BorderBrush="#E0E0E0"
-                                BorderThickness="1" Padding="14,8" Margin="0,0,0,10">
+                        <TextBlock Text="IDENTIFICACIÓN BIOMÉTRICA"
+                                   FontFamily="Segoe UI SemiBold" FontSize="9"
+                                   Foreground="#007864" TextAlignment="Center"
+                                   Margin="0,0,0,36"/>
+
+                        <!-- Círculo con huella y glow verde suave -->
+                        <Border Width="180" Height="180" CornerRadius="90"
+                                Background="#E8F4F1"
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,28">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="32" ShadowDepth="0"
+                                                  Color="#007864" Opacity="0.18"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Ellipse x:Name="elpPulso"
+                                         Width="148" Height="148"
+                                         Fill="#007864" Opacity="0.10"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"/>
+                                <Image x:Name="imgHuellaPanel"
+                                       Stretch="Uniform" Margin="28"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Instrucción -->
+                        <TextBlock x:Name="lblInstruccionPanel"
+                                   Text="Coloque su dedo en el sensor"
+                                   FontFamily="Segoe UI SemiBold" FontSize="15"
+                                   Foreground="#607D8B"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,28"/>
+
+                        <!-- Píldora de estado del lector -->
+                        <Border CornerRadius="20" Padding="18,8"
+                                Background="#E8F4F1"
+                                HorizontalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="dotConexion"
-                                         Width="8" Height="8"
-                                         Fill="#4CAF50"
-                                         VerticalAlignment="Center"
-                                         Margin="0,0,10,0"/>
-                                <TextBlock x:Name="lblConexion"
-                                           Text="EN LÍNEA"
-                                           FontFamily="Segoe UI SemiBold" FontSize="11"
-                                           Foreground="#388E3C"
+                                <Ellipse x:Name="dotLector" Width="8" Height="8"
+                                         Fill="#9E9E9E" VerticalAlignment="Center"
+                                         Margin="0,0,8,0"/>
+                                <TextBlock x:Name="lblEstadoLector"
+                                           Text="Inicializando..."
+                                           FontFamily="Segoe UI" FontSize="11"
+                                           Foreground="#607D8B"
                                            VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
-
-                        <!-- Botón actualizar -->
-                        <Button Height="38" Margin="0,0,0,8"
-                                Click="BtnRefrescar_Click" Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="brd" CornerRadius="8"
-                                            Background="White"
-                                            BorderBrush="#007864" BorderThickness="1.5">
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="↻" FontSize="14" Foreground="#007864"
-                                                       Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Actualizar ahora"
-                                                       FontFamily="Segoe UI SemiBold" FontSize="12"
-                                                       Foreground="#007864" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="brd" Property="Background" Value="#E8F5E9"/>
-                                        </Trigger>
-                                        <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="brd" Property="Background" Value="#C8E6C9"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-
-                        <!-- Botón cerrar -->
-                        <Button Height="38" Click="BtnCerrar_Click" Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="brd" CornerRadius="8"
-                                            Background="White"
-                                            BorderBrush="#BDBDBD" BorderThickness="1">
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="✕" FontSize="12" Foreground="#757575"
-                                                       Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Cerrar Panel"
-                                                       FontFamily="Segoe UI SemiBold" FontSize="12"
-                                                       Foreground="#616161" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="brd" Property="Background" Value="#FAFAFA"/>
-                                            <Setter TargetName="brd" Property="BorderBrush" Value="#9E9E9E"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
                     </StackPanel>
 
-                    <!-- Estadísticas (parte superior) -->
-                    <StackPanel Margin="16,20,16,0">
+                    <!-- Resultado de identificación (overlay del panel izquierdo) -->
+                    <Border x:Name="pnlResultadoLector"
+                            Visibility="Collapsed">
+                        <Border.Background>
+                            <SolidColorBrush x:Name="brushResultado" Color="#1B5E20"/>
+                        </Border.Background>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Margin="40,0" MaxWidth="340">
 
-                        <TextBlock Text="RESUMEN DEL DÍA"
-                                   FontFamily="Segoe UI SemiBold" FontSize="9"
-                                   Foreground="#007864" Margin="4,0,0,14"/>
+                            <!-- Badge de estado -->
+                            <Border x:Name="brdEstadoResult"
+                                    CornerRadius="28" Padding="24,12"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,0,0,28">
+                                <TextBlock x:Name="lblEstadoResult" Text=""
+                                           FontFamily="Segoe UI Black" FontSize="15"
+                                           Foreground="White" TextAlignment="Center"/>
+                            </Border>
 
-                        <!-- Tarjeta TOTAL INGRESOS -->
-                        <Border CornerRadius="10" Margin="0,0,0,10"
-                                Background="White"
-                                BorderBrush="#E0E0E0" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1"
-                                                  Color="#000000" Opacity="0.06"/>
-                            </Border.Effect>
-                            <Grid Margin="16,14">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0"
-                                           Text="TOTAL INGRESOS HOY"
-                                           FontFamily="Segoe UI" FontSize="9"
-                                           Foreground="#9E9E9E"/>
-                                <Grid Grid.Row="1" Margin="0,4,0,0">
-                                    <TextBlock x:Name="lblStatPresentes" Text="—"
-                                               FontFamily="Segoe UI Black" FontSize="52"
-                                               Foreground="#1565C0"
-                                               HorizontalAlignment="Left"/>
-                                    <Border Background="#E3F2FD" CornerRadius="16"
-                                            Padding="10,3"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Bottom">
-                                        <TextBlock Text="estudiantes"
-                                                   FontFamily="Segoe UI" FontSize="9"
-                                                   Foreground="#1565C0"/>
-                                    </Border>
-                                </Grid>
-                            </Grid>
-                        </Border>
+                            <!-- Nombre del estudiante -->
+                            <TextBlock x:Name="lblNombreResult" Text=""
+                                       FontFamily="Segoe UI Black" FontSize="26"
+                                       Foreground="White"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,14"/>
 
-                        <!-- Tarjeta A TIEMPO -->
-                        <Border CornerRadius="10" Margin="0,0,0,8"
-                                Background="White"
-                                BorderBrush="#E0E0E0" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1"
-                                                  Color="#000000" Opacity="0.06"/>
-                            </Border.Effect>
-                            <Grid Margin="14,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock FontFamily="Segoe UI SemiBold" FontSize="12"
-                                               Foreground="#2E7D32">
-                                        <Run Text="✓ " FontSize="10"/>
-                                        <Run Text="A TIEMPO"/>
-                                    </TextBlock>
-                                    <TextBlock Text="Llegada puntual"
-                                               FontFamily="Segoe UI" FontSize="9"
-                                               Foreground="#81C784" Margin="0,2,0,0"/>
-                                </StackPanel>
-                                <TextBlock x:Name="lblStatATiempo" Text="0" Grid.Column="1"
-                                           FontFamily="Segoe UI Black" FontSize="38"
-                                           Foreground="#2E7D32" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
+                            <!-- Detalle -->
+                            <TextBlock x:Name="lblDetalleResult" Text=""
+                                       FontFamily="Segoe UI" FontSize="12"
+                                       Foreground="#B2DFDB"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
 
-                        <!-- Tarjeta TARDANZAS -->
-                        <Border CornerRadius="10" Margin="0,0,0,16"
-                                Background="White"
-                                BorderBrush="#E0E0E0" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1"
-                                                  Color="#000000" Opacity="0.06"/>
-                            </Border.Effect>
-                            <Grid Margin="14,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock FontFamily="Segoe UI SemiBold" FontSize="12"
-                                               Foreground="#E65100">
-                                        <Run Text="⚠ " FontSize="10"/>
-                                        <Run Text="TARDANZAS"/>
-                                    </TextBlock>
-                                    <TextBlock Text="Llegada tardía"
-                                               FontFamily="Segoe UI" FontSize="9"
-                                               Foreground="#FFB74D" Margin="0,2,0,0"/>
-                                </StackPanel>
-                                <TextBlock x:Name="lblStatTardanzas" Text="0" Grid.Column="1"
-                                           FontFamily="Segoe UI Black" FontSize="38"
-                                           Foreground="#E65100" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Separador -->
-                        <Rectangle Height="1" Margin="4,0,4,16" Fill="#E0E0E0"/>
-
-                        <!-- ── Lector biométrico ─────────────────────── -->
-                        <TextBlock Text="LECTOR BIOMÉTRICO"
-                                   FontFamily="Segoe UI SemiBold" FontSize="9"
-                                   Foreground="#007864" Margin="4,0,0,10"/>
-
-                        <Border CornerRadius="10" Background="White"
-                                BorderBrush="#E0E0E0" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="1"
-                                                  Color="#000000" Opacity="0.06"/>
-                            </Border.Effect>
-                            <StackPanel Margin="14,14">
-
-                                <!-- Estado del lector -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <Ellipse x:Name="dotLector" Width="8" Height="8"
-                                             Fill="#9E9E9E" VerticalAlignment="Center"
-                                             Margin="0,0,8,0"/>
-                                    <TextBlock x:Name="lblEstadoLector"
-                                               Text="Inicializando..."
-                                               FontFamily="Segoe UI" FontSize="11"
-                                               Foreground="#757575"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-
-                                <!-- Imagen de huella con animación de pulso -->
-                                <Border Width="96" Height="96" CornerRadius="10"
-                                        Background="#F5F7FA" BorderBrush="#E0E0E0"
-                                        BorderThickness="1"
-                                        HorizontalAlignment="Center" Margin="0,0,0,12">
-                                    <Grid>
-                                        <Ellipse x:Name="elpPulso"
-                                                 Width="72" Height="72"
-                                                 Fill="#007864" Opacity="0.15"
-                                                 HorizontalAlignment="Center"
-                                                 VerticalAlignment="Center"/>
-                                        <Image x:Name="imgHuellaPanel"
-                                               Stretch="Uniform" Margin="10"
-                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Instrucción -->
-                                <TextBlock x:Name="lblInstruccionPanel"
-                                           Text="Coloque su dedo en el sensor"
-                                           FontFamily="Segoe UI SemiBold" FontSize="11"
-                                           Foreground="#546E7A"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Border>
-
-                    </StackPanel>
-                </DockPanel>
+                </Grid>
             </Border>
 
-            <!-- ── Área principal: lista de ingresos ───────────── -->
-            <Grid Grid.Column="1" Background="White">
+            <!-- ── Panel derecho: Estadísticas + Lista ──────────── -->
+            <Grid Grid.Column="1" Background="#F0F5F4">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="40"/>  <!-- Cabecera columnas -->
-                    <RowDefinition Height="*"/>   <!-- Filas -->
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="38"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Resultado de identificación (overlay temporal, aparece encima de la lista) -->
-                <Border x:Name="pnlResultadoLector"
-                        Grid.RowSpan="2" VerticalAlignment="Top"
-                        Visibility="Collapsed" Panel.ZIndex="10"
-                        Padding="24,18">
-                    <Border.Background>
-                        <SolidColorBrush x:Name="brushResultado" Color="#1B5E20"/>
-                    </Border.Background>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
+                <!-- Tarjetas de estadísticas horizontales -->
+                <Grid Grid.Row="0" Margin="24,20,24,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="lblNombreResult" Text=""
-                                       FontFamily="Segoe UI Black" FontSize="22"
-                                       Foreground="White"/>
-                            <TextBlock x:Name="lblDetalleResult" Text=""
-                                       FontFamily="Segoe UI" FontSize="11"
-                                       Foreground="#B2DFDB" Margin="0,3,0,0"/>
+                    <!-- Total -->
+                    <Border Grid.Column="0" CornerRadius="12" Background="White" Padding="20,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="1"
+                                              Color="#007864" Opacity="0.08"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="TOTAL HOY"
+                                       FontFamily="Segoe UI SemiBold" FontSize="9"
+                                       Foreground="#007864" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="lblStatPresentes" Text="—"
+                                       FontFamily="Segoe UI Black" FontSize="44"
+                                       Foreground="#1C3A33"/>
+                            <TextBlock Text="ingresos"
+                                       FontFamily="Segoe UI" FontSize="10"
+                                       Foreground="#90A4AE"/>
                         </StackPanel>
+                    </Border>
 
-                        <Border Grid.Column="1" x:Name="brdEstadoResult"
-                                CornerRadius="24" Padding="22,10"
-                                VerticalAlignment="Center">
-                            <TextBlock x:Name="lblEstadoResult" Text=""
-                                       FontFamily="Segoe UI Black" FontSize="15"
-                                       Foreground="White" TextAlignment="Center"/>
-                        </Border>
-                    </Grid>
-                </Border>
+                    <!-- A Tiempo -->
+                    <Border Grid.Column="2" CornerRadius="12" Background="White" Padding="20,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="1"
+                                              Color="#007864" Opacity="0.08"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="A TIEMPO"
+                                       FontFamily="Segoe UI SemiBold" FontSize="9"
+                                       Foreground="#2E7D32" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="lblStatATiempo" Text="0"
+                                       FontFamily="Segoe UI Black" FontSize="44"
+                                       Foreground="#2E7D32"/>
+                            <TextBlock Text="puntuales"
+                                       FontFamily="Segoe UI" FontSize="10"
+                                       Foreground="#90A4AE"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tardanzas -->
+                    <Border Grid.Column="4" CornerRadius="12" Background="White" Padding="20,16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="1"
+                                              Color="#007864" Opacity="0.08"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="TARDANZAS"
+                                       FontFamily="Segoe UI SemiBold" FontSize="9"
+                                       Foreground="#E65100" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="lblStatTardanzas" Text="0"
+                                       FontFamily="Segoe UI Black" FontSize="44"
+                                       Foreground="#E65100"/>
+                            <TextBlock Text="llegadas tardías"
+                                       FontFamily="Segoe UI" FontSize="10"
+                                       Foreground="#90A4AE"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
                 <!-- Cabecera de columnas -->
-                <Border Grid.Row="0"
-                        Background="#F5F7FA"
-                        BorderThickness="0,0,0,1" BorderBrush="#E0E0E0">
+                <Border Grid.Row="1" Background="#E8F4F1"
+                        BorderThickness="0,0,0,1" BorderBrush="#D4E6E1">
                     <Grid Margin="24,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="84"/>
-                            <ColumnDefinition Width="48"/>
+                            <ColumnDefinition Width="46"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="140"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="HORA" Grid.Column="0"
                                    FontFamily="Segoe UI SemiBold" FontSize="9"
-                                   Foreground="#78909C" VerticalAlignment="Center"/>
+                                   Foreground="#007864" VerticalAlignment="Center"/>
                         <TextBlock Text="ESTUDIANTE" Grid.Column="2"
                                    FontFamily="Segoe UI SemiBold" FontSize="9"
-                                   Foreground="#78909C" VerticalAlignment="Center"/>
+                                   Foreground="#007864" VerticalAlignment="Center"/>
                         <TextBlock Text="GRADO · GRUPO" Grid.Column="3"
                                    FontFamily="Segoe UI SemiBold" FontSize="9"
-                                   Foreground="#78909C" VerticalAlignment="Center"/>
+                                   Foreground="#007864" VerticalAlignment="Center"/>
                         <TextBlock Text="ESTADO" Grid.Column="4"
                                    FontFamily="Segoe UI SemiBold" FontSize="9"
-                                   Foreground="#78909C"
+                                   Foreground="#007864"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
                 <!-- Lista de registros -->
-                <ListView x:Name="listIngresos" Grid.Row="1"
+                <ListView x:Name="listIngresos" Grid.Row="2"
                           Background="Transparent"
                           BorderThickness="0"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -396,8 +298,8 @@
 
                     <ListView.Resources>
                         <Style TargetType="ScrollBar">
-                            <Setter Property="Width" Value="5"/>
-                            <Setter Property="Background" Value="#F5F5F5"/>
+                            <Setter Property="Width" Value="4"/>
+                            <Setter Property="Background" Value="#D4E6E1"/>
                         </Style>
                     </ListView.Resources>
 
@@ -414,17 +316,17 @@
                                         <Border x:Name="rowBorder"
                                                 Background="{TemplateBinding Background}"
                                                 BorderThickness="0,0,0,1"
-                                                BorderBrush="#F0F0F0">
+                                                BorderBrush="#EBF4F1">
                                             <ContentPresenter/>
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                                                 <Setter TargetName="rowBorder"
-                                                        Property="Background" Value="#FAFAFA"/>
+                                                        Property="Background" Value="#F7FBFA"/>
                                             </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="rowBorder"
-                                                        Property="Background" Value="#F1F8F6"/>
+                                                        Property="Background" Value="#EBF4F1"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -435,19 +337,19 @@
 
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid Height="68" Margin="24,0">
+                            <Grid Height="64" Margin="24,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="84"/>   <!-- Hora -->
-                                    <ColumnDefinition Width="48"/>   <!-- Avatar -->
-                                    <ColumnDefinition Width="*"/>    <!-- Nombre/ID -->
-                                    <ColumnDefinition Width="200"/>  <!-- Grado·Grupo -->
-                                    <ColumnDefinition Width="150"/>  <!-- Estado -->
+                                    <ColumnDefinition Width="84"/>
+                                    <ColumnDefinition Width="46"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="190"/>
+                                    <ColumnDefinition Width="140"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Hora -->
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Hora}"
-                                               FontFamily="Consolas" FontSize="17"
+                                               FontFamily="Consolas" FontSize="16"
                                                FontWeight="Bold"
                                                Foreground="#37474F"/>
                                     <Border x:Name="badgeNuevo"
@@ -462,14 +364,14 @@
 
                                 <!-- Avatar circular con iniciales -->
                                 <Border Grid.Column="1"
-                                        Width="38" Height="38"
-                                        CornerRadius="19"
+                                        Width="34" Height="34"
+                                        CornerRadius="17"
                                         Background="{Binding AvatarFondo}"
                                         VerticalAlignment="Center"
                                         HorizontalAlignment="Left">
                                     <TextBlock Text="{Binding Iniciales}"
                                                FontFamily="Segoe UI SemiBold"
-                                               FontSize="13" Foreground="White"
+                                               FontSize="12" Foreground="White"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"/>
                                 </Border>
@@ -480,8 +382,8 @@
                                             Margin="0,0,16,0">
                                     <TextBlock Text="{Binding Nombre}"
                                                FontFamily="Segoe UI SemiBold"
-                                               FontSize="14"
-                                               Foreground="#263238"
+                                               FontSize="13"
+                                               Foreground="#1C3A33"
                                                TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding Identificacion}"
                                                FontFamily="Segoe UI" FontSize="11"
@@ -492,7 +394,7 @@
                                 <!-- Grado · Grupo -->
                                 <TextBlock Grid.Column="3"
                                            Text="{Binding GradoGrupo}"
-                                           FontFamily="Segoe UI" FontSize="13"
+                                           FontFamily="Segoe UI" FontSize="12"
                                            Foreground="#546E7A"
                                            VerticalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"
@@ -507,10 +409,10 @@
                                         Padding="12,5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        MinWidth="120">
+                                        MinWidth="110">
                                     <TextBlock Text="{Binding EstadoTexto}"
                                                FontFamily="Segoe UI SemiBold"
-                                               FontSize="11"
+                                               FontSize="10"
                                                Foreground="{Binding EstadoColor}"
                                                TextAlignment="Center"/>
                                 </Border>
@@ -523,69 +425,132 @@
 
                 <!-- Mensaje cuando no hay registros -->
                 <StackPanel x:Name="pnlSinDatos"
-                            Grid.Row="1"
+                            Grid.Row="2"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="Collapsed">
-                    <TextBlock Text="📋"
-                               FontSize="64"
-                               HorizontalAlignment="Center" Opacity="0.2"/>
+                    <TextBlock Text="&#x1F4CB;"
+                               FontSize="56"
+                               HorizontalAlignment="Center" Opacity="0.18"/>
                     <TextBlock Text="Sin ingresos registrados hoy"
                                FontFamily="Segoe UI Light" FontSize="20"
-                               Foreground="#B0BEC5"
+                               Foreground="#90A4AE"
                                HorizontalAlignment="Center"
                                Margin="0,12,0,0"/>
                     <TextBlock Text="Los registros aparecerán aquí en tiempo real"
                                FontFamily="Segoe UI" FontSize="12"
-                               Foreground="#CFD8DC"
+                               Foreground="#B2DFDB"
                                HorizontalAlignment="Center"
                                Margin="0,6,0,0"/>
                 </StackPanel>
             </Grid>
         </Grid>
 
-        <!-- ════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
              PIE DE PANTALLA
-             ════════════════════════════════════════ -->
-        <Border Grid.Row="2" Background="#F5F7FA"
-                BorderThickness="0,1,0,0" BorderBrush="#E0E0E0">
-            <Grid Margin="28,0">
+             ══════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="White"
+                BorderThickness="0,1,0,0" BorderBrush="#D4E6E1">
+            <Grid Margin="24,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Estado de conexión -->
+                <Border x:Name="pnlConexion" Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="dotConexion" Width="6" Height="6"
+                                 Fill="#4CAF50" VerticalAlignment="Center"
+                                 Margin="0,0,6,0"/>
+                        <TextBlock x:Name="lblConexion" Text="EN LÍNEA"
+                                   FontFamily="Segoe UI SemiBold" FontSize="10"
+                                   Foreground="#388E3C"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Última actualización -->
                 <TextBlock x:Name="lblUltimaActualizacion"
+                           Grid.Column="1"
                            FontFamily="Segoe UI" FontSize="10"
-                           Foreground="#9E9E9E"
-                           VerticalAlignment="Center"/>
-                <TextBlock Text="ESC — cerrar panel  ·  F5 — actualizar"
-                           FontFamily="Segoe UI" FontSize="10"
-                           Foreground="#BDBDBD"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center"/>
+                           Foreground="#90A4AE"
+                           VerticalAlignment="Center"
+                           Margin="16,0,0,0"/>
+
+                <!-- Atajos + botones icono -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="F5 actualizar  ·  ESC cerrar"
+                               FontFamily="Segoe UI" FontSize="10"
+                               Foreground="#B0BEC5"
+                               VerticalAlignment="Center"
+                               Margin="0,0,14,0"/>
+                    <Button Height="24" Width="24" Margin="0,0,6,0"
+                            Click="BtnRefrescar_Click" Cursor="Hand"
+                            ToolTip="Actualizar">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="brd" CornerRadius="4" Background="#E8F4F1">
+                                    <TextBlock Text="&#x21BB;" FontSize="13"
+                                               Foreground="#007864"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="brd" Property="Background" Value="#C8E6C9"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button Height="24" Width="24"
+                            Click="BtnCerrar_Click" Cursor="Hand"
+                            ToolTip="Cerrar panel">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="brd" CornerRadius="4" Background="#E8F4F1">
+                                    <TextBlock Text="&#x2715;" FontSize="11"
+                                               Foreground="#607D8B"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="brd" Property="Background" Value="#FFCDD2"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
              OVERLAY: SELECTOR DE INSTITUCIÓN
-             ════════════════════════════════════════ -->
+             ══════════════════════════════════════════ -->
         <Grid x:Name="pnlSelectorInstitucion"
               Grid.RowSpan="3"
               Visibility="Collapsed">
             <Grid.Background>
-                <SolidColorBrush Color="White" Opacity="0.92"/>
+                <SolidColorBrush Color="#E8F4F1" Opacity="0.94"/>
             </Grid.Background>
 
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="460"
-                    CornerRadius="14"
+                    CornerRadius="16"
                     Background="White"
-                    BorderBrush="#E0E0E0" BorderThickness="1">
+                    BorderBrush="#D4E6E1" BorderThickness="1">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="40" ShadowDepth="0"
-                                      Color="#000000" Opacity="0.12"/>
+                                      Color="#007864" Opacity="0.12"/>
                 </Border.Effect>
 
                 <StackPanel Margin="36,32">
 
-                    <!-- Logo + título -->
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center" Margin="0,0,0,20">
                         <Border Width="44" Height="44" CornerRadius="8"
@@ -595,28 +560,25 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="CSM BIOMÉTRICO"
                                        FontFamily="Segoe UI Black" FontSize="14"
-                                       Foreground="#263238"/>
+                                       Foreground="#1C3A33"/>
                             <TextBlock Text="Panel de Control de Acceso"
                                        FontFamily="Segoe UI" FontSize="10"
                                        Foreground="#007864"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Separador -->
-                    <Rectangle Height="1" Margin="0,0,0,24" Fill="#E0E0E0"/>
+                    <Rectangle Height="1" Margin="0,0,0,24" Fill="#D4E6E1"/>
 
                     <TextBlock Text="Seleccionar institución"
                                FontFamily="Segoe UI SemiBold" FontSize="13"
                                Foreground="#546E7A" Margin="0,0,0,8"/>
 
-                    <!-- ComboBox de instituciones -->
                     <ComboBox x:Name="cmbInstitucionSelector"
                               Height="42"
                               FontFamily="Segoe UI" FontSize="14"
                               Foreground="#263238"
                               Margin="0,0,0,20"/>
 
-                    <!-- Botón abrir -->
                     <Button Content="Abrir Panel de Ingresos →"
                             Height="44"
                             FontFamily="Segoe UI SemiBold" FontSize="14"
@@ -624,8 +586,7 @@
                             Click="BtnAbrirPanel_Click">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border x:Name="brd" CornerRadius="10"
-                                        Background="#007864">
+                                <Border x:Name="brd" CornerRadius="10" Background="#007864">
                                     <ContentPresenter HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
                                                       TextElement.Foreground="White"/>
@@ -644,56 +605,55 @@
 
                     <TextBlock Text="También puede presionar Enter para confirmar"
                                FontFamily="Segoe UI" FontSize="10"
-                               Foreground="#BDBDBD"
+                               Foreground="#B0BEC5"
                                HorizontalAlignment="Center"
                                Margin="0,10,0,0"/>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <!-- ════════════════════════════════════════
+        <!-- ══════════════════════════════════════════
              OVERLAY: SELECTOR DE SEDE
-             ════════════════════════════════════════ -->
+             ══════════════════════════════════════════ -->
         <Grid x:Name="pnlSelectorSede"
               Grid.RowSpan="3"
               Visibility="Collapsed">
             <Grid.Background>
-                <SolidColorBrush Color="White" Opacity="0.92"/>
+                <SolidColorBrush Color="#E8F4F1" Opacity="0.94"/>
             </Grid.Background>
 
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="460"
-                    CornerRadius="14"
+                    CornerRadius="16"
                     Background="White"
-                    BorderBrush="#E0E0E0" BorderThickness="1">
+                    BorderBrush="#D4E6E1" BorderThickness="1">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="40" ShadowDepth="0"
-                                      Color="#000000" Opacity="0.12"/>
+                                      Color="#007864" Opacity="0.12"/>
                 </Border.Effect>
 
                 <StackPanel Margin="36,32">
 
-                    <!-- Logo + título -->
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center" Margin="0,0,0,20">
                         <Border Width="44" Height="44" CornerRadius="8"
                                 Background="#007864" Margin="0,0,14,0">
-                            <TextBlock Text="📍" FontSize="22"
+                            <TextBlock Text="&#x1F4CD;" FontSize="22"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="CSM BIOMÉTRICO"
                                        FontFamily="Segoe UI Black" FontSize="14"
-                                       Foreground="#263238"/>
+                                       Foreground="#1C3A33"/>
                             <TextBlock Text="Seleccionar sede de trabajo"
                                        FontFamily="Segoe UI" FontSize="10"
                                        Foreground="#007864"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <Rectangle Height="1" Margin="0,0,0,24" Fill="#E0E0E0"/>
+                    <Rectangle Height="1" Margin="0,0,0,24" Fill="#D4E6E1"/>
 
                     <TextBlock Text="Sede"
                                FontFamily="Segoe UI SemiBold" FontSize="13"
@@ -713,8 +673,7 @@
                             Click="BtnAbrirPanelSede_Click">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border x:Name="brd" CornerRadius="10"
-                                        Background="#007864">
+                                <Border x:Name="brd" CornerRadius="10" Background="#007864">
                                     <ContentPresenter HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
                                                       TextElement.Foreground="White"/>
@@ -733,7 +692,7 @@
 
                     <TextBlock Text="También puede presionar Enter para confirmar"
                                FontFamily="Segoe UI" FontSize="10"
-                               Foreground="#BDBDBD"
+                               Foreground="#B0BEC5"
                                HorizontalAlignment="Center"
                                Margin="0,10,0,0"/>
                 </StackPanel>

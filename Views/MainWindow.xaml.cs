@@ -26,11 +26,10 @@ namespace CSMBiometricoWPF.Views
         // Formato de subitems: "icono|nombre visible|MODULO"
         private readonly (string icono, string titulo, string[] subitems)[] _menuDefs =
         {
-            ("📊", "Estadística",        new[] { "📊|Dashboard|DASHBOARD" }),
-            ("📋", "Registro y Control", new[] { "👨‍🎓|Estudiantes|ESTUDIANTES", "🖐|Enrolamiento|ENROLAMIENTO", "✅|Verificación|VERIFICACION", "📅|Consultar Asistencia|CONSULTA" }),
-            ("⚙",  "Configuración",     new[] { "🏛|Instituciones|INSTITUCIONES", "🏫|Sedes|SEDES", "📚|Grados|GRADOS", "👥|Grupos|GRUPOS", "🕐|Horarios|HORARIOS", "📅|Períodos académicos|PERIODOS" }),
-            ("🔒", "Seguridad",          new[] { "👤|Usuarios|USUARIOS", "📋|Logs|LOGS" }),
-            ("🔧", "Utilidades",         new[] { "🔧|Probar Lector|LECTOR" }),
+            ("\uEDA3", "Módulo Biométrico", new[] { "\uE80F|Dashboard|DASHBOARD",               "\uEDA3|Enrolamiento|ENROLAMIENTO", "\uE73E|Verificación|VERIFICACION" }),
+            ("\uE902", "Estudiantes",       new[] { "\uE902|Gestión de Estudiantes|ESTUDIANTES", "\uE716|Consulta de Asistencia|CONSULTA" }),
+            ("\uE713", "Administración",    new[] { "\uE825|Institución|INSTITUCIONES",          "\uE823|Horarios|HORARIOS",         "\uE787|Períodos Académicos|PERIODOS" }),
+            ("\uE8A7", "Sistema",           new[] { "\uE77B|Usuarios|USUARIOS",                  "\uE838|Registros del Sistema|LOGS", "\uE90F|Prueba de Lector|LECTOR" }),
         };
 
         public MainWindow()
@@ -59,7 +58,7 @@ namespace CSMBiometricoWPF.Views
 
             // Placeholder del buscador
             txtBuscar.Text = "Buscar formulario...";
-            txtBuscar.Foreground = new SolidColorBrush(Colors.White) { Opacity = 0.6 };
+            txtBuscar.Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
 
             ConstruirMenu();
             ConstruirIndiceModulos();
@@ -115,6 +114,7 @@ namespace CSMBiometricoWPF.Views
                     itemContent.Children.Add(new TextBlock
                     {
                         Text = itemIcono,
+                        FontFamily = new FontFamily("Segoe MDL2 Assets"),
                         FontSize = 14,
                         Width = 24,
                         TextAlignment = TextAlignment.Center,
@@ -154,17 +154,27 @@ namespace CSMBiometricoWPF.Views
                 headerContent.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 headerContent.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-                var lblTitulo = new TextBlock
+                var leftPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+                leftPanel.Children.Add(new TextBlock
                 {
-                    Text = $"{catIcono}  {titulo}",
+                    Text = catIcono,
+                    FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                    FontSize = 13,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x00, 0x78, 0x64)),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 8, 0)
+                });
+                leftPanel.Children.Add(new TextBlock
+                {
+                    Text = titulo,
                     FontFamily = new FontFamily("Segoe UI Semibold"),
                     FontSize = 12,
                     Foreground = new SolidColorBrush(Color.FromRgb(0x37, 0x47, 0x4F)),
                     VerticalAlignment = VerticalAlignment.Center
-                };
-                Grid.SetColumn(lblTitulo, 0);
+                });
+                Grid.SetColumn(leftPanel, 0);
                 Grid.SetColumn(lblArrow, 2);
-                headerContent.Children.Add(lblTitulo);
+                headerContent.Children.Add(leftPanel);
                 headerContent.Children.Add(lblArrow);
 
                 var capturedPanel = pnlItems;
@@ -227,7 +237,7 @@ namespace CSMBiometricoWPF.Views
             if (txtBuscar.Text == "Buscar formulario...")
             {
                 txtBuscar.Text = "";
-                txtBuscar.Foreground = new SolidColorBrush(Colors.White);
+                txtBuscar.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x22));
             }
         }
 
@@ -299,7 +309,7 @@ namespace CSMBiometricoWPF.Views
         private void RestablecerPlaceholder()
         {
             txtBuscar.Text = "Buscar formulario...";
-            txtBuscar.Foreground = new SolidColorBrush(Colors.White) { Opacity = 0.6 };
+            txtBuscar.Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
         }
 
         // ── Reloj ───────────────────────────────────────────────────────

@@ -81,14 +81,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
             cmbGrado.DisplayMemberPath = "NombreGrado";
             cmbGrado.SelectedValuePath = "IdGrado";
 
-            // Grupo
-            cmbGrupo.Items.Clear();
-            try
-            {
-                foreach (var g in _grupoRepo.ObtenerTodos())
-                    cmbGrupo.Items.Add(g);
-            }
-            catch { }
+            // Grupo — se carga automáticamente al seleccionar grado
             cmbGrupo.DisplayMemberPath = "NombreGrupo";
             cmbGrupo.SelectedValuePath = "IdGrupo";
 
@@ -137,6 +130,24 @@ namespace CSMBiometricoWPF.Views.Dialogs
             if (_cargandoCombos) return;
             if (cmbInstitucion.SelectedItem is Institucion inst)
                 CargarSedes(inst.IdInstitucion);
+        }
+
+        private void CmbGrado_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            cmbGrupo.Items.Clear();
+            if (cmbGrado.SelectedItem is Grado g)
+            {
+                try
+                {
+                    var gr = _grupoRepo.ObtenerPorGrado(g.IdGrado);
+                    if (gr != null)
+                    {
+                        cmbGrupo.Items.Add(gr);
+                        cmbGrupo.SelectedIndex = 0;
+                    }
+                }
+                catch { }
+            }
         }
 
         private void BtnFoto_Click(object sender, RoutedEventArgs e)

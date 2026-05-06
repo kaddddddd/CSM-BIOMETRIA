@@ -60,7 +60,8 @@
                 <ComboBox x:Name="cmbSede" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
 
                 <TextBlock Text="Grado *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
-                <ComboBox x:Name="cmbGrado" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+                <ComboBox x:Name="cmbGrado" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"
+                          SelectionChanged="CmbGrado_Changed"/>
 
                 <TextBlock Text="Grupo *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
                 <ComboBox x:Name="cmbGrupo" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
@@ -77,10 +78,15 @@
                         Width="100" Height="130" HorizontalAlignment="Center">
                     <Image x:Name="imgFoto" Stretch="UniformToFill"/>
                 </Border>
-                <Button Content="📷  Foto"
-                        Style="{StaticResource BtnSecundario}"
+                <Button Style="{StaticResource BtnSecundario}"
                         Height="28" Margin="0,8,0,0" FontSize="11"
-                        Click="BtnFoto_Click"/>
+                        Click="BtnFoto_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Subir Foto" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 

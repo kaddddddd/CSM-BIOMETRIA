@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
 using CSMBiometricoWPF.Views.Dialogs;
@@ -40,103 +41,175 @@ namespace CSMBiometricoWPF.Views.Pages
         private void RenderizarPeriodos(List<PeriodoAcademico> periodos)
         {
             pnlPeriodos.Children.Clear();
+            bool puedeEliminar = periodos.Count > 3;
             for (int i = 0; i < periodos.Count; i++)
-                pnlPeriodos.Children.Add(CrearFilaPeriodo(periodos[i], i + 1));
+                pnlPeriodos.Children.Add(CrearFilaPeriodo(periodos[i], i + 1, puedeEliminar));
+            btnAgregarPeriodo.Visibility = periodos.Count >= 4
+                ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        private Border CrearFilaPeriodo(PeriodoAcademico p, int numero)
+        private Border CrearFilaPeriodo(PeriodoAcademico p, int numero, bool puedeEliminar)
         {
-            var border = new Border
+            var acentos = new[]
+            {
+                Color.FromRgb(0x00, 0x78, 0x64), // verde
+                Color.FromRgb(0x15, 0x65, 0xC0), // azul
+                Color.FromRgb(0x6A, 0x1B, 0x9A), // morado
+                Color.FromRgb(0xE6, 0x5C, 0x00), // naranja
+            };
+            var acento = acentos[(numero - 1) % acentos.Length];
+
+            var outer = new Border
             {
                 Background      = Brushes.White,
-                CornerRadius    = new CornerRadius(8),
-                BorderBrush     = new SolidColorBrush(Color.FromRgb(0xC8, 0xE6, 0xE0)),
+                CornerRadius    = new CornerRadius(10),
+                BorderBrush     = new SolidColorBrush(Color.FromArgb(0x28, acento.R, acento.G, acento.B)),
                 BorderThickness = new Thickness(1),
-                Margin          = new Thickness(0, 0, 0, 12),
-                Padding         = new Thickness(20, 16, 20, 16)
+                Margin          = new Thickness(8),
+                Effect          = new DropShadowEffect
+                {
+                    BlurRadius  = 10,
+                    ShadowDepth = 2,
+                    Opacity     = 0.07,
+                    Color       = Colors.Black,
+                    Direction   = 270
+                }
             };
 
-            var outer = new Grid();
-            outer.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            outer.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12) });
-            outer.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            // Grid principal: franja izquierda | contenido
+            var mainGrid = new Grid();
+            mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(7) });
+            mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            // ── Fila 0: badge número + nombre ──────────────────────────
-            var filaTop = new StackPanel { Orientation = Orientation.Horizontal };
+            var franja = new Border
+            {
+                Background   = new SolidColorBrush(acento),
+                CornerRadius = new CornerRadius(10, 0, 0, 10)
+            };
+            Grid.SetColumn(franja, 0);
+            mainGrid.Children.Add(franja);
+
+            // Contenido interior
+            var content = new StackPanel { Margin = new Thickness(20, 18, 20, 18) };
+            Grid.SetColumn(content, 1);
+
+            // ── Fila 1: [badge] [título fijo] [×] ─────────────────────
+            var filaNombre = new Grid { Margin = new Thickness(0, 0, 0, 14) };
+            filaNombre.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            filaNombre.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            filaNombre.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var badge = new Border
             {
-                Background      = new SolidColorBrush(Color.FromRgb(0x00, 0x78, 0x64)),
-                CornerRadius    = new CornerRadius(4),
-                Padding         = new Thickness(10, 3, 10, 3),
-                Margin          = new Thickness(0, 0, 12, 0),
+                Background        = new SolidColorBrush(acento),
+                CornerRadius      = new CornerRadius(22),
+                Width             = 44,
+                Height            = 44,
+                Margin            = new Thickness(0, 0, 14, 0),
                 VerticalAlignment = VerticalAlignment.Center
             };
             badge.Child = new TextBlock
             {
-                Text       = $"P{numero}",
-                Foreground = Brushes.White,
-                FontWeight = FontWeights.Bold,
-                FontSize   = 11
+                Text                = $"P{numero}",
+                Foreground          = Brushes.White,
+                FontWeight          = FontWeights.Bold,
+                FontSize            = 14,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment   = VerticalAlignment.Center
             };
-            filaTop.Children.Add(badge);
+            Grid.SetColumn(badge, 0);
+            filaNombre.Children.Add(badge);
 
-            var txtNombre = new TextBox
+            var lblNombre = new TextBlock
             {
-                Text                    = p.Nombre,
-                Width                   = 180,
-                Height                  = 30,
-                FontSize                = 13,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                Tag                     = "nombre"
+                Text              = $"Período {numero}",
+                FontSize          = 15,
+                FontWeight        = FontWeights.SemiBold,
+                Foreground        = new SolidColorBrush(Color.FromRgb(0x26, 0x32, 0x38)),
+                VerticalAlignment = VerticalAlignment.Center
             };
-            if (Application.Current.TryFindResource("TxtBase") is Style s)
-                txtNombre.Style = s;
-            filaTop.Children.Add(txtNombre);
+            Grid.SetColumn(lblNombre, 1);
+            filaNombre.Children.Add(lblNombre);
 
-            Grid.SetRow(filaTop, 0);
-            outer.Children.Add(filaTop);
+            var btnEliminar = new Button
+            {
+                Content           = "✕",
+                FontSize          = 13,
+                Foreground        = new SolidColorBrush(Color.FromRgb(0xB0, 0xBE, 0xC5)),
+                Background        = Brushes.Transparent,
+                BorderThickness   = new Thickness(0),
+                Cursor            = System.Windows.Input.Cursors.Hand,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin            = new Thickness(8, 0, 0, 0),
+                Visibility        = puedeEliminar ? Visibility.Visible : Visibility.Collapsed,
+                ToolTip           = "Eliminar período"
+            };
+            btnEliminar.Click += (_, _) =>
+            {
+                var confirmacion = CustomMessageBox.Show(
+                    $"¿Está seguro de que desea eliminar \"Período {numero}\"?\n\nEsta acción eliminará toda la configuración de este período.",
+                    "Confirmar eliminación", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirmacion != MessageBoxResult.Yes) return;
 
-            // ── Fila 2: desde / hasta ──────────────────────────────────
-            var filaFechas = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+                var lista = LeerFormulario();
+                if (numero - 1 < lista.Count) lista.RemoveAt(numero - 1);
+                RenderizarPeriodos(lista);
+            };
+            Grid.SetColumn(btnEliminar, 2);
+            filaNombre.Children.Add(btnEliminar);
 
-            filaFechas.Children.Add(Etiqueta("Desde:"));
+            content.Children.Add(filaNombre);
 
+            // ── Fila 2: Desde → Hasta ──────────────────────────────────
+            var filaDesde = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin      = new Thickness(0, 0, 0, 10)
+            };
+            filaDesde.Children.Add(BadgeFecha("Desde", acento));
             var cmbMesI = CrearComboMes(p.MesInicio); cmbMesI.Tag = "mesI";
-            filaFechas.Children.Add(cmbMesI);
-
+            filaDesde.Children.Add(cmbMesI);
             var cmbDiaI = CrearComboDia(p.DiaInicio); cmbDiaI.Tag = "diaI";
             cmbDiaI.Margin = new Thickness(6, 0, 0, 0);
-            filaFechas.Children.Add(cmbDiaI);
+            filaDesde.Children.Add(cmbDiaI);
+            content.Children.Add(filaDesde);
 
-            filaFechas.Children.Add(Etiqueta("Hasta:", new Thickness(18, 0, 8, 0)));
-
+            var filaHasta = new StackPanel { Orientation = Orientation.Horizontal };
+            filaHasta.Children.Add(BadgeFecha("Hasta", Color.FromRgb(0xE6, 0x5C, 0x00)));
             var cmbMesF = CrearComboMes(p.MesFin); cmbMesF.Tag = "mesF";
-            filaFechas.Children.Add(cmbMesF);
-
+            filaHasta.Children.Add(cmbMesF);
             var cmbDiaF = CrearComboDia(p.DiaFin); cmbDiaF.Tag = "diaF";
             cmbDiaF.Margin = new Thickness(6, 0, 0, 0);
-            filaFechas.Children.Add(cmbDiaF);
+            filaHasta.Children.Add(cmbDiaF);
+            content.Children.Add(filaHasta);
 
-            Grid.SetRow(filaFechas, 2);
-            outer.Children.Add(filaFechas);
-
-            border.Child = outer;
-            return border;
+            mainGrid.Children.Add(content);
+            outer.Child = mainGrid;
+            return outer;
         }
 
-        private static TextBlock Etiqueta(string texto, Thickness? margin = null) => new()
+        private static Border BadgeFecha(string texto, Color color) => new()
         {
-            Text              = texto,
-            FontSize          = 12,
-            Foreground        = new SolidColorBrush(Color.FromRgb(0x54, 0x6E, 0x7A)),
+            Background        = new SolidColorBrush(Color.FromArgb(0x20, color.R, color.G, color.B)),
+            CornerRadius      = new CornerRadius(5),
+            Padding           = new Thickness(10, 5, 10, 5),
+            Margin            = new Thickness(0, 0, 10, 0),
+            Width             = 58,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin            = margin ?? new Thickness(0, 0, 8, 0)
+            Child             = new TextBlock
+            {
+                Text                = texto,
+                FontSize            = 11,
+                FontWeight          = FontWeights.SemiBold,
+                Foreground          = new SolidColorBrush(color),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment   = VerticalAlignment.Center
+            }
         };
 
         private static ComboBox CrearComboMes(int seleccionado)
         {
-            var cmb = new ComboBox { Width = 120, Height = 30, FontSize = 12 };
+            var cmb = new ComboBox { Width = 118, Height = 34, FontSize = 12 };
             for (int i = 0; i < 12; i++) cmb.Items.Add(_meses[i]);
             cmb.SelectedIndex = Math.Clamp(seleccionado - 1, 0, 11);
             return cmb;
@@ -144,7 +217,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
         private static ComboBox CrearComboDia(int seleccionado)
         {
-            var cmb = new ComboBox { Width = 60, Height = 30, FontSize = 12 };
+            var cmb = new ComboBox { Width = 62, Height = 34, FontSize = 12 };
             for (int i = 1; i <= 31; i++) cmb.Items.Add(i);
             cmb.SelectedIndex = Math.Clamp(seleccionado - 1, 0, 30);
             return cmb;
@@ -154,19 +227,23 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             var lista = new List<PeriodoAcademico>();
             int orden = 1;
-            foreach (Border border in pnlPeriodos.Children.OfType<Border>())
+            foreach (Border outer in pnlPeriodos.Children.OfType<Border>())
             {
-                if (border.Child is not Grid outer) continue;
+                if (outer.Child is not Grid mainGrid) continue;
 
-                TextBox?  txtNombre = null;
+                // Buscar el StackPanel de contenido (segunda columna del mainGrid)
+                StackPanel? content = null;
+                foreach (UIElement el in mainGrid.Children)
+                    if (el is StackPanel sp && Grid.GetColumn(sp) == 1) { content = sp; break; }
+                if (content == null) continue;
+
                 ComboBox? cmbMesI = null, cmbDiaI = null, cmbMesF = null, cmbDiaF = null;
 
-                foreach (UIElement fila in outer.Children)
+                foreach (UIElement fila in content.Children)
                 {
                     if (fila is not StackPanel sp) continue;
                     foreach (UIElement hijo in sp.Children)
                     {
-                        if (hijo is TextBox tb && tb.Tag?.ToString() == "nombre") txtNombre = tb;
                         if (hijo is ComboBox cb)
                             switch (cb.Tag?.ToString())
                             {
@@ -178,11 +255,11 @@ namespace CSMBiometricoWPF.Views.Pages
                     }
                 }
 
-                if (txtNombre == null || cmbMesI == null) continue;
+                if (cmbMesI == null) continue;
 
                 lista.Add(new PeriodoAcademico
                 {
-                    Nombre    = txtNombre.Text.Trim(),
+                    Nombre    = $"Período {orden}",
                     MesInicio = cmbMesI.SelectedIndex + 1,
                     DiaInicio = (int)(cmbDiaI?.SelectedItem ?? 1),
                     MesFin    = cmbMesF?.SelectedIndex + 1 ?? 12,
@@ -193,12 +270,24 @@ namespace CSMBiometricoWPF.Views.Pages
             return lista;
         }
 
+        private void BtnAgregarPeriodo_Click(object sender, RoutedEventArgs e)
+        {
+            var lista = LeerFormulario();
+            lista.Add(new PeriodoAcademico
+            {
+                Nombre    = $"Período {lista.Count + 1}",
+                MesInicio = 1, DiaInicio = 1,
+                MesFin    = 12, DiaFin   = 31
+            });
+            RenderizarPeriodos(lista);
+        }
+
         private void BtnGuardar_Click(object sender, RoutedEventArgs e)
         {
             var periodos = LeerFormulario();
-            if (periodos.Any(p => string.IsNullOrWhiteSpace(p.Nombre)))
+            if (periodos.Count < 3)
             {
-                CustomMessageBox.Show("Todos los períodos deben tener un nombre.",
+                CustomMessageBox.Show("Deben existir al menos 3 períodos académicos.",
                     "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }

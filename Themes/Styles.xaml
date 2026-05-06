@@ -153,15 +153,132 @@
 
     <!-- ── ComboBox estilizado ──────────────────────────────── -->
     <Style x:Key="CmbBase" TargetType="ComboBox">
-        <Setter Property="FontFamily"             Value="Segoe UI"/>
-        <Setter Property="FontSize"               Value="13"/>
-        <Setter Property="Padding"                Value="8,5"/>
-        <Setter Property="BorderBrush"            Value="#BDBDBD"/>
-        <Setter Property="BorderThickness"        Value="1"/>
-        <Setter Property="Background"             Value="White"/>
-        <Setter Property="Foreground"             Value="{StaticResource BrushTexto}"/>
-        <Setter Property="Height"                 Value="34"/>
+        <Setter Property="FontFamily"               Value="Segoe UI"/>
+        <Setter Property="FontSize"                 Value="13"/>
+        <Setter Property="Height"                   Value="34"/>
+        <Setter Property="Background"               Value="White"/>
+        <Setter Property="Foreground"               Value="{StaticResource BrushTexto}"/>
+        <Setter Property="BorderBrush"              Value="#BDBDBD"/>
+        <Setter Property="BorderThickness"          Value="1"/>
+        <Setter Property="Padding"                  Value="8,0"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="MaxDropDownHeight"        Value="300"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility"   Value="Auto"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <!-- Botón toggle que cubre todo el control y dibuja el borde -->
+                        <ToggleButton x:Name="PART_ToggleButton"
+                                      Focusable="False" ClickMode="Press"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                                  RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="bd"
+                                            Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                        <Path x:Name="arrow"
+                                              Data="M 0 0 L 4 4 L 8 0 Z"
+                                              Fill="#767676" Width="8" Height="5"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,10,0"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bd" Property="BorderBrush" Value="#9E9E9E"/>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource BrushVerdePrimario}"/>
+                                            <Setter TargetName="bd" Property="BorderThickness" Value="2"/>
+                                            <Setter TargetName="arrow" Property="Fill" Value="{StaticResource BrushVerdePrimario}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <!-- Contenido seleccionado (modo no editable) -->
+                        <ContentPresenter x:Name="contentPresenter"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                          Margin="8,0,28,0"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="Left"
+                                          IsHitTestVisible="False"/>
+
+                        <!-- Campo de texto (modo editable) -->
+                        <TextBox x:Name="PART_EditableTextBox"
+                                 Background="Transparent" BorderThickness="0"
+                                 Margin="8,0,28,0"
+                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                 IsReadOnly="{TemplateBinding IsReadOnly}"
+                                 Visibility="Hidden"/>
+
+                        <!-- Popup desplegable -->
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               Placement="Bottom" Focusable="False">
+                            <Border Background="White"
+                                    BorderBrush="#BDBDBD" BorderThickness="1"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.12" Direction="270"/>
+                                </Border.Effect>
+                                <ScrollViewer CanContentScroll="True">
+                                    <StackPanel IsItemsHost="True"
+                                                KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="contentPresenter" Property="Visibility" Value="Hidden"/>
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── ComboBoxItem estilizado ──────────────────────────── -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="FontFamily"  Value="Segoe UI"/>
+        <Setter Property="FontSize"    Value="13"/>
+        <Setter Property="Padding"     Value="10,7"/>
+        <Setter Property="Background"  Value="White"/>
+        <Setter Property="Foreground"  Value="{StaticResource BrushTexto}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="bd"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#E8F5F2"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#C8E6E0"/>
+                            <Setter Property="Foreground" Value="#003828"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ── DataGrid estilizado ──────────────────────────────── -->
@@ -283,7 +400,8 @@
     <Style x:Key="LblFiltro" TargetType="TextBlock">
         <Setter Property="FontFamily"        Value="Segoe UI"/>
         <Setter Property="FontSize"          Value="12"/>
-        <Setter Property="Foreground"        Value="#546E7A"/>
+        <Setter Property="FontWeight"        Value="SemiBold"/>
+        <Setter Property="Foreground"        Value="#374151"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
@@ -314,17 +432,17 @@
         </Setter>
     </Style>
 
-    <!-- ── Botón de categoría colapsable del menú ───────────── -->
+    <!-- ── Botón de categoría del menú ──────────────────────── -->
     <Style x:Key="BtnMenuCategoria" TargetType="Button">
-        <Setter Property="Background"      Value="#F0F4F3"/>
-        <Setter Property="Foreground"      Value="#37474F"/>
-        <Setter Property="BorderThickness" Value="0,1,0,0"/>
-        <Setter Property="BorderBrush"     Value="#E0E0E0"/>
-        <Setter Property="Padding"         Value="16,0"/>
-        <Setter Property="Height"          Value="42"/>
+        <Setter Property="Background"      Value="White"/>
+        <Setter Property="Foreground"      Value="#263238"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush"     Value="#EEEEEE"/>
+        <Setter Property="Padding"         Value="12,0,12,0"/>
+        <Setter Property="Height"          Value="44"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="FontFamily"      Value="Segoe UI Semibold"/>
-        <Setter Property="FontSize"        Value="12"/>
+        <Setter Property="FontSize"        Value="13"/>
         <Setter Property="Cursor"          Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -342,15 +460,60 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#E8F0EE"/>
+                            <Setter TargetName="border" Property="Background" Value="#EEF3FC"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#D0E8E3"/>
+                            <Setter TargetName="border" Property="Background" Value="#DCE8F8"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- ── Botón de acción derecha del menú ──────────────────── -->
+    <Style x:Key="BtnMenuAccionDer" TargetType="Button">
+        <Setter Property="Background"      Value="White"/>
+        <Setter Property="Foreground"      Value="#263238"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush"     Value="#EEEEEE"/>
+        <Setter Property="Padding"         Value="14,0"/>
+        <Setter Property="Height"          Value="40"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="FontFamily"      Value="Segoe UI"/>
+        <Setter Property="FontSize"        Value="12"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid>
+                            <Border x:Name="overlay" Background="Transparent"/>
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="overlay" Property="Background" Value="#101E3464"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="overlay" Property="Background" Value="#201E3464"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── Botón de acción peligro derecha del menú ──────────── -->
+    <Style x:Key="BtnMenuAccionDerPeligro" TargetType="Button"
+           BasedOn="{StaticResource BtnMenuAccionDer}">
+        <Setter Property="Foreground" Value="#C62828"/>
     </Style>
 
     <!-- ── Botón de ítem dentro del popup de menú ───────────── -->
@@ -390,6 +553,65 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- ── Botón de acceso rápido (barra inferior) ─────────────── -->
+    <Style x:Key="BtnAccesoRapido" TargetType="Button">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="BorderBrush"     Value="#70FFFFFF"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Foreground"      Value="White"/>
+        <Setter Property="FontFamily"      Value="Segoe UI"/>
+        <Setter Property="FontSize"        Value="12"/>
+        <Setter Property="Height"          Value="30"/>
+        <Setter Property="Padding"         Value="10,0"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#30FFFFFF"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="#50FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ── Barra de filtros (fondo limpio con línea inferior) ─── -->
+    <Style x:Key="BarraFiltros" TargetType="Border">
+        <Setter Property="Background"      Value="White"/>
+        <Setter Property="Padding"         Value="20,0"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush"     Value="#E5E7EB"/>
+    </Style>
+
+    <!-- ── Toolbar de acciones (botones Nuevo, Refrescar, etc.) ─ -->
+    <Style x:Key="ToolbarAcciones" TargetType="Border">
+        <Setter Property="Background"      Value="White"/>
+        <Setter Property="Padding"         Value="12,8"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush"     Value="#E5E7EB"/>
+    </Style>
+
+    <!-- ── Barra de estado (pie de página) ───────────────────── -->
+    <Style x:Key="StatusBar" TargetType="Border">
+        <Setter Property="Background"      Value="White"/>
+        <Setter Property="Padding"         Value="16,0"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="BorderBrush"     Value="#E5E7EB"/>
     </Style>
 
     <!-- ── Botón de menú lateral ─────────────────────────────── -->

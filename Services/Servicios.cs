@@ -217,7 +217,7 @@ namespace CSMBiometricoWPF.Services
             try
             {
                 using var conn = Data.ConexionDB.ObtenerConexion();
-                using var cmd = new Microsoft.Data.Sqlite.SqliteCommand(
+                using var cmd = new MySqlConnector.MySqlCommand(
                     "SELECT id_institucion FROM sedes WHERE id_sede=@s LIMIT 1", conn);
                 cmd.Parameters.AddWithValue("@s", idSede);
                 var res = cmd.ExecuteScalar();

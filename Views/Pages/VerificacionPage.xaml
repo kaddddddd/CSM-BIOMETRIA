@@ -12,7 +12,11 @@
         <!-- Header verde -->
         <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
             <Grid>
-                <TextBlock Text="Verificación Biométrica" Style="{StaticResource LblTituloHeader}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xEDA3;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                               Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="Verificación Biométrica" Style="{StaticResource LblTituloHeader}"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                             VerticalAlignment="Center" Margin="0,0,20,0">
                     <Button x:Name="btnIniciar" Content="▶  Iniciar Captura"

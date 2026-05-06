@@ -340,7 +340,7 @@ namespace CSMBiometricoWPF.Models
         public static Institucion InstitucionActual { get; set; }
         public static bool EsSuperAdmin => UsuarioActual?.NombreRol == "SUPERADMIN";
         public static bool EsAdministrador => UsuarioActual?.NombreRol == "ADMINISTRADOR";
-        public static bool EsOperador => UsuarioActual?.NombreRol == "OPERADOR";
+        public static bool EsOperador => UsuarioActual?.NombreRol == "DOCENTE";
 
         public static void Cerrar()
         {

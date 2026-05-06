@@ -141,7 +141,7 @@ La base de datos es un único archivo SQLite (`csm_biometrico.db`) ubicado junto
 ### Tablas principales
 
 ```
-roles                    — Roles del sistema (SUPERADMIN, ADMINISTRADOR, OPERADOR)
+roles                    — Roles del sistema (SUPERADMIN, ADMINISTRADOR, DOCENTE)
 usuarios                 — Cuentas de acceso con hash SHA-256
 instituciones            — Entidades educativas
 sedes                    — Sedes físicas de cada institución
@@ -277,7 +277,7 @@ Gestiona el login y los permisos por módulo.
 **TienePermiso(modulo):** tabla de permisos por rol definida en código:
 - `SUPERADMIN` → acceso total.
 - `ADMINISTRADOR` → gestión académica (horarios, estudiantes, reportes, etc.).
-- `OPERADOR` → solo consulta, verificación y dashboard.
+- `DOCENTE` → solo consulta, verificación y dashboard.
 
 ---
 
@@ -442,7 +442,7 @@ Ventana de operación desatendida (pantalla de entrada):
 
 ### PanelEntradaWindow
 
-Vista de supervisión en tiempo real (para operador o pantalla secundaria):
+Vista de supervisión en tiempo real (para docente o pantalla secundaria):
 
 1. Selector de institución y sede.
 2. Grid con los ingresos del día, ordenados por hora.
@@ -597,7 +597,7 @@ Desde `ConsultaAsistenciaPage`, haciendo doble clic en un registro se puede:
 
 ## Roles y permisos
 
-| Módulo | SUPERADMIN | ADMINISTRADOR | OPERADOR |
+| Módulo | SUPERADMIN | ADMINISTRADOR | DOCENTE |
 |---|---|---|---|
 | Usuarios | ✓ | — | — |
 | Instituciones | ✓ | ✓ | — |

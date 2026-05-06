@@ -11,14 +11,15 @@
 
         <!-- Header oscuro -->
         <Border Grid.Row="0" Background="#1C272C" Padding="20,0">
-            <TextBlock Text="🔧  Diagnóstico del Lector"
-                       FontFamily="Segoe UI Light" FontSize="20"
-                       Foreground="White" VerticalAlignment="Center"/>
+            <TextBlock FontSize="20" Foreground="White" VerticalAlignment="Center">
+                <Run FontFamily="Segoe MDL2 Assets" Text="&#xE90F;"/>
+                <Run FontFamily="Segoe UI Light" Text="  Diagnóstico del Lector"/>
+            </TextBlock>
         </Border>
 
         <!-- Contenido -->
         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="🔧" FontSize="72" HorizontalAlignment="Center"
+            <TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" FontSize="72" HorizontalAlignment="Center"
                        Foreground="White" Margin="0,0,0,20"/>
             <TextBlock Text="Diagnóstico del Lector Biométrico"
                        FontFamily="Segoe UI Light" FontSize="24"

@@ -5,66 +5,48 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="60"/>  <!-- Header -->
-            <RowDefinition Height="50"/>  <!-- Toolbar -->
-            <RowDefinition Height="*"/>   <!-- Grid -->
-            <RowDefinition Height="35"/>  <!-- Status bar -->
+            <RowDefinition Height="60"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
-            <TextBlock Text="Instituciones" Style="{StaticResource LblTituloHeader}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE825;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                               Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="Institución" Style="{StaticResource LblTituloHeader}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,16,0">
+                    <Button x:Name="btnNuevaInst" Style="{StaticResource BtnPrimario}"
+                            Height="34" Padding="14,0" Margin="0,0,8,0"
+                            Click="BtnNuevaInst_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Nueva Institución" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource BtnSecundario}"
+                            Height="34" Padding="14,0" Click="BtnRefrescar_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Refrescar" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Toolbar -->
-        <Border Grid.Row="1" Background="#007864" Padding="10,7">
-            <StackPanel Orientation="Horizontal">
-                <Button x:Name="btnNueva" Content="✚  Nueva Institución" Style="{StaticResource BtnPrimario}"
-                        Background="#009678" Height="35" Width="160" Margin="0,0,8,0"
-                        Click="BtnNueva_Click"/>
-                <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
-                        Width="110" Height="35"
-                        Click="BtnRefrescar_Click"/>
-            </StackPanel>
-        </Border>
-
-        <!-- DataGrid -->
-        <DataGrid x:Name="grid" Grid.Row="2"
-                  Style="{StaticResource GridBase}"
-                  ColumnHeaderStyle="{StaticResource GridHeaderStyle}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID"          Binding="{Binding IdInstitucion}" Width="50"/>
-                <DataGridTextColumn Header="Nombre"      Binding="{Binding Nombre}"        Width="*"/>
-                <DataGridTextColumn Header="Dirección"   Binding="{Binding Direccion}"     Width="180"/>
-                <DataGridTextColumn Header="Teléfono"    Binding="{Binding Telefono}"      Width="110"/>
-                <DataGridTextColumn Header="Estado"      Binding="{Binding EstadoStr}"     Width="90"/>
-                <DataGridTextColumn Header="Fecha creación" Binding="{Binding FechaCreacionStr}" Width="120"/>
-                <DataGridTemplateColumn x:Name="colEditar" Header="" Width="60">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="✎" Background="Transparent" BorderThickness="0"
-                                    Foreground="#007864" FontSize="16" Cursor="Hand"
-                                    Click="BtnEditar_Click" Tag="{Binding}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn x:Name="colEliminar" Header="" Width="60">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="🗑" Background="Transparent" BorderThickness="0"
-                                    Foreground="#C62828" FontSize="15" Cursor="Hand"
-                                    Click="BtnEliminar_Click" Tag="{Binding}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <!-- Status bar -->
-        <Border Grid.Row="3" Background="#F5F5F5" Padding="16,0">
-            <TextBlock x:Name="lblTotal" Text="Mostrando 0 registros"
-                       VerticalAlignment="Center" FontSize="12"
-                       HorizontalAlignment="Right"/>
-        </Border>
+        <!-- Contenido scrollable -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20">
+            <StackPanel x:Name="pnlContenido" HorizontalAlignment="Stretch"/>
+        </ScrollViewer>
     </Grid>
 </Page>

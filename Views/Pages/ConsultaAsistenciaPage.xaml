@@ -14,14 +14,15 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
-            <TextBlock Text="Consulta de Asistencia" Style="{StaticResource LblTituloHeader}"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                           Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <TextBlock Text="Consulta de Asistencia" Style="{StaticResource LblTituloHeader}"/>
+            </StackPanel>
         </Border>
 
         <!-- Barra de filtros: búsqueda + período en una sola fila -->
-        <Border Grid.Row="1" Background="White" Padding="20,0">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.08" Direction="270"/>
-            </Border.Effect>
+        <Border Grid.Row="1" Style="{StaticResource BarraFiltros}">
             <Grid Height="56">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -100,8 +101,9 @@
                     <!-- Avatar -->
                     <Border Grid.Column="0" Width="52" Height="52" CornerRadius="26"
                             Background="#007864" Margin="0,0,16,0" VerticalAlignment="Center">
-                        <TextBlock Text="👤" FontSize="26" HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="26"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White"/>
                     </Border>
 
                     <!-- Datos del estudiante -->
@@ -395,7 +397,7 @@
         </DataGrid>
 
         <!-- Status bar -->
-        <Border Grid.Row="4" Background="#ECEFF1" Padding="20,0">
+        <Border Grid.Row="4" Style="{StaticResource StatusBar}">
             <TextBlock x:Name="lblTotal" VerticalAlignment="Center" FontSize="12"
                        Foreground="#607D8B"
                        Text="Busque un estudiante para ver su historial de asistencia"/>

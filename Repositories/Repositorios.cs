@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Data.Sqlite;
+using MySqlConnector;
 using CSMBiometricoWPF.Data;
 using CSMBiometricoWPF.Models;
 
@@ -30,7 +30,7 @@ namespace CSMBiometricoWPF.Repositories
                                LEFT JOIN instituciones i ON u.id_institucion = i.id_institucion
                                WHERE u.username = @user AND u.password_hash = @pwd
                                AND u.estado = 1 AND u.bloqueado = 0";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@user", username);
                     cmd.Parameters.AddWithValue("@pwd", hash);
@@ -52,7 +52,7 @@ namespace CSMBiometricoWPF.Repositories
                                INNER JOIN roles r ON u.id_rol = r.id_rol
                                LEFT JOIN instituciones i ON u.id_institucion = i.id_institucion
                                WHERE u.username = @user AND u.estado = 1";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@user", username);
                     using (var dr = cmd.ExecuteReader())
@@ -72,7 +72,7 @@ namespace CSMBiometricoWPF.Repositories
                                INNER JOIN roles r ON u.id_rol = r.id_rol
                                LEFT JOIN instituciones i ON u.id_institucion = i.id_institucion
                                ORDER BY u.nombre_completo";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 using (var dr = cmd.ExecuteReader())
                     while (dr.Read()) lista.Add(MapearUsuario(dr));
             }
@@ -88,7 +88,7 @@ namespace CSMBiometricoWPF.Repositories
                     string sql = @"INSERT INTO usuarios 
                         (id_rol, id_institucion, username, password_hash, nombre_completo, email, estado)
                         VALUES (@rol, @inst, @user, @pwd, @nombre, @email, @estado)";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@rol", u.IdRol);
                         cmd.Parameters.AddWithValue("@inst", (object)u.IdInstitucion ?? DBNull.Value);
@@ -105,7 +105,7 @@ namespace CSMBiometricoWPF.Repositories
                     string sql = @"UPDATE usuarios SET id_rol=@rol, id_institucion=@inst,
                         username=@user, nombre_completo=@nombre, email=@email, estado=@estado
                         WHERE id_usuario=@id";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@id", u.IdUsuario);
                         cmd.Parameters.AddWithValue("@rol", u.IdRol);
@@ -128,7 +128,7 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = "UPDATE usuarios SET password_hash=@pwd WHERE id_usuario=@id";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@pwd", HashPassword(nuevaPassword));
                     cmd.Parameters.AddWithValue("@id", idUsuario);
@@ -142,7 +142,7 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = "UPDATE usuarios SET estado=0 WHERE id_usuario=@id";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idUsuario);
                     return cmd.ExecuteNonQuery() > 0;
@@ -154,8 +154,8 @@ namespace CSMBiometricoWPF.Repositories
         {
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                string sql = "UPDATE usuarios SET ultimo_login=datetime('now'), intentos_fallidos=0 WHERE id_usuario=@id";
-                using (var cmd = new SqliteCommand(sql, conn))
+                string sql = "UPDATE usuarios SET ultimo_login=NOW(), intentos_fallidos=0 WHERE id_usuario=@id";
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idUsuario);
                     cmd.ExecuteNonQuery();
@@ -167,7 +167,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             var lista = new List<Rol>();
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("SELECT * FROM roles WHERE activo=1", conn))
+            using (var cmd = new MySqlCommand("SELECT * FROM roles WHERE activo=1", conn))
             using (var dr = cmd.ExecuteReader())
                 while (dr.Read())
                     lista.Add(new Rol
@@ -189,7 +189,7 @@ namespace CSMBiometricoWPF.Repositories
             }
         }
 
-        private Usuario MapearUsuario(SqliteDataReader dr)
+        private Usuario MapearUsuario(MySqlDataReader dr)
         {
             return new Usuario
             {
@@ -220,7 +220,7 @@ namespace CSMBiometricoWPF.Repositories
             {
                 string filtro = soloActivas ? "WHERE estado=1" : "";
                 string sql = $"SELECT * FROM instituciones {filtro} ORDER BY nombre";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 using (var dr = cmd.ExecuteReader())
                     while (dr.Read())
                         lista.Add(new Institucion
@@ -239,7 +239,7 @@ namespace CSMBiometricoWPF.Repositories
         public Institucion ObtenerPorId(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("SELECT * FROM instituciones WHERE id_institucion=@id", conn))
+            using (var cmd = new MySqlCommand("SELECT * FROM instituciones WHERE id_institucion=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 using (var dr = cmd.ExecuteReader())
@@ -263,7 +263,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (inst.IdInstitucion == 0)
                 {
                     string sql = "INSERT INTO instituciones (nombre, direccion, telefono, estado) VALUES (@n,@d,@t,@e)";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@n", inst.Nombre);
                         cmd.Parameters.AddWithValue("@d", (object)inst.Direccion ?? DBNull.Value);
@@ -275,7 +275,7 @@ namespace CSMBiometricoWPF.Repositories
                 else
                 {
                     string sql = "UPDATE instituciones SET nombre=@n, direccion=@d, telefono=@t, estado=@e WHERE id_institucion=@id";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@id", inst.IdInstitucion);
                         cmd.Parameters.AddWithValue("@n", inst.Nombre);
@@ -292,7 +292,7 @@ namespace CSMBiometricoWPF.Repositories
         public bool Eliminar(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE instituciones SET estado=0 WHERE id_institucion=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE instituciones SET estado=0 WHERE id_institucion=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 return cmd.ExecuteNonQuery() > 0;
@@ -316,7 +316,7 @@ namespace CSMBiometricoWPF.Repositories
                                WHERE s.id_institucion=@id"
                            + (soloActivas ? " AND s.estado=1" : "")
                            + " ORDER BY s.nombre_sede";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idInstitucion);
                     using (var dr = cmd.ExecuteReader())
@@ -337,7 +337,7 @@ namespace CSMBiometricoWPF.Repositories
                                INNER JOIN instituciones i ON s.id_institucion = i.id_institucion"
                            + (soloActivas ? " WHERE s.estado=1" : "")
                            + " ORDER BY i.nombre, s.nombre_sede";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 using (var dr = cmd.ExecuteReader())
                     while (dr.Read()) lista.Add(MapearSede(dr));
             }
@@ -347,7 +347,7 @@ namespace CSMBiometricoWPF.Repositories
         public bool Activar(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE sedes SET estado=1 WHERE id_sede=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE sedes SET estado=1 WHERE id_sede=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 return cmd.ExecuteNonQuery() > 0;
@@ -361,7 +361,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (sede.IdSede == 0)
                 {
                     string sql = "INSERT INTO sedes (id_institucion, nombre_sede, direccion, estado) VALUES (@i,@n,@d,@e)";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@i", sede.IdInstitucion);
                         cmd.Parameters.AddWithValue("@n", sede.NombreSede);
@@ -373,7 +373,7 @@ namespace CSMBiometricoWPF.Repositories
                 else
                 {
                     string sql = "UPDATE sedes SET id_institucion=@i, nombre_sede=@n, direccion=@d, estado=@e WHERE id_sede=@id";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@id", sede.IdSede);
                         cmd.Parameters.AddWithValue("@i", sede.IdInstitucion);
@@ -390,14 +390,14 @@ namespace CSMBiometricoWPF.Repositories
         public bool Eliminar(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE sedes SET estado=0 WHERE id_sede=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE sedes SET estado=0 WHERE id_sede=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 return cmd.ExecuteNonQuery() > 0;
             }
         }
 
-        private Sede MapearSede(SqliteDataReader dr) => new Sede
+        private Sede MapearSede(MySqlDataReader dr) => new Sede
         {
             IdSede = Convert.ToInt32(dr["id_sede"]),
             IdInstitucion = Convert.ToInt32(dr["id_institucion"]),
@@ -417,7 +417,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             var lista = new List<Grado>();
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("SELECT * FROM grados WHERE estado=1 ORDER BY orden_grado", conn))
+            using (var cmd = new MySqlCommand("SELECT * FROM grados WHERE estado=1 ORDER BY orden_grado", conn))
             using (var dr = cmd.ExecuteReader())
                 while (dr.Read())
                     lista.Add(new Grado
@@ -436,7 +436,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (grado.IdGrado == 0)
                 {
                     string sql = "INSERT INTO grados (nombre_grado, orden_grado, estado) VALUES (@n,@o,1)";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@n", grado.NombreGrado);
                         cmd.Parameters.AddWithValue("@o", grado.OrdenGrado);
@@ -446,7 +446,7 @@ namespace CSMBiometricoWPF.Repositories
                 else
                 {
                     string sql = "UPDATE grados SET nombre_grado=@n, orden_grado=@o WHERE id_grado=@id";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@id", grado.IdGrado);
                         cmd.Parameters.AddWithValue("@n", grado.NombreGrado);
@@ -461,7 +461,7 @@ namespace CSMBiometricoWPF.Repositories
         public bool Eliminar(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE grados SET estado=0 WHERE id_grado=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE grados SET estado=0 WHERE id_grado=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 return cmd.ExecuteNonQuery() > 0;
@@ -478,7 +478,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             var lista = new List<Grupo>();
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("SELECT * FROM grupos WHERE estado=1 ORDER BY nombre_grupo", conn))
+            using (var cmd = new MySqlCommand("SELECT * FROM grupos WHERE estado=1 ORDER BY id_grupo", conn))
             using (var dr = cmd.ExecuteReader())
                 while (dr.Read())
                     lista.Add(new Grupo
@@ -489,13 +489,30 @@ namespace CSMBiometricoWPF.Repositories
             return lista;
         }
 
+        // Devuelve únicamente el grupo correspondiente al grado (id_grupo == id_grado)
+        public Grupo? ObtenerPorGrado(int idGrado)
+        {
+            using var conn = ConexionDB.ObtenerConexion();
+            using var cmd = new MySqlCommand(
+                "SELECT * FROM grupos WHERE id_grupo=@id AND estado=1 LIMIT 1", conn);
+            cmd.Parameters.AddWithValue("@id", idGrado);
+            using var dr = cmd.ExecuteReader();
+            if (dr.Read())
+                return new Grupo
+                {
+                    IdGrupo = Convert.ToInt32(dr["id_grupo"]),
+                    NombreGrupo = dr["nombre_grupo"].ToString()
+                };
+            return null;
+        }
+
         public bool Guardar(Grupo grupo)
         {
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 if (grupo.IdGrupo == 0)
                 {
-                    using (var cmd = new SqliteCommand("INSERT INTO grupos (nombre_grupo, estado) VALUES (@n,1)", conn))
+                    using (var cmd = new MySqlCommand("INSERT INTO grupos (nombre_grupo, estado) VALUES (@n,1)", conn))
                     {
                         cmd.Parameters.AddWithValue("@n", grupo.NombreGrupo);
                         cmd.ExecuteNonQuery();
@@ -503,7 +520,7 @@ namespace CSMBiometricoWPF.Repositories
                 }
                 else
                 {
-                    using (var cmd = new SqliteCommand("UPDATE grupos SET nombre_grupo=@n WHERE id_grupo=@id", conn))
+                    using (var cmd = new MySqlCommand("UPDATE grupos SET nombre_grupo=@n WHERE id_grupo=@id", conn))
                     {
                         cmd.Parameters.AddWithValue("@id", grupo.IdGrupo);
                         cmd.Parameters.AddWithValue("@n", grupo.NombreGrupo);
@@ -517,7 +534,7 @@ namespace CSMBiometricoWPF.Repositories
         public bool Eliminar(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE grupos SET estado=0 WHERE id_grupo=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE grupos SET estado=0 WHERE id_grupo=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 return cmd.ExecuteNonQuery() > 0;
@@ -550,7 +567,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (!string.IsNullOrEmpty(estado)) sql += " AND e.estado=@estado";
                 sql += " ORDER BY e.apellidos, e.nombre";
 
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     if (idInstitucion.HasValue) cmd.Parameters.AddWithValue("@inst", idInstitucion.Value);
                     if (idSede.HasValue)        cmd.Parameters.AddWithValue("@sede", idSede.Value);
@@ -576,7 +593,7 @@ namespace CSMBiometricoWPF.Repositories
                                INNER JOIN grados g ON e.id_grado = g.id_grado
                                INNER JOIN grupos gr ON e.id_grupo = gr.id_grupo
                                WHERE e.id_estudiante=@id";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
                     using (var dr = cmd.ExecuteReader())
@@ -596,7 +613,7 @@ namespace CSMBiometricoWPF.Repositories
                         (identificacion, nombre, apellidos, id_institucion, id_sede, id_grado, id_grupo, 
                          telefono, email, foto, estado, fecha_matricula)
                         VALUES (@id,@n,@ap,@inst,@sede,@grado,@grupo,@tel,@email,@foto,@estado,@fmat)";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         AgregarParametrosEstudiante(cmd, e);
                         cmd.ExecuteNonQuery();
@@ -608,7 +625,7 @@ namespace CSMBiometricoWPF.Repositories
                         id_institucion=@inst, id_sede=@sede, id_grado=@grado, id_grupo=@grupo,
                         telefono=@tel, email=@email, foto=@foto, estado=@estado, fecha_matricula=@fmat
                         WHERE id_estudiante=@eid";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         AgregarParametrosEstudiante(cmd, e);
                         cmd.Parameters.AddWithValue("@eid", e.IdEstudiante);
@@ -622,7 +639,7 @@ namespace CSMBiometricoWPF.Repositories
         public bool Eliminar(int id)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE estudiantes SET estado='RETIRADO' WHERE id_estudiante=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE estudiantes SET estado='RETIRADO' WHERE id_estudiante=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 return cmd.ExecuteNonQuery() > 0;
@@ -645,7 +662,7 @@ namespace CSMBiometricoWPF.Repositories
                                WHERE (e.identificacion LIKE @texto OR e.nombre LIKE @texto OR e.apellidos LIKE @texto)";
                 if (idInstitucion.HasValue) sql += " AND e.id_institucion=@inst";
                 sql += " ORDER BY e.apellidos, e.nombre LIMIT 100";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@texto", $"%{texto}%");
                     if (idInstitucion.HasValue) cmd.Parameters.AddWithValue("@inst", idInstitucion.Value);
@@ -656,7 +673,7 @@ namespace CSMBiometricoWPF.Repositories
             return lista;
         }
 
-        private void AgregarParametrosEstudiante(SqliteCommand cmd, Estudiante e)
+        private void AgregarParametrosEstudiante(MySqlCommand cmd, Estudiante e)
         {
             cmd.Parameters.AddWithValue("@id", e.Identificacion);
             cmd.Parameters.AddWithValue("@n", e.Nombre);
@@ -672,7 +689,7 @@ namespace CSMBiometricoWPF.Repositories
             cmd.Parameters.AddWithValue("@fmat", (object)e.FechaMatricula ?? DBNull.Value);
         }
 
-        private Estudiante MapearEstudiante(SqliteDataReader dr) => new Estudiante
+        private Estudiante MapearEstudiante(MySqlDataReader dr) => new Estudiante
         {
             IdEstudiante = Convert.ToInt32(dr["id_estudiante"]),
             Identificacion = dr["identificacion"].ToString(),
@@ -716,7 +733,7 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = @"SELECT h.*, e.id_sede, s.id_institucion,
-                                (e.nombre || ' ' || e.apellidos) as nombre_est
+                                CONCAT(e.nombre, ' ', e.apellidos) as nombre_est
                                FROM huellas_digitales h
                                INNER JOIN estudiantes e ON h.id_estudiante = e.id_estudiante
                                INNER JOIN sedes s ON e.id_sede = s.id_sede
@@ -724,7 +741,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (idInstitucion.HasValue)
                     sql += " AND s.id_institucion=@inst";
 
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     if (idInstitucion.HasValue)
                         cmd.Parameters.AddWithValue("@inst", idInstitucion.Value);
@@ -752,7 +769,7 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = "SELECT * FROM huellas_digitales WHERE id_estudiante=@id AND activo=1";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idEstudiante);
                     using (var dr = cmd.ExecuteReader())
@@ -777,7 +794,7 @@ namespace CSMBiometricoWPF.Repositories
                 string sql = @"INSERT INTO huellas_digitales 
                     (id_estudiante, template_biometrico, dedo, calidad, activo, registrado_por)
                     VALUES (@est, @tmpl, @dedo, @cal, 1, @usr)";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@est", h.IdEstudiante);
                     cmd.Parameters.AddWithValue("@tmpl", h.TemplateBiometrico);
@@ -793,7 +810,7 @@ namespace CSMBiometricoWPF.Repositories
         public bool EliminarPorEstudiante(int idEstudiante)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand("UPDATE huellas_digitales SET activo=0 WHERE id_estudiante=@id", conn))
+            using (var cmd = new MySqlCommand("UPDATE huellas_digitales SET activo=0 WHERE id_estudiante=@id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", idEstudiante);
                 return cmd.ExecuteNonQuery() > 0;
@@ -803,7 +820,7 @@ namespace CSMBiometricoWPF.Repositories
         public int ContarHuellasPorEstudiante(int idEstudiante)
         {
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand(
+            using (var cmd = new MySqlCommand(
                 "SELECT COUNT(*) FROM huellas_digitales WHERE id_estudiante=@id AND activo=1", conn))
             {
                 cmd.Parameters.AddWithValue("@id", idEstudiante);
@@ -827,7 +844,7 @@ namespace CSMBiometricoWPF.Repositories
                 string sql = @"INSERT INTO registros_ingreso
                     (id_estudiante, id_sede, fecha_ingreso, hora_ingreso, estado_ingreso, puntaje_biometrico, nombre_franja)
                     VALUES (@est,@sede,@fecha,@hora,@estado,@puntaje,@franja)";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@est",    r.IdEstudiante);
                     cmd.Parameters.AddWithValue("@sede",   r.IdSede);
@@ -845,7 +862,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             string hoy = DateTime.Today.ToString("yyyy-MM-dd");
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new SqliteCommand(
+            using (var cmd = new MySqlCommand(
                 "SELECT COUNT(*) FROM registros_ingreso WHERE id_estudiante=@id AND fecha_ingreso=@hoy", conn))
             {
                 cmd.Parameters.AddWithValue("@id",  idEstudiante);
@@ -860,7 +877,7 @@ namespace CSMBiometricoWPF.Repositories
             string inicio = franjaInicio.ToString(@"hh\:mm\:ss");
             string cierre = franjaCierre.ToString(@"hh\:mm\:ss");
             using var conn = ConexionDB.ObtenerConexion();
-            using var cmd  = new SqliteCommand(
+            using var cmd  = new MySqlCommand(
                 @"SELECT COUNT(*) FROM registros_ingreso
                   WHERE id_estudiante=@id AND fecha_ingreso=@hoy
                   AND hora_ingreso >= @inicio AND hora_ingreso <= @cierre", conn);
@@ -886,7 +903,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (idSede.HasValue)       sql += " AND ri.id_sede = @sede";
                 if (idInstitucion.HasValue) sql += " AND s.id_institucion = @inst";
                 sql += " ORDER BY v.hora_ingreso DESC";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@fecha", fecha.Date.ToString("yyyy-MM-dd"));
                     if (idSede.HasValue)       cmd.Parameters.AddWithValue("@sede", idSede.Value);
@@ -925,7 +942,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (idSede.HasValue)       sql += " AND ri.id_sede = @sede";
                 if (idInstitucion.HasValue) sql += " AND s.id_institucion = @inst";
                 sql += " ORDER BY v.fecha_ingreso DESC, v.hora_ingreso DESC";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@desde", desde.Date.ToString("yyyy-MM-dd"));
                     cmd.Parameters.AddWithValue("@hasta", hasta.Date.ToString("yyyy-MM-dd"));
@@ -955,7 +972,7 @@ namespace CSMBiometricoWPF.Repositories
         public void ActualizarObservaciones(int idRegistro, string observaciones)
         {
             using var conn = ConexionDB.ObtenerConexion();
-            using var cmd  = new SqliteCommand(
+            using var cmd  = new MySqlCommand(
                 "UPDATE registros_ingreso SET observaciones = @obs WHERE id_registro = @id", conn);
             cmd.Parameters.AddWithValue("@obs", string.IsNullOrWhiteSpace(observaciones)
                 ? DBNull.Value : (object)observaciones.Trim());
@@ -966,7 +983,7 @@ namespace CSMBiometricoWPF.Repositories
         public void ActualizarEstadoYObservaciones(int idRegistro, EstadoIngreso nuevoEstado, string observaciones)
         {
             using var conn = ConexionDB.ObtenerConexion();
-            using var cmd  = new SqliteCommand(
+            using var cmd  = new MySqlCommand(
                 "UPDATE registros_ingreso SET estado_ingreso = @estado, observaciones = @obs WHERE id_registro = @id", conn);
             cmd.Parameters.AddWithValue("@estado", nuevoEstado.ToString());
             cmd.Parameters.AddWithValue("@obs", string.IsNullOrWhiteSpace(observaciones)
@@ -978,7 +995,7 @@ namespace CSMBiometricoWPF.Repositories
         public void ActualizarCompleto(int idRegistro, EstadoIngreso nuevoEstado, string observaciones, string? nombreFranja)
         {
             using var conn = ConexionDB.ObtenerConexion();
-            using var cmd  = new SqliteCommand(
+            using var cmd  = new MySqlCommand(
                 "UPDATE registros_ingreso SET estado_ingreso=@estado, observaciones=@obs, nombre_franja=@franja WHERE id_registro=@id", conn);
             cmd.Parameters.AddWithValue("@estado", nuevoEstado.ToString());
             cmd.Parameters.AddWithValue("@obs",    string.IsNullOrWhiteSpace(observaciones) ? DBNull.Value : (object)observaciones.Trim());
@@ -1018,7 +1035,7 @@ namespace CSMBiometricoWPF.Repositories
                     WHERE DATE(v.fecha_ingreso) BETWEEN @desde AND @hasta
                       AND ri.id_estudiante = @est
                     ORDER BY v.fecha_ingreso ASC, v.hora_ingreso ASC";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@desde", desde.Date.ToString("yyyy-MM-dd"));
                     cmd.Parameters.AddWithValue("@hasta", hasta.Date.ToString("yyyy-MM-dd"));
@@ -1050,7 +1067,7 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = "SELECT * FROM v_estadisticas_hoy WHERE id_sede=@sede";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@sede", idSede);
                     using (var dr = cmd.ExecuteReader())
@@ -1104,7 +1121,7 @@ namespace CSMBiometricoWPF.Repositories
                                LEFT  JOIN grados g  ON h.id_grado=g.id_grado
                                LEFT  JOIN grupos  gr ON h.id_grupo=gr.id_grupo
                                WHERE h.id_sede=@id AND h.activo=1 {filtro}";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idSede);
                     if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
@@ -1137,7 +1154,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (idGrado.HasValue && idGrupo.HasValue)
                 {
                     string sql1 = "SELECT * FROM horarios WHERE id_sede=@sede AND id_grado=@grado AND id_grupo=@grupo AND dia_semana=@dia AND activo=1 LIMIT 1";
-                    using (var cmd = new SqliteCommand(sql1, conn))
+                    using (var cmd = new MySqlCommand(sql1, conn))
                     {
                         cmd.Parameters.AddWithValue("@sede",  idSede);
                         cmd.Parameters.AddWithValue("@grado", idGrado.Value);
@@ -1151,7 +1168,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (idGrado.HasValue)
                 {
                     string sql2 = "SELECT * FROM horarios WHERE id_sede=@sede AND id_grado=@grado AND id_grupo IS NULL AND dia_semana=@dia AND activo=1 LIMIT 1";
-                    using (var cmd = new SqliteCommand(sql2, conn))
+                    using (var cmd = new MySqlCommand(sql2, conn))
                     {
                         cmd.Parameters.AddWithValue("@sede",  idSede);
                         cmd.Parameters.AddWithValue("@grado", idGrado.Value);
@@ -1162,7 +1179,7 @@ namespace CSMBiometricoWPF.Repositories
                 }
                 // 3. Horario sede genérico
                 string sql3 = "SELECT * FROM horarios WHERE id_sede=@sede AND id_grado IS NULL AND id_grupo IS NULL AND dia_semana=@dia AND activo=1 LIMIT 1";
-                using (var cmd = new SqliteCommand(sql3, conn))
+                using (var cmd = new MySqlCommand(sql3, conn))
                 {
                     cmd.Parameters.AddWithValue("@sede", idSede);
                     cmd.Parameters.AddWithValue("@dia",  diaEsp);
@@ -1195,7 +1212,7 @@ namespace CSMBiometricoWPF.Repositories
                 WHERE h.id_sede IN ({string.Join(",", paramNames)}) AND h.activo = 1
                 GROUP BY h.id_sede, h.dia_semana";
 
-            using var cmd = new SqliteCommand(sql, conn);
+            using var cmd = new MySqlCommand(sql, conn);
             for (int i = 0; i < ids.Count; i++)
                 cmd.Parameters.AddWithValue(paramNames[i], ids[i]);
 
@@ -1229,7 +1246,7 @@ namespace CSMBiometricoWPF.Repositories
                 WHERE h.id_sede IN ({string.Join(",", paramNames)}) AND h.activo = 1
                 ORDER BY h.id_sede, h.dia_semana, f.orden, f.id_franja";
 
-            using var cmd = new SqliteCommand(sql, conn);
+            using var cmd = new MySqlCommand(sql, conn);
             for (int i = 0; i < ids.Count; i++)
                 cmd.Parameters.AddWithValue(paramNames[i], ids[i]);
 
@@ -1288,7 +1305,7 @@ namespace CSMBiometricoWPF.Repositories
                     chkSql = "SELECT id_horario FROM horarios WHERE id_sede=@sede AND id_grado IS NULL AND id_grupo IS NULL AND dia_semana=@dia LIMIT 1";
 
                 int existeId = 0;
-                using (var chk = new SqliteCommand(chkSql, conn))
+                using (var chk = new MySqlCommand(chkSql, conn))
                 {
                     chk.Parameters.AddWithValue("@sede", h.IdSede);
                     chk.Parameters.AddWithValue("@dia",  h.DiaSemana.ToString());
@@ -1302,7 +1319,7 @@ namespace CSMBiometricoWPF.Repositories
                     ? "UPDATE horarios SET hora_inicio=@hi, hora_limite_tarde=@hlt, hora_cierre_ingreso=@hci, activo=1 WHERE id_horario=@id"
                     : "INSERT INTO horarios (id_sede, id_grado, id_grupo, dia_semana, hora_inicio, hora_limite_tarde, hora_cierre_ingreso, activo) VALUES (@sede,@grado,@grupo,@dia,@hi,@hlt,@hci,1)";
 
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@hi",  h.HoraInicio.ToString(@"hh\:mm"));
                     cmd.Parameters.AddWithValue("@hlt", h.HoraLimiteTarde.ToString(@"hh\:mm"));
@@ -1336,7 +1353,7 @@ namespace CSMBiometricoWPF.Repositories
                     filtro = "AND id_grado IS NULL AND id_grupo IS NULL";
 
                 string sql = $"SELECT id_horario FROM horarios WHERE id_sede=@sede AND dia_semana=@dia AND activo=1 {filtro} LIMIT 1";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@sede", idSede);
                     cmd.Parameters.AddWithValue("@dia",  diaSemana);
@@ -1348,14 +1365,14 @@ namespace CSMBiometricoWPF.Repositories
             }
         }
 
-        private static bool TieneColumna(SqliteDataReader dr, string nombre)
+        private static bool TieneColumna(MySqlDataReader dr, string nombre)
         {
             for (int i = 0; i < dr.FieldCount; i++)
                 if (dr.GetName(i).Equals(nombre, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 
-        private static Horario MapearHorario(SqliteDataReader dr) => new Horario
+        private static Horario MapearHorario(MySqlDataReader dr) => new Horario
         {
             IdHorario         = Convert.ToInt32(dr["id_horario"]),
             IdSede            = Convert.ToInt32(dr["id_sede"]),
@@ -1388,7 +1405,7 @@ namespace CSMBiometricoWPF.Repositories
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = "SELECT * FROM franjas_horario WHERE id_horario=@id AND activo=1 ORDER BY orden, id_franja";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idHorario);
                     using (var dr = cmd.ExecuteReader())
@@ -1410,7 +1427,7 @@ namespace CSMBiometricoWPF.Repositories
                 else
                     sql = @"UPDATE franjas_horario SET nombre=@nom, hora_inicio=@hi, hora_limite_tarde=@hlt,
                             hora_cierre_ingreso=@hci, orden=@ord WHERE id_franja=@id";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@idh", f.IdHorario);
                     cmd.Parameters.AddWithValue("@nom", f.Nombre);
@@ -1428,7 +1445,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                using (var cmd = new SqliteCommand("DELETE FROM franjas_horario WHERE id_franja=@id", conn))
+                using (var cmd = new MySqlCommand("DELETE FROM franjas_horario WHERE id_franja=@id", conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idFranja);
                     return cmd.ExecuteNonQuery() > 0;
@@ -1436,7 +1453,7 @@ namespace CSMBiometricoWPF.Repositories
             }
         }
 
-        private static FranjaHorario MapearFranja(SqliteDataReader dr) => new FranjaHorario
+        private static FranjaHorario MapearFranja(MySqlDataReader dr) => new FranjaHorario
         {
             IdFranja          = Convert.ToInt32(dr["id_franja"]),
             IdHorario         = Convert.ToInt32(dr["id_horario"]),
@@ -1477,7 +1494,7 @@ namespace CSMBiometricoWPF.Repositories
                                      OR (e.id_sede IS NULL AND @instId IS NOT NULL AND e.id_institucion=@instId)
                                  )
                                ORDER BY e.fecha_excepcion DESC";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@sede", idSede);
                     cmd.Parameters.AddWithValue("@instId", idInstitucion.HasValue ? (object)idInstitucion.Value : DBNull.Value);
@@ -1528,7 +1545,7 @@ namespace CSMBiometricoWPF.Repositories
             return null;
         }
 
-        private HorarioExcepcion BuscarExcepcion(SqliteConnection conn, string fecha, int idSede, int? idGrado, int? idInstitucion)
+        private HorarioExcepcion BuscarExcepcion(MySqlConnection conn, string fecha, int idSede, int? idGrado, int? idInstitucion)
         {
             string filtroGrado = idGrado.HasValue ? "AND e.id_grado=@grado" : "AND e.id_grado IS NULL";
             string sql = $@"SELECT e.*,
@@ -1538,7 +1555,7 @@ namespace CSMBiometricoWPF.Repositories
                             LEFT JOIN sedes s ON e.id_sede=s.id_sede
                             LEFT JOIN grados g ON e.id_grado=g.id_grado
                             WHERE e.id_sede=@sede AND e.fecha_excepcion=@fecha AND e.activo=1 {filtroGrado} LIMIT 1";
-            using (var cmd = new SqliteCommand(sql, conn))
+            using (var cmd = new MySqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@sede",  idSede);
                 cmd.Parameters.AddWithValue("@fecha", fecha);
@@ -1553,7 +1570,7 @@ namespace CSMBiometricoWPF.Repositories
             }
         }
 
-        private HorarioExcepcion BuscarExcepcionInstitucion(SqliteConnection conn, string fecha, int idInstitucion, int? idGrado)
+        private HorarioExcepcion BuscarExcepcionInstitucion(MySqlConnection conn, string fecha, int idInstitucion, int? idGrado)
         {
             string filtroGrado = idGrado.HasValue ? "AND e.id_grado=@grado" : "AND e.id_grado IS NULL";
             string sql = $@"SELECT e.*,
@@ -1563,7 +1580,7 @@ namespace CSMBiometricoWPF.Repositories
                             LEFT JOIN grados g ON e.id_grado=g.id_grado
                             WHERE e.id_sede IS NULL AND e.id_institucion=@inst
                               AND e.fecha_excepcion=@fecha AND e.activo=1 {filtroGrado} LIMIT 1";
-            using (var cmd = new SqliteCommand(sql, conn))
+            using (var cmd = new MySqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@inst",  idInstitucion);
                 cmd.Parameters.AddWithValue("@fecha", fecha);
@@ -1588,8 +1605,8 @@ namespace CSMBiometricoWPF.Repositories
                     string sql = @"INSERT INTO horario_excepciones
                                    (id_sede, id_grado, id_institucion, alcance, fecha_excepcion, descripcion)
                                    VALUES (@sede, @grado, @inst, @alcance, @fecha, @desc);
-                                   SELECT last_insert_rowid()";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                                   SELECT LAST_INSERT_ID()";
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@sede",    e.IdSede > 0 ? (object)e.IdSede : DBNull.Value);
                         cmd.Parameters.AddWithValue("@grado",   e.IdGrado.HasValue ? (object)e.IdGrado.Value : DBNull.Value);
@@ -1606,7 +1623,7 @@ namespace CSMBiometricoWPF.Repositories
                                    SET descripcion=@desc, fecha_excepcion=@fecha,
                                        id_grado=@grado, alcance=@alcance
                                    WHERE id_excepcion=@id";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@desc",    e.Descripcion);
                         cmd.Parameters.AddWithValue("@fecha",   fecha);
@@ -1624,7 +1641,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                using (var cmd = new SqliteCommand("DELETE FROM horario_excepciones WHERE id_excepcion=@id", conn))
+                using (var cmd = new MySqlCommand("DELETE FROM horario_excepciones WHERE id_excepcion=@id", conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idExcepcion);
                     return cmd.ExecuteNonQuery() > 0;
@@ -1643,7 +1660,7 @@ namespace CSMBiometricoWPF.Repositories
                 else
                     sql = @"UPDATE franjas_excepcion SET nombre=@nom, hora_inicio=@hi, hora_limite_tarde=@hlt,
                             hora_cierre_ingreso=@hci, orden=@ord WHERE id_franja_exc=@id";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@ide", f.IdExcepcion);
                     cmd.Parameters.AddWithValue("@nom", f.Nombre);
@@ -1661,7 +1678,7 @@ namespace CSMBiometricoWPF.Repositories
         {
             using (var conn = ConexionDB.ObtenerConexion())
             {
-                using (var cmd = new SqliteCommand("DELETE FROM franjas_excepcion WHERE id_franja_exc=@id", conn))
+                using (var cmd = new MySqlCommand("DELETE FROM franjas_excepcion WHERE id_franja_exc=@id", conn))
                 {
                     cmd.Parameters.AddWithValue("@id", idFranjaExc);
                     return cmd.ExecuteNonQuery() > 0;
@@ -1669,11 +1686,11 @@ namespace CSMBiometricoWPF.Repositories
             }
         }
 
-        private static List<FranjaExcepcion> ObtenerFranjas(SqliteConnection conn, int idExcepcion)
+        private static List<FranjaExcepcion> ObtenerFranjas(MySqlConnection conn, int idExcepcion)
         {
             var lista = new List<FranjaExcepcion>();
             string sql = "SELECT * FROM franjas_excepcion WHERE id_excepcion=@id ORDER BY orden, id_franja_exc";
-            using (var cmd = new SqliteCommand(sql, conn))
+            using (var cmd = new MySqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@id", idExcepcion);
                 using (var dr = cmd.ExecuteReader())
@@ -1692,14 +1709,14 @@ namespace CSMBiometricoWPF.Repositories
             return lista;
         }
 
-        private static bool TieneColumna(SqliteDataReader dr, string nombre)
+        private static bool TieneColumna(MySqlDataReader dr, string nombre)
         {
             for (int i = 0; i < dr.FieldCount; i++)
                 if (dr.GetName(i).Equals(nombre, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 
-        private static HorarioExcepcion MapearExcepcion(SqliteDataReader dr)
+        private static HorarioExcepcion MapearExcepcion(MySqlDataReader dr)
         {
             int? idSede = dr["id_sede"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_sede"]);
             return new HorarioExcepcion
@@ -1735,7 +1752,7 @@ namespace CSMBiometricoWPF.Repositories
                 {
                     string sql = @"INSERT INTO logs_sistema (id_usuario, tipo_evento, descripcion, nivel)
                                    VALUES (@usr, @tipo, @desc, @nivel)";
-                    using (var cmd = new SqliteCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@usr", (object)SesionActiva.UsuarioActual?.IdUsuario ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@tipo", tipo.ToString());
@@ -1758,7 +1775,7 @@ namespace CSMBiometricoWPF.Repositories
                 if (idInstitucion.HasValue)
                     sql += " WHERE u.id_institucion = @inst";
                 sql += " ORDER BY l.fecha_evento DESC LIMIT @cant";
-                using (var cmd = new SqliteCommand(sql, conn))
+                using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@cant", cantidad);
                     if (idInstitucion.HasValue)
@@ -1803,7 +1820,7 @@ namespace CSMBiometricoWPF.Repositories
                 string sql = idInstitucion.HasValue
                     ? "SELECT * FROM periodos_academicos WHERE id_institucion=@id ORDER BY orden"
                     : "SELECT * FROM periodos_academicos WHERE id_institucion IS NULL ORDER BY orden";
-                using var cmd = new SqliteCommand(sql, conn);
+                using var cmd = new MySqlCommand(sql, conn);
                 if (idInstitucion.HasValue)
                     cmd.Parameters.AddWithValue("@id", idInstitucion.Value);
                 var lista = Leer(cmd);
@@ -1812,7 +1829,7 @@ namespace CSMBiometricoWPF.Repositories
                 // Si no tiene propios y hay institución, intenta globales
                 if (idInstitucion.HasValue)
                 {
-                    using var cmd2 = new SqliteCommand(
+                    using var cmd2 = new MySqlCommand(
                         "SELECT * FROM periodos_academicos WHERE id_institucion IS NULL ORDER BY orden", conn);
                     lista = Leer(cmd2);
                     if (lista.Count > 0) return lista;
@@ -1827,7 +1844,7 @@ namespace CSMBiometricoWPF.Repositories
             }).ToList();
         }
 
-        private static List<PeriodoAcademico> Leer(SqliteCommand cmd)
+        private static List<PeriodoAcademico> Leer(MySqlCommand cmd)
         {
             var lista = new List<PeriodoAcademico>();
             using var dr = cmd.ExecuteReader();
@@ -1854,14 +1871,14 @@ namespace CSMBiometricoWPF.Repositories
             string del = idInstitucion.HasValue
                 ? "DELETE FROM periodos_academicos WHERE id_institucion=@id"
                 : "DELETE FROM periodos_academicos WHERE id_institucion IS NULL";
-            using var cmdDel = new SqliteCommand(del, conn, tx);
+            using var cmdDel = new MySqlCommand(del, conn, tx);
             if (idInstitucion.HasValue) cmdDel.Parameters.AddWithValue("@id", idInstitucion.Value);
             cmdDel.ExecuteNonQuery();
 
             int orden = 1;
             foreach (var p in periodos)
             {
-                using var ins = new SqliteCommand(@"
+                using var ins = new MySqlCommand(@"
                     INSERT INTO periodos_academicos
                         (id_institucion, nombre, mes_inicio, dia_inicio, mes_fin, dia_fin, orden)
                     VALUES (@inst, @nom, @mi, @di, @mf, @df, @ord)", conn, tx);

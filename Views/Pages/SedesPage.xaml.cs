@@ -43,7 +43,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
             if (!SesionActiva.EsSuperAdmin && SesionActiva.InstitucionActual != null)
             {
-                // Operador/Administrador: solo ve su institución
+                // Docente/Administrador: solo ve su institución
                 cmbInstitucion.Items.Add(SesionActiva.InstitucionActual);
                 cmbInstitucion.SelectedIndex = 0;
                 cmbInstitucion.IsEnabled = false;
@@ -85,7 +85,7 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             var dlg = new EditarSedeDialog(sede) { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() == true)
-            {
+   ane         {
                 new LogRepository().Registrar(TipoEvento.CRUD,
                     sede == null ? "Nueva sede creada" : $"Sede editada: {sede.NombreSede}");
                 Cargar();

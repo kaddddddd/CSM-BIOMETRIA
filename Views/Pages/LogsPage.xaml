@@ -5,46 +5,68 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="35"/>
+            <RowDefinition Height="60"/>  <!-- Banner -->
+            <RowDefinition Height="50"/>  <!-- Toolbar -->
+            <RowDefinition Height="50"/>  <!-- Filtros -->
+            <RowDefinition Height="*"/>   <!-- Grid -->
+            <RowDefinition Height="35"/>  <!-- Status bar -->
         </Grid.RowDefinitions>
 
+        <!-- Banner -->
+        <Border Grid.Row="0" Style="{StaticResource PanelHeader}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                           Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <TextBlock Text="Registros del Sistema" Style="{StaticResource LblTituloHeader}"/>
+            </StackPanel>
+        </Border>
+
         <!-- Toolbar -->
-        <Border Grid.Row="0" Background="#263238" Padding="10,7">
+        <Border Grid.Row="1" Style="{StaticResource ToolbarAcciones}">
             <StackPanel Orientation="Horizontal">
-                <Button Content="🔄  Refrescar" Style="{StaticResource BtnSecundario}"
+                <Button Style="{StaticResource BtnSecundario}"
                         Width="120" Height="35" Margin="0,0,8,0"
-                        Click="BtnRefrescar_Click"/>
-                <Button Content="✖  Limpiar filtros" Style="{StaticResource BtnNaranja}"
+                        Click="BtnRefrescar_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Refrescar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnNaranja}"
                         Width="140" Height="35"
-                        Click="BtnLimpiar_Click"/>
+                        Click="BtnLimpiar_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE894;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Limpiar filtros" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
         <!-- Filtros -->
-        <Border Grid.Row="1" Background="#ECEFF1" Padding="10,8">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Nivel:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
-                <ComboBox x:Name="cmbNivel" Width="120" Height="28"
+        <Border Grid.Row="2" Style="{StaticResource BarraFiltros}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Nivel:" Style="{StaticResource LblFiltro}" Margin="0,0,8,0"/>
+                <ComboBox x:Name="cmbNivel" Width="120" Height="30"
                           Style="{StaticResource CmbBase}" Margin="0,0,16,0"
                           SelectionChanged="Filtro_Changed"/>
 
-                <TextBlock Text="Tipo evento:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
-                <ComboBox x:Name="cmbTipo" Width="170" Height="28"
+                <TextBlock Text="Tipo evento:" Style="{StaticResource LblFiltro}" Margin="0,0,8,0"/>
+                <ComboBox x:Name="cmbTipo" Width="170" Height="30"
                           Style="{StaticResource CmbBase}" Margin="0,0,16,0"
                           SelectionChanged="Filtro_Changed"/>
 
-                <TextBlock Text="Buscar:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
-                <TextBox x:Name="txtBuscar" Width="200" Height="28"
+                <TextBlock Text="Buscar:" Style="{StaticResource LblFiltro}" Margin="0,0,8,0"/>
+                <TextBox x:Name="txtBuscar" Width="200" Height="30"
                          Style="{StaticResource TxtBase}"
                          TextChanged="TxtBuscar_Changed"/>
             </StackPanel>
         </Border>
 
         <!-- Grid de logs -->
-        <DataGrid x:Name="grid" Grid.Row="2"
+        <DataGrid x:Name="grid" Grid.Row="3"
                   Style="{StaticResource GridBase}"
                   ColumnHeaderStyle="{StaticResource GridHeaderStyle}">
             <DataGrid.Columns>
@@ -82,7 +104,7 @@
         </DataGrid>
 
         <!-- Status bar -->
-        <Border Grid.Row="3" Background="#ECEFF1" Padding="16,0">
+        <Border Grid.Row="4" Style="{StaticResource StatusBar}">
             <TextBlock x:Name="lblTotal" Text="Mostrando 0 registros"
                        VerticalAlignment="Center" FontSize="12"
                        HorizontalAlignment="Right"/>

@@ -18,7 +18,7 @@
   <!-- ── NuGet packages ──────────────────────────────────── -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+    <PackageReference Include="MySqlConnector" Version="2.3.7" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.5" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.5" />
     <PackageReference Include="System.Management" Version="10.0.5" />
@@ -50,9 +50,13 @@
 
   <!-- ── Imágenes ──────────────────────────────────────────── -->
   <ItemGroup>
+    <!-- background.png se carga por ruta de archivo en código -->
     <None Update="Images\background.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Recursos embebidos (referenciados desde XAML con /Images/...) -->
+    <Resource Include="Images\icono.png"/>
+    <Resource Include="Images\bottom_bg.png"/>
     <None Update="Images\csm-logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

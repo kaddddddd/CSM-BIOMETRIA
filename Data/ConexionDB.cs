@@ -1,6 +1,6 @@
 using System;
-using System.IO;
-using Microsoft.Data.Sqlite;
+using System.Configuration;
+using MySqlConnector;
 
 namespace CSMBiometricoWPF.Data
 {
@@ -13,16 +13,15 @@ namespace CSMBiometricoWPF.Data
 
         static ConexionDB()
         {
-            string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "csm_biometrico.db");
-            _connectionString = $"Data Source={dbPath};";
+            _connectionString =
+                ConfigurationManager.ConnectionStrings["MySqlConnection"]?.ConnectionString
+                ?? "Server=127.0.0.1;Port=3306;Database=csm_biometrico;User ID=root;Password=admin;CharSet=utf8mb4;SslMode=None;";
         }
 
-        public static SqliteConnection ObtenerConexion()
+        public static MySqlConnection ObtenerConexion()
         {
-            var conn = new SqliteConnection(_connectionString);
+            var conn = new MySqlConnection(_connectionString);
             conn.Open();
-            using var pragma = new SqliteCommand("PRAGMA foreign_keys = ON;", conn);
-            pragma.ExecuteNonQuery();
             _conectado = true;
             return conn;
         }
@@ -31,7 +30,7 @@ namespace CSMBiometricoWPF.Data
         {
             try
             {
-                using var conn = new SqliteConnection(_connectionString);
+                using var conn = new MySqlConnection(_connectionString);
                 conn.Open();
                 _conectado = true;
                 return true;
@@ -43,9 +42,10 @@ namespace CSMBiometricoWPF.Data
             }
         }
 
-        public static void ConfigurarConexion(string dbPath)
+        /// <summary>Reconfigura la conexión en tiempo de ejecución (útil para la pantalla de configuración).</summary>
+        public static void ConfigurarConexion(string servidor, string baseDatos, string usuario, string password, int puerto = 3306)
         {
-            _connectionString = $"Data Source={dbPath};";
+            _connectionString = $"Server={servidor};Port={puerto};Database={baseDatos};User ID={usuario};Password={password};CharSet=utf8mb4;SslMode=None;";
         }
 
         public static string ObtenerCadenaConexion() => _connectionString;

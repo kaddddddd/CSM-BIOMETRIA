@@ -31,12 +31,12 @@ namespace CSMBiometricoWPF.Views.Pages
 
         private readonly (string icono, string titulo, string color, string filtro)[] _cardDefs =
         {
-            ("👨‍🎓", "Total estudiantes",   "#009688", "TODOS"),
-            ("✅",  "Presentes",           "#4CAF50", "PRESENTES"),
-            ("⚠️",  "Parcial",             "#FF9800", "PARCIALES"),
-            ("❌",  "Ausentes",            "#E53935", "AUSENTES"),
-            ("⏰",  "Tardanzas",           "#FB8C00", "TARDANZAS"),
-            ("🖐",  "Huellas registradas", "#2196F3", "HUELLAS"),
+            ("\uE716", "Total estudiantes",   "#009688", "TODOS"),
+            ("\uE73E", "Presentes",           "#4CAF50", "PRESENTES"),
+            ("\uE783", "Parcial",             "#FF9800", "PARCIALES"),
+            ("\uE711", "Ausentes",            "#E53935", "AUSENTES"),
+            ("\uE823", "Tardanzas",           "#FB8C00", "TARDANZAS"),
+            ("\uED5F", "Huellas registradas", "#2196F3", "HUELLAS"),
         };
 
         // Opciones de período y días que restan al día de hoy
@@ -73,7 +73,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
         // Institución efectiva según el rol:
         // - SuperAdmin: usa lo que el combo diga (o null = todas)
-        // - Administrador/Operador: forzado a su propia institución
+        // - Administrador/Docente: forzado a su propia institución
         private int? InstFiltroEfectivo
         {
             get
@@ -127,7 +127,7 @@ namespace CSMBiometricoWPF.Views.Pages
 
             if (!SesionActiva.EsSuperAdmin && SesionActiva.InstitucionActual != null)
             {
-                // Operador / Administrador: solo ve su institución
+                // Docente / Administrador: solo ve su institución
                 cmbInstitucion.Items.Add(SesionActiva.InstitucionActual);
                 cmbInstitucion.SelectedIndex = 0;
                 cmbInstitucion.IsEnabled = false;
@@ -145,9 +145,9 @@ namespace CSMBiometricoWPF.Views.Pages
             cmbGrado.DisplayMemberPath = "NombreGrado";
 
             cmbGrupo.Items.Add(new Grupo { NombreGrupo = "Todos los grupos" });
-            try { foreach (var g in _repoGrupo.ObtenerTodos()) cmbGrupo.Items.Add(g); } catch { }
             cmbGrupo.SelectedIndex = 0;
             cmbGrupo.DisplayMemberPath = "NombreGrupo";
+            cmbGrupo.IsEnabled = false;
             _inicializando = false;
         }
 
@@ -178,12 +178,12 @@ namespace CSMBiometricoWPF.Views.Pages
 
                 var card = new Border
                 {
-                    Width = 180, Height = 110,
+                    Height = 110,
                     Background = Brushes.White,
                     CornerRadius = new CornerRadius(6),
                     BorderThickness = new Thickness(2),
                     BorderBrush = Brushes.Transparent,
-                    Margin = new Thickness(0, 0, 14, 0),
+                    Margin = new Thickness(6, 0, 6, 0),
                     Cursor = Cursors.Hand
                 };
                 card.Effect = new System.Windows.Media.Effects.DropShadowEffect
@@ -202,7 +202,8 @@ namespace CSMBiometricoWPF.Views.Pages
 
                 var lblIco = new TextBlock
                 {
-                    Text = icono, FontSize = 22,
+                    Text = icono, FontSize = 24,
+                    FontFamily = new FontFamily("Segoe MDL2 Assets"),
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Top,
                     Margin = new Thickness(0, 12, 12, 0),
@@ -457,6 +458,37 @@ namespace CSMBiometricoWPF.Views.Pages
                 RefrescarTodo();
         }
 
+        private void CmbGrado_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_inicializando) return;
+            ActualizarComboGrupo();
+            RefrescarTodo();
+        }
+
+        private void ActualizarComboGrupo()
+        {
+            var prev = _inicializando;
+            _inicializando = true;
+            cmbGrupo.Items.Clear();
+            cmbGrupo.Items.Add(new Grupo { NombreGrupo = "Todos los grupos" });
+            if (cmbGrado.SelectedItem is Grado g && g.IdGrado > 0)
+            {
+                try
+                {
+                    var gr = _repoGrupo.ObtenerPorGrado(g.IdGrado);
+                    if (gr != null) cmbGrupo.Items.Add(gr);
+                }
+                catch { }
+                cmbGrupo.IsEnabled = true;
+            }
+            else
+            {
+                cmbGrupo.IsEnabled = false;
+            }
+            cmbGrupo.SelectedIndex = 0;
+            _inicializando = prev;
+        }
+
         private void CmbFiltro_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_inicializando) return;
@@ -478,7 +510,7 @@ namespace CSMBiometricoWPF.Views.Pages
             cmbInstitucion.SelectedIndex = 0;
             cmbSede.SelectedIndex = 0;
             cmbGrado.SelectedIndex = 0;
-            cmbGrupo.SelectedIndex = 0;
+            ActualizarComboGrupo();
             _inicializando = false;
             _filtroActivo = "AUSENTES";
             RefrescarTodo();
@@ -487,6 +519,198 @@ namespace CSMBiometricoWPF.Views.Pages
         private void cmbInstitucion_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
+        }
+
+        private void TabGraficas_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (tabGraficas?.IsSelected == true)
+                DibujarGraficas();
+            if (tabGradosGrupos?.IsSelected == true)
+                CargarGradosGrupos();
+        }
+
+        private void CargarGradosGrupos()
+        {
+            try
+            {
+                var instEfectiva = InstFiltroEfectivo;
+                int? idSede = (cmbSede.SelectedItem as Sede)?.IdSede is int s && s > 0 ? s : (int?)null;
+
+                var todos = _repoEst.ObtenerTodos(idInstitucion: instEfectiva, estado: "ACTIVO");
+                if (idSede.HasValue) todos = todos.FindAll(e => e.IdSede == idSede);
+
+                var grados = _repoGrado.ObtenerTodos();
+
+                var vms = grados.Select(g =>
+                {
+                    var grupo = _repoGrupo.ObtenerPorGrado(g.IdGrado);
+                    int count = todos.Count(e => e.IdGrado == g.IdGrado);
+                    return new GradoGrupoVM
+                    {
+                        NombreGrado      = g.NombreGrado,
+                        NombreGrupo      = grupo?.NombreGrupo ?? "—",
+                        TotalEstudiantes = count
+                    };
+                }).ToList();
+
+                gridGradosGrupos.ItemsSource = vms;
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show("CargarGradosGrupos: " + ex.Message, "Error");
+            }
+        }
+
+        private void CanvasDias_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            DibujarBarrasDias();
+        }
+
+        private void DibujarGraficas()
+        {
+            if (_vmsActuales == null || _vmsActuales.Count == 0) return;
+            var (desde, hasta) = ObtenerRangoFechas();
+            lblGraficasTitulo.Text = $"Período: {desde:dd/MM/yyyy} — {hasta:dd/MM/yyyy}";
+            DibujarDonut();
+            DibujarBarrasGrado();
+            DibujarBarrasDias();
+        }
+
+        private void DibujarDonut()
+        {
+            canvasDonut.Children.Clear();
+            int presentes = _vmsActuales.Count(v => v.TotalFaltas == 0 && v.DiasATiempo > 0);
+            int tardanzas = _vmsActuales.Count(v => v.DiasTarde > 0);
+            int ausentes  = _vmsActuales.Count(v => v.DiasPresentes == 0 && v.TotalFaltas > 0);
+            int total     = _vmsActuales.Count;
+            if (total == 0) return;
+
+            var datos = new[] {
+                (presentes, "#4CAF50", "Presentes"),
+                (tardanzas, "#FF9800", "Tardanzas"),
+                (ausentes,  "#E53935", "Ausentes"),
+            };
+
+            double cx = 80, cy = 80, rOut = 70, rIn = 40;
+            double startAngle = -Math.PI / 2;
+            var leyenda = new List<DonutLeyendaItem>();
+
+            foreach (var (count, colorHex, label) in datos)
+            {
+                if (count == 0) continue;
+                double angle    = 2 * Math.PI * count / total;
+                double endAngle = startAngle + angle;
+                bool   isLarge  = angle > Math.PI;
+
+                double x1 = cx + rOut * Math.Cos(startAngle), y1 = cy + rOut * Math.Sin(startAngle);
+                double x2 = cx + rOut * Math.Cos(endAngle),   y2 = cy + rOut * Math.Sin(endAngle);
+                double x3 = cx + rIn  * Math.Cos(endAngle),   y3 = cy + rIn  * Math.Sin(endAngle);
+                double x4 = cx + rIn  * Math.Cos(startAngle), y4 = cy + rIn  * Math.Sin(startAngle);
+
+                var fig = new PathFigure { StartPoint = new Point(x1, y1), IsClosed = true };
+                fig.Segments.Add(new ArcSegment(new Point(x2, y2), new Size(rOut, rOut), 0, isLarge, SweepDirection.Clockwise, true));
+                fig.Segments.Add(new LineSegment(new Point(x3, y3), true));
+                fig.Segments.Add(new ArcSegment(new Point(x4, y4), new Size(rIn,  rIn),  0, isLarge, SweepDirection.Counterclockwise, true));
+
+                var geo   = new PathGeometry(); geo.Figures.Add(fig);
+                var color = (Color)ColorConverter.ConvertFromString(colorHex);
+                canvasDonut.Children.Add(new System.Windows.Shapes.Path
+                {
+                    Data = geo, Fill = new SolidColorBrush(color),
+                    Stroke = Brushes.White, StrokeThickness = 2
+                });
+
+                leyenda.Add(new DonutLeyendaItem
+                {
+                    ColorBrush = new SolidColorBrush(color),
+                    Label      = label,
+                    Valor      = count.ToString(),
+                    Pct        = $"({100.0 * count / total:F0}%)"
+                });
+                startAngle = endAngle;
+            }
+            lstLeyendaDonut.ItemsSource = leyenda;
+        }
+
+        private void DibujarBarrasGrado()
+        {
+            var byGrado = _vmsActuales
+                .GroupBy(v => v.NombreGrado ?? "Sin grado")
+                .Select(g => new { Grado = g.Key, Faltas = g.Sum(v => v.TotalFaltas) })
+                .OrderByDescending(x => x.Faltas)
+                .ToList();
+
+            int    maxF = byGrado.Count > 0 && byGrado.Max(x => x.Faltas) > 0 ? byGrado.Max(x => x.Faltas) : 1;
+            double maxW = Math.Max(lstBarrasGrado.ActualWidth - 180, 100);
+
+            lstBarrasGrado.ItemsSource = byGrado.Select(x =>
+            {
+                double ratio = (double)x.Faltas / maxF;
+                string hex   = ratio > 0.66 ? "#E53935" : ratio > 0.33 ? "#FF9800" : "#4CAF50";
+                return new BarraGradoItem
+                {
+                    Grado      = x.Grado,
+                    AnchoFalta = ratio * maxW,
+                    ColorBarra = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)),
+                    FaltaStr   = x.Faltas.ToString(),
+                    Tooltip    = $"{x.Grado}: {x.Faltas} falta(s)"
+                };
+            }).ToList();
+
+            lblSinDatosGrado.Visibility = byGrado.All(x => x.Faltas == 0)
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void DibujarBarrasDias()
+        {
+            canvasDias.Children.Clear();
+            double w = canvasDias.ActualWidth, h = canvasDias.ActualHeight;
+            if (w <= 0 || h <= 0 || _vmsActuales == null) return;
+
+            var keys   = new[] { "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES" };
+            var labels = new[] { "Lun",   "Mar",    "Mié",       "Jue",    "Vie"     };
+            var counts = keys.Select(k =>
+                _vmsActuales.SelectMany(v => v.Faltas).Count(f => DiaSemanaStr(f.Fecha.DayOfWeek) == k)
+            ).ToArray();
+
+            int    maxVal  = counts.Max() > 0 ? counts.Max() : 1;
+            double barArea = h - 24;
+            double slot    = w / keys.Length;
+            double barW    = slot * 0.5;
+            var    fill    = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#007864"));
+
+            for (int i = 0; i < keys.Length; i++)
+            {
+                double x    = slot * i + (slot - barW) / 2;
+                double barH = barArea * counts[i] / maxVal;
+                double y    = barArea - barH;
+
+                var rect = new System.Windows.Shapes.Rectangle
+                {
+                    Width = barW, Height = Math.Max(barH, 2),
+                    Fill = fill, RadiusX = 3, RadiusY = 3,
+                    ToolTip = $"{labels[i]}: {counts[i]} falta(s)"
+                };
+                Canvas.SetLeft(rect, x); Canvas.SetTop(rect, y);
+                canvasDias.Children.Add(rect);
+
+                if (counts[i] > 0)
+                {
+                    var lv = new TextBlock { Text = counts[i].ToString(), FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.FromRgb(80, 80, 80)) };
+                    lv.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    Canvas.SetLeft(lv, x + barW / 2 - lv.DesiredSize.Width / 2);
+                    Canvas.SetTop(lv, y - 16);
+                    canvasDias.Children.Add(lv);
+                }
+
+                var ld = new TextBlock { Text = labels[i], FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.FromRgb(120, 120, 120)) };
+                ld.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                Canvas.SetLeft(ld, x + barW / 2 - ld.DesiredSize.Width / 2);
+                Canvas.SetTop(ld, h - 18);
+                canvasDias.Children.Add(ld);
+            }
         }
     }
 
@@ -535,6 +759,34 @@ namespace CSMBiometricoWPF.Views.Pages
             set { _expandido = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Expandido))); }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
+    }
+
+    public class DonutLeyendaItem
+    {
+        public Brush  ColorBrush { get; set; } = Brushes.Transparent;
+        public string Label      { get; set; } = "";
+        public string Valor      { get; set; } = "";
+        public string Pct        { get; set; } = "";
+    }
+
+    public class BarraGradoItem
+    {
+        public string Grado      { get; set; } = "";
+        public double AnchoFalta { get; set; }
+        public Brush  ColorBarra { get; set; } = Brushes.Transparent;
+        public string FaltaStr   { get; set; } = "";
+        public string Tooltip    { get; set; } = "";
+    }
+
+    public class GradoGrupoVM
+    {
+        public string NombreGrado      { get; set; } = "";
+        public string NombreGrupo      { get; set; } = "";
+        public int    TotalEstudiantes { get; set; }
+        public string EstudiantesLabel => TotalEstudiantes == 0 ? "Sin estudiantes" : TotalEstudiantes.ToString();
+        public Brush  EstudiantesColor => TotalEstudiantes == 0
+            ? new SolidColorBrush(Color.FromRgb(170, 170, 170))
+            : new SolidColorBrush(Color.FromRgb(40,  40,  40));
     }
 }

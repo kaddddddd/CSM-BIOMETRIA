@@ -129,10 +129,14 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             cmbGrupo.Items.Clear();
             cmbGrupo.Items.Add(new Grupo { IdGrupo = 0, NombreGrupo = "Todos los grupos" });
-            // Solo mostrar grupos si hay un grado seleccionado
             if (_idGradoActual.HasValue)
             {
-                try { foreach (var gr in _grupoRepo.ObtenerTodos()) cmbGrupo.Items.Add(gr); } catch { }
+                try
+                {
+                    var gr = _grupoRepo.ObtenerPorGrado(_idGradoActual.Value);
+                    if (gr != null) cmbGrupo.Items.Add(gr);
+                }
+                catch { }
             }
             cmbGrupo.DisplayMemberPath = "NombreGrupo";
             cmbGrupo.SelectedIndex = 0;
@@ -188,6 +192,18 @@ namespace CSMBiometricoWPF.Views.Pages
                     lblInfoAmbito.Text = $"Horario del grado: {gsel.NombreGrado}  (aplica a grupos de este grado sin horario propio)";
                 else
                     lblInfoAmbito.Text = "Horario general de la sede  (aplica a todos los grados/grupos sin horario propio)";
+
+                // Grados 10 y 11: solo Martes y Jueves
+                bool soloMartesJueves = _idGradoActual.HasValue &&
+                    cmbGrado.SelectedItem is Grado gFiltro &&
+                    (gFiltro.NombreGrado.Contains("10") || gFiltro.NombreGrado.Contains("11"));
+
+                var visOtros = soloMartesJueves ? Visibility.Collapsed : Visibility.Visible;
+                borderLunes.Visibility     = visOtros;
+                borderMiercoles.Visibility = visOtros;
+                borderViernes.Visibility   = visOtros;
+                borderMartes.Visibility    = Visibility.Visible;
+                borderJueves.Visibility    = Visibility.Visible;
 
                 pnlHorarios.Visibility = Visibility.Visible;
                 lblSeleccioneSede.Visibility = Visibility.Collapsed;
