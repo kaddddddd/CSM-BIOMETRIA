@@ -10,7 +10,7 @@ namespace CSMBiometricoWPF.Views.Dialogs
         private readonly SedeRepository _repo = new();
         private readonly Sede _sede;
 
-        public EditarSedeDialog(Sede? sede)
+        public EditarSedeDialog(Sede? sede, Institucion? instPreseleccionada = null)
         {
             InitializeComponent();
             _sede = sede ?? new Sede { Estado = true };
@@ -30,6 +30,8 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 try
                 {
                     cmbInstitucion.ItemsSource = new InstitucionRepository().ObtenerTodas(soloActivas: true);
+                    if (instPreseleccionada != null)
+                        cmbInstitucion.SelectedValue = instPreseleccionada.IdInstitucion;
                 }
                 catch { }
             }

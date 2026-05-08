@@ -52,6 +52,7 @@ namespace CSMBiometricoWPF.Models
         public string Telefono { get; set; }
         public bool Estado { get; set; } = true;
         public DateTime FechaCreacion { get; set; }
+        public string? LogoPath { get; set; }
         public List<Sede> Sedes { get; set; } = new List<Sede>();
         public override string ToString() => Nombre;
     }
@@ -89,6 +90,8 @@ namespace CSMBiometricoWPF.Models
     public class Grupo
     {
         public int IdGrupo { get; set; }
+        public int? IdSede { get; set; }
+        public int? IdGrado { get; set; }
         public string NombreGrupo { get; set; }
         public bool Estado { get; set; } = true;
         public override string ToString() => NombreGrupo;

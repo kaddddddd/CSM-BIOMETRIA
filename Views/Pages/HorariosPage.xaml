@@ -83,6 +83,10 @@
                         <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Foreground="#9E9E9E"/>
                         <TextBlock Text="Seleccione una institución y una sede para ver y editar sus horarios."
                                    FontSize="14" Foreground="#9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="lblAvisoGrado"
+                                   Text="&#x2139;  Seleccione un grado específico para ver el horario por grado."
+                                   FontSize="12" Foreground="#1A7A5E" HorizontalAlignment="Center"
+                                   Margin="0,8,0,0" Visibility="Collapsed"/>
                     </StackPanel>
                 </Border>
 

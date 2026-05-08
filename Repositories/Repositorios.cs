@@ -230,7 +230,8 @@ namespace CSMBiometricoWPF.Repositories
                             Direccion = dr["direccion"]?.ToString(),
                             Telefono = dr["telefono"]?.ToString(),
                             Estado = Convert.ToBoolean(dr["estado"]),
-                            FechaCreacion = Convert.ToDateTime(dr["fecha_creacion"])
+                            FechaCreacion = Convert.ToDateTime(dr["fecha_creacion"]),
+                            LogoPath = dr["logo_path"] == DBNull.Value ? null : dr["logo_path"]?.ToString()
                         });
             }
             return lista;
@@ -250,7 +251,8 @@ namespace CSMBiometricoWPF.Repositories
                             Nombre = dr["nombre"].ToString(),
                             Direccion = dr["direccion"]?.ToString(),
                             Telefono = dr["telefono"]?.ToString(),
-                            Estado = Convert.ToBoolean(dr["estado"])
+                            Estado = Convert.ToBoolean(dr["estado"]),
+                            LogoPath = dr["logo_path"] == DBNull.Value ? null : dr["logo_path"]?.ToString()
                         };
             }
             return null;
@@ -262,19 +264,20 @@ namespace CSMBiometricoWPF.Repositories
             {
                 if (inst.IdInstitucion == 0)
                 {
-                    string sql = "INSERT INTO instituciones (nombre, direccion, telefono, estado) VALUES (@n,@d,@t,@e)";
+                    string sql = "INSERT INTO instituciones (nombre, direccion, telefono, estado, logo_path) VALUES (@n,@d,@t,@e,@l)";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@n", inst.Nombre);
                         cmd.Parameters.AddWithValue("@d", (object)inst.Direccion ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@t", (object)inst.Telefono ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@e", inst.Estado);
+                        cmd.Parameters.AddWithValue("@l", (object)inst.LogoPath ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
                 else
                 {
-                    string sql = "UPDATE instituciones SET nombre=@n, direccion=@d, telefono=@t, estado=@e WHERE id_institucion=@id";
+                    string sql = "UPDATE instituciones SET nombre=@n, direccion=@d, telefono=@t, estado=@e, logo_path=@l WHERE id_institucion=@id";
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@id", inst.IdInstitucion);
@@ -282,6 +285,7 @@ namespace CSMBiometricoWPF.Repositories
                         cmd.Parameters.AddWithValue("@d", (object)inst.Direccion ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@t", (object)inst.Telefono ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@e", inst.Estado);
+                        cmd.Parameters.AddWithValue("@l", (object)inst.LogoPath ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -429,6 +433,30 @@ namespace CSMBiometricoWPF.Repositories
             return lista;
         }
 
+        public List<Grado> ObtenerPorSede(int idSede)
+        {
+            var lista = new List<Grado>();
+            using (var conn = ConexionDB.ObtenerConexion())
+            {
+                string sql = @"SELECT DISTINCT g.id_grado, g.nombre_grado, g.orden_grado
+                               FROM grados g
+                               INNER JOIN horarios h ON h.id_grado = g.id_grado
+                               WHERE h.id_sede = @idSede AND g.estado = 1 AND h.activo = 1
+                               ORDER BY g.orden_grado";
+                using var cmd = new MySqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@idSede", idSede);
+                using var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                    lista.Add(new Grado
+                    {
+                        IdGrado    = Convert.ToInt32(dr["id_grado"]),
+                        NombreGrado = dr["nombre_grado"].ToString(),
+                        OrdenGrado = Convert.ToInt32(dr["orden_grado"])
+                    });
+            }
+            return lista;
+        }
+
         public bool Guardar(Grado grado)
         {
             using (var conn = ConexionDB.ObtenerConexion())
@@ -478,32 +506,35 @@ namespace CSMBiometricoWPF.Repositories
         {
             var lista = new List<Grupo>();
             using (var conn = ConexionDB.ObtenerConexion())
-            using (var cmd = new MySqlCommand("SELECT * FROM grupos WHERE estado=1 ORDER BY id_grupo", conn))
+            using (var cmd = new MySqlCommand("SELECT * FROM grupos WHERE estado=1 ORDER BY nombre_grupo", conn))
             using (var dr = cmd.ExecuteReader())
                 while (dr.Read())
-                    lista.Add(new Grupo
-                    {
-                        IdGrupo = Convert.ToInt32(dr["id_grupo"]),
-                        NombreGrupo = dr["nombre_grupo"].ToString()
-                    });
+                    lista.Add(MapearGrupo(dr));
             return lista;
         }
 
-        // Devuelve únicamente el grupo correspondiente al grado (id_grupo == id_grado)
-        public Grupo? ObtenerPorGrado(int idGrado)
+        public Grupo? ObtenerPorSedeGrado(int idSede, int idGrado)
         {
             using var conn = ConexionDB.ObtenerConexion();
             using var cmd = new MySqlCommand(
-                "SELECT * FROM grupos WHERE id_grupo=@id AND estado=1 LIMIT 1", conn);
-            cmd.Parameters.AddWithValue("@id", idGrado);
+                "SELECT * FROM grupos WHERE id_sede=@s AND id_grado=@g AND estado=1 LIMIT 1", conn);
+            cmd.Parameters.AddWithValue("@s", idSede);
+            cmd.Parameters.AddWithValue("@g", idGrado);
             using var dr = cmd.ExecuteReader();
-            if (dr.Read())
-                return new Grupo
-                {
-                    IdGrupo = Convert.ToInt32(dr["id_grupo"]),
-                    NombreGrupo = dr["nombre_grupo"].ToString()
-                };
-            return null;
+            return dr.Read() ? MapearGrupo(dr) : null;
+        }
+
+        private static Grupo MapearGrupo(MySqlDataReader dr)
+        {
+            int? idSede  = dr["id_sede"]  == DBNull.Value ? null : Convert.ToInt32(dr["id_sede"]);
+            int? idGrado = dr["id_grado"] == DBNull.Value ? null : Convert.ToInt32(dr["id_grado"]);
+            return new Grupo
+            {
+                IdGrupo     = Convert.ToInt32(dr["id_grupo"]),
+                IdSede      = idSede,
+                IdGrado     = idGrado,
+                NombreGrupo = dr["nombre_grupo"].ToString()
+            };
         }
 
         public bool Guardar(Grupo grupo)
@@ -512,18 +543,22 @@ namespace CSMBiometricoWPF.Repositories
             {
                 if (grupo.IdGrupo == 0)
                 {
-                    using (var cmd = new MySqlCommand("INSERT INTO grupos (nombre_grupo, estado) VALUES (@n,1)", conn))
+                    using (var cmd = new MySqlCommand(
+                        "INSERT INTO grupos (nombre_grupo, id_sede, id_grado, estado) VALUES (@n,@s,@g,1)", conn))
                     {
                         cmd.Parameters.AddWithValue("@n", grupo.NombreGrupo);
+                        cmd.Parameters.AddWithValue("@s", (object?)grupo.IdSede  ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@g", (object?)grupo.IdGrado ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
                 else
                 {
-                    using (var cmd = new MySqlCommand("UPDATE grupos SET nombre_grupo=@n WHERE id_grupo=@id", conn))
+                    using (var cmd = new MySqlCommand(
+                        "UPDATE grupos SET nombre_grupo=@n WHERE id_grupo=@id", conn))
                     {
                         cmd.Parameters.AddWithValue("@id", grupo.IdGrupo);
-                        cmd.Parameters.AddWithValue("@n", grupo.NombreGrupo);
+                        cmd.Parameters.AddWithValue("@n",  grupo.NombreGrupo);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -1021,13 +1056,13 @@ namespace CSMBiometricoWPF.Repositories
                                         ON e2.id_estudiante = ri.id_estudiante
                                 WHERE h.id_sede = e2.id_sede
                                   AND h.activo  = 1
-                                  AND h.dia_semana = CASE strftime('%w', v.fecha_ingreso)
-                                        WHEN '1' THEN 'LUNES'   WHEN '2' THEN 'MARTES'
-                                        WHEN '3' THEN 'MIERCOLES' WHEN '4' THEN 'JUEVES'
-                                        WHEN '5' THEN 'VIERNES' WHEN '6' THEN 'SABADO'
+                                  AND h.dia_semana = CASE DAYOFWEEK(v.fecha_ingreso)
+                                        WHEN 2 THEN 'LUNES'   WHEN 3 THEN 'MARTES'
+                                        WHEN 4 THEN 'MIERCOLES' WHEN 5 THEN 'JUEVES'
+                                        WHEN 6 THEN 'VIERNES' WHEN 7 THEN 'SABADO'
                                         ELSE 'DOMINGO' END
-                                  AND time(v.hora_ingreso) BETWEEN time(f.hora_inicio)
-                                                               AND time(f.hora_cierre_ingreso)
+                                  AND TIME(v.hora_ingreso) BETWEEN TIME(f.hora_inicio)
+                                                               AND TIME(f.hora_cierre_ingreso)
                                 LIMIT 1)
                            ) AS nombre_franja
                     FROM v_registros_ingreso_detalle v
@@ -1195,22 +1230,29 @@ namespace CSMBiometricoWPF.Repositories
         /// 1 (horario principal) + N franjas activas.
         /// Útil para detectar faltas parciales cuando hay franjas configuradas.
         /// </summary>
-        public Dictionary<(int IdSede, string DiaSemana), int> ObtenerSlotsPorSedes(IEnumerable<int> sedeIds)
+        /// <summary>
+        /// Devuelve los slots esperados por (idSede, idGrado nullable, diaSemana).
+        /// idGrado=null representa el horario general de la sede.
+        /// En el dashboard, aplicar prioridad: buscar primero por grado, luego por null.
+        /// Solo incluye horarios sin grupo (id_grupo IS NULL) para evitar doble conteo.
+        /// </summary>
+        public Dictionary<(int IdSede, int? IdGrado, string DiaSemana), int> ObtenerSlotsPorSedes(IEnumerable<int> sedeIds)
         {
-            var result = new Dictionary<(int, string), int>();
+            var result = new Dictionary<(int, int?, string), int>();
             var ids = sedeIds.ToList();
             if (!ids.Any()) return result;
 
             using var conn = ConexionDB.ObtenerConexion();
             var paramNames = ids.Select((_, i) => $"@id{i}").ToList();
             string sql = $@"
-                SELECT h.id_sede, h.dia_semana,
+                SELECT h.id_sede, h.id_grado, h.dia_semana,
                        CASE WHEN COUNT(f.id_franja) = 0 THEN 1 ELSE COUNT(f.id_franja) END AS total_slots
                 FROM horarios h
                 LEFT JOIN franjas_horario f
                        ON f.id_horario = h.id_horario AND f.activo = 1
-                WHERE h.id_sede IN ({string.Join(",", paramNames)}) AND h.activo = 1
-                GROUP BY h.id_sede, h.dia_semana";
+                WHERE h.id_sede IN ({string.Join(",", paramNames)})
+                  AND h.activo = 1 AND h.id_grupo IS NULL
+                GROUP BY h.id_sede, h.id_grado, h.dia_semana";
 
             using var cmd = new MySqlCommand(sql, conn);
             for (int i = 0; i < ids.Count; i++)
@@ -1219,10 +1261,11 @@ namespace CSMBiometricoWPF.Repositories
             using var dr = cmd.ExecuteReader();
             while (dr.Read())
             {
-                int idSede   = Convert.ToInt32(dr["id_sede"]);
+                int  idSede  = Convert.ToInt32(dr["id_sede"]);
+                int? idGrado = dr["id_grado"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_grado"]);
                 string dia   = dr["dia_semana"].ToString();
                 int slots    = Convert.ToInt32(dr["total_slots"]);
-                result[(idSede, dia)] = slots;
+                result[(idSede, idGrado, dia)] = slots;
             }
             return result;
         }
@@ -1231,20 +1274,26 @@ namespace CSMBiometricoWPF.Repositories
         /// Devuelve los nombres de las franjas configuradas por (idSede, diaSemana).
         /// Sedes cuyo horario no tiene franjas explícitas no aparecen en el resultado.
         /// </summary>
-        public Dictionary<(int IdSede, string DiaSemana), List<string>> ObtenerNombrasFranjasPorSedes(IEnumerable<int> sedeIds)
+        /// <summary>
+        /// Devuelve los nombres de franjas por (idSede, idGrado nullable, diaSemana).
+        /// idGrado=null representa el horario general de la sede.
+        /// Solo incluye horarios sin grupo (id_grupo IS NULL).
+        /// </summary>
+        public Dictionary<(int IdSede, int? IdGrado, string DiaSemana), List<string>> ObtenerNombrasFranjasPorSedes(IEnumerable<int> sedeIds)
         {
-            var result = new Dictionary<(int, string), List<string>>();
+            var result = new Dictionary<(int, int?, string), List<string>>();
             var ids = sedeIds.ToList();
             if (!ids.Any()) return result;
 
             using var conn = ConexionDB.ObtenerConexion();
             var paramNames = ids.Select((_, i) => $"@id{i}").ToList();
             string sql = $@"
-                SELECT h.id_sede, h.dia_semana, f.nombre
+                SELECT h.id_sede, h.id_grado, h.dia_semana, f.nombre
                 FROM horarios h
                 INNER JOIN franjas_horario f ON f.id_horario = h.id_horario AND f.activo = 1
-                WHERE h.id_sede IN ({string.Join(",", paramNames)}) AND h.activo = 1
-                ORDER BY h.id_sede, h.dia_semana, f.orden, f.id_franja";
+                WHERE h.id_sede IN ({string.Join(",", paramNames)})
+                  AND h.activo = 1 AND h.id_grupo IS NULL
+                ORDER BY h.id_sede, h.id_grado, h.dia_semana, f.orden, f.id_franja";
 
             using var cmd = new MySqlCommand(sql, conn);
             for (int i = 0; i < ids.Count; i++)
@@ -1253,7 +1302,9 @@ namespace CSMBiometricoWPF.Repositories
             using var dr = cmd.ExecuteReader();
             while (dr.Read())
             {
-                var key = (Convert.ToInt32(dr["id_sede"]), dr["dia_semana"].ToString());
+                int  idSede  = Convert.ToInt32(dr["id_sede"]);
+                int? idGrado = dr["id_grado"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_grado"]);
+                var  key     = (idSede, idGrado, dr["dia_semana"].ToString());
                 if (!result.ContainsKey(key)) result[key] = new List<string>();
                 result[key].Add(dr["nombre"].ToString());
             }

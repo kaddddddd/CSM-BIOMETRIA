@@ -1,4 +1,4 @@
-<Window x:Class="CSMBiometricoWPF.Views.MainWindow"
+﻿<Window x:Class="CSMBiometricoWPF.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="CSM Educativo - Módulo Biométrico"
@@ -6,58 +6,54 @@
         WindowStartupLocation="CenterScreen">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="54"/>
+        </Grid.RowDefinitions>
 
-        <!-- Imagen de fondo -->
-        <Image x:Name="imgFondo" Stretch="UniformToFill"/>
-        <!-- Overlay verde oscuro semitransparente -->
-        <Border Background="#55005040"/>
+        <!-- ══ Área MDI ═══════════════════════════════════════════ -->
+        <Grid Grid.Row="0">
+            <!-- Dashboard como fondo fijo -->
+            <Image x:Name="imgFondo" Stretch="UniformToFill"/>
+            <Border Background="#55005040"/>
+            <Frame x:Name="frameDashboard"
+                   NavigationUIVisibility="Hidden"
+                   Background="Transparent"/>
+            <!-- Contenedor de ventanas flotantes -->
+            <Canvas x:Name="mdiContainer"
+                    ClipToBounds="True"
+                    Background="{x:Null}"/>
+        </Grid>
 
-        <!-- Frame de contenido (ocupa todo menos la barra inferior) -->
-        <Frame x:Name="frameContenido"
-               NavigationUIVisibility="Hidden"
-               Background="Transparent"
-               Margin="0,0,0,54"/>
-
-        <!-- ══════════════════════════════════════════
-             BARRA INFERIOR
-             ══════════════════════════════════════════ -->
-        <Border VerticalAlignment="Bottom" Height="54" Background="White">
+        <!-- ══ Barra inferior ════════════════════════════════════ -->
+        <Border x:Name="barraInferior" Grid.Row="1" Background="White">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="-2" Opacity="0.12" Direction="90"/>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="-2"
+                                  Opacity="0.12" Direction="90"/>
             </Border.Effect>
             <Grid Margin="10,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>  <!-- Botón Menú (con logo) -->
-                    <ColumnDefinition Width="Auto"/>  <!-- Botón Panel Entrada -->
-                    <ColumnDefinition Width="Auto"/>  <!-- Búsqueda -->
-                    <ColumnDefinition Width="*"/>     <!-- Espacio -->
+                    <ColumnDefinition Width="Auto"/>  <!-- Menú -->
+                    <ColumnDefinition Width="Auto"/>  <!-- Panel Entrada -->
+                    <ColumnDefinition Width="Auto"/>  <!-- Buscador -->
+                    <ColumnDefinition Width="Auto"/>  <!-- Sep. tabs -->
+                    <ColumnDefinition Width="*"/>     <!-- Tabs -->
                     <ColumnDefinition Width="Auto"/>  <!-- Separador -->
                     <ColumnDefinition Width="Auto"/>  <!-- Hora -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Botón Menú: ovalado, blanco, logo CSM + texto negro -->
+                <!-- Botón Menú -->
                 <Button x:Name="btnAbrirMenu" Grid.Column="0"
-                        Background="White"
-                        Foreground="#222222"
-                        BorderBrush="#CCCCCC"
-                        BorderThickness="1"
-                        Padding="14,0"
+                        Style="{StaticResource BtnMenuPill}"
                         Height="38"
-                        Cursor="Hand"
+                        Margin="0,0,8,0"
                         Click="BtnAbrirMenu_Click">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="19"/>
-                        </Style>
-                    </Button.Resources>
                     <StackPanel Orientation="Horizontal">
-                        <Image Source="/Images/icono.png" Width="26" Height="26"
-                               VerticalAlignment="Center" Margin="0,0,7,0"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                        <TextBlock Text="Menú" FontFamily="Segoe UI SemiBold" FontSize="13"
-                                   VerticalAlignment="Center" Foreground="#222222"/>
+                        <Image Source="/Images/icono.png" Width="20" Height="20"
+                               VerticalAlignment="Center" Margin="0,0,7,0"/>
+                        <TextBlock Text="Menú" VerticalAlignment="Center"/>
                         <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="9"
-                                   VerticalAlignment="Center" Foreground="#555555" Margin="5,1,0,0"/>
+                                   Foreground="#1ABC9C" VerticalAlignment="Center" Margin="6,1,0,0"/>
                     </StackPanel>
                 </Button>
 
@@ -69,7 +65,6 @@
                         Padding="12,0"
                         Height="38"
                         Cursor="Hand"
-                        Margin="8,0,0,0"
                         Click="BtnPanelEntrada_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="13"
@@ -98,7 +93,7 @@
                              TextChanged="TxtBuscar_TextChanged"/>
                 </Border>
 
-                <!-- Popup de sugerencias -->
+                <!-- Popup sugerencias buscador -->
                 <Popup x:Name="popupBuscar" Grid.Column="2"
                        PlacementTarget="{Binding ElementName=borderBuscar}"
                        Placement="Top"
@@ -120,7 +115,7 @@
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Padding" Value="10,7"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Cursor"  Value="Hand"/>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter Property="Background" Value="#E8F5F2"/>
@@ -134,7 +129,9 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Icono}" FontSize="14"
+                                        <TextBlock Text="{Binding Icono}"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14"
                                                    Width="24" VerticalAlignment="Center"/>
                                         <TextBlock Text="{Binding Nombre}" FontSize="13"
                                                    Foreground="#263238" VerticalAlignment="Center"/>
@@ -145,13 +142,28 @@
                     </Border>
                 </Popup>
 
+                <!-- Separador antes de tabs -->
+                <Border Grid.Column="3"
+                        Width="1" Background="#DDDDDD"
+                        Margin="6,12"/>
+
+                <!-- Área de tabs de módulos abiertos -->
+                <ScrollViewer Grid.Column="4"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              VerticalAlignment="Center">
+                    <StackPanel x:Name="pnlTabs"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"/>
+                </ScrollViewer>
+
                 <!-- Separador vertical -->
-                <Border Grid.Column="4"
+                <Border Grid.Column="5"
                         Width="1" Background="#DDDDDD"
                         Margin="0,12"/>
 
                 <!-- Hora -->
-                <TextBlock x:Name="lblHora" Grid.Column="5"
+                <TextBlock x:Name="lblHora" Grid.Column="6"
                            FontFamily="Segoe UI" FontSize="13"
                            Foreground="#333333"
                            VerticalAlignment="Center"
@@ -159,68 +171,149 @@
             </Grid>
         </Border>
 
-        <!-- ══════════════════════════════════════════
-             POPUP DEL MENÚ
-             ══════════════════════════════════════════ -->
+        <!-- ══ POPUP DEL MENÚ ════════════════════════════════════ -->
         <Popup x:Name="popupMenu"
-               PlacementTarget="{Binding ElementName=btnAbrirMenu}"
+               Grid.Row="1"
                Placement="Top"
                StaysOpen="False"
                AllowsTransparency="True"
-               PopupAnimation="Slide">
-
-            <Border Background="White" Width="270"
-                    CornerRadius="6,6,0,0">
+               PopupAnimation="Fade">
+            <Border CornerRadius="10,10,0,0"
+                    BorderThickness="2,2,2,0"
+                    BorderBrush="#1ABC9C"
+                    Width="400"
+                    ClipToBounds="True">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="20" ShadowDepth="0"
-                                      Opacity="0.30" Color="Black"/>
+                    <DropShadowEffect BlurRadius="22" ShadowDepth="5"
+                                      Opacity="0.28" Direction="270" Color="Black"/>
                 </Border.Effect>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="178"/>
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel>
-                    <!-- Header: usuario + institución -->
-                    <Border Background="#007864"
-                            CornerRadius="6,6,0,0"
-                            Padding="16,14">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="/Images/icono.png"
-                                   Width="42" Height="42"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,12,0"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock x:Name="lblNombreUsuario"
+                    <!-- ── Panel izquierdo ────────────────────────────── -->
+                    <Grid Grid.Column="0" Background="White">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header: avatar + nombre -->
+                        <Border Grid.Row="0" Background="#1ABC9C" Padding="14,12">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="34" Height="34" CornerRadius="17"
+                                        Background="#40FFFFFF" BorderBrush="#65FFFFFF"
+                                        BorderThickness="2"
+                                        VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <TextBlock Text="&#xE77B;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16" Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               TextAlignment="Center"/>
+                                </Border>
+                                <TextBlock x:Name="lblMenuNombreUsuario"
+                                           Foreground="White"
                                            FontFamily="Segoe UI SemiBold"
-                                           FontSize="13" Foreground="White"/>
-                                <TextBlock x:Name="lblInstitucion"
-                                           FontFamily="Segoe UI" FontSize="10"
-                                           Foreground="#B0E8DE"
-                                           TextWrapping="Wrap" MaxWidth="170"/>
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="148"/>
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
+                        </Border>
 
-                    <!-- Ítems de navegación (construidos en código) -->
-                    <ScrollViewer MaxHeight="420"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="pnlMenu"/>
-                    </ScrollViewer>
+                        <!-- Categorías del menú -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      MaxHeight="340">
+                            <StackPanel x:Name="pnlMenuItems" Margin="0,4,0,6"/>
+                        </ScrollViewer>
+                    </Grid>
 
-                    <!-- Footer: cerrar sesión -->
-                    <Border BorderThickness="0,1,0,0"
-                            BorderBrush="#E0E0E0"
-                            Padding="12,10">
-                        <Button Style="{StaticResource BtnPeligro}"
-                                Height="34"
-                                HorizontalAlignment="Stretch"
-                                Click="BtnCerrarSesion_Click">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xF3B1;" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <TextBlock Text="Cerrar Sesión" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
+                    <!-- ── Panel derecho ──────────────────────────────── -->
+                    <Border x:Name="pnlMenuDerPanel" Grid.Column="1" Background="#F5F7F8"
+                            BorderThickness="1,0,0,0" BorderBrush="#D0D8DC">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>    <!-- Logo / Submenú -->
+                                <RowDefinition Height="Auto"/> <!-- Cerrar Sesión (siempre) -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Área de contenido (logo por defecto, submenú al hover) -->
+                            <Grid Grid.Row="0">
+                                <!-- Logo + nombre institución -->
+                                <StackPanel x:Name="pnlMenuDerDefault"
+                                            VerticalAlignment="Center"
+                                            Margin="14,16,14,8">
+                                    <Image x:Name="imgLogoPopup"
+                                           Width="72" Height="72"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"/>
+                                    <TextBlock x:Name="lblInstPopup"
+                                               TextAlignment="Center"
+                                               FontFamily="Segoe UI Semibold"
+                                               FontSize="11"
+                                               Foreground="#333333"
+                                               TextWrapping="Wrap"
+                                               HorizontalAlignment="Center"
+                                               MaxWidth="155"/>
+                                </StackPanel>
+
+                                <!-- Submenú al pasar cursor (se puebla en código) -->
+                                <StackPanel x:Name="pnlMenuDerSubmenu"
+                                            Visibility="Collapsed"
+                                            VerticalAlignment="Top"
+                                            Margin="0,8,0,8"/>
+                            </Grid>
+
+                            <!-- Cerrar Sesión: SIEMPRE visible -->
+                            <Border Grid.Row="1"
+                                    BorderThickness="0,1,0,0" BorderBrush="#D0D8DC"
+                                    Padding="12,10,12,12">
+                                <Button Height="36" HorizontalAlignment="Stretch"
+                                        Click="BtnCerrarSesion_Click">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background"      Value="#F5A623"/>
+                                            <Setter Property="Foreground"      Value="White"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Cursor"          Value="Hand"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="bd"
+                                                                Background="{TemplateBinding Background}"
+                                                                CornerRadius="6" Padding="10,0">
+                                                            <ContentPresenter HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="bd" Property="Background"
+                                                                        Value="#E09415"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="&#xE72E;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="13" VerticalAlignment="Center"
+                                                   Margin="0,0,6,0"/>
+                                        <TextBlock Text="Cerrar Sesión"
+                                                   FontSize="12" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Border>
+                        </Grid>
                     </Border>
-                </StackPanel>
+                </Grid>
             </Border>
         </Popup>
 

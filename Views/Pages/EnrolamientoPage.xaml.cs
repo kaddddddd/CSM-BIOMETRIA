@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using CSMBiometricoWPF.Biometria;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
@@ -21,6 +23,7 @@ namespace CSMBiometricoWPF.Views.Pages
         private int _pasoActual = 0;
         private readonly Image[] _imgHuellas;
         private readonly Border[] _pasos;
+        private readonly DispatcherTimer _searchTimer;
 
         private static readonly string[] _instrucciones =
         {
@@ -35,6 +38,9 @@ namespace CSMBiometricoWPF.Views.Pages
             InitializeComponent();
             _imgHuellas = new[] { imgHuella1, imgHuella2, imgHuella3, imgHuella4 };
             _pasos      = new[] { paso1, paso2, paso3, paso4 };
+
+            _searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); EjecutarBusqueda(); };
 
             // Usar la instancia compartida — nunca crear una nueva ni disponer.
             _biometrico = ServicioBiometrico.Compartido;
@@ -56,19 +62,46 @@ namespace CSMBiometricoWPF.Views.Pages
 
         // ── Búsqueda de estudiante ────────────────────────────
 
-        private void BtnBuscar_Click(object sender, RoutedEventArgs e)
+        private void TxtBuscar_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _searchTimer.Stop();
+            if (txtBuscar.Text.Trim().Length >= 2)
+                _searchTimer.Start();
+            else
+            {
+                lstResultados.ItemsSource = null;
+                popupResultados.IsOpen = false;
+            }
+        }
+
+        private void TxtBuscar_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) { _searchTimer.Stop(); EjecutarBusqueda(); }
+        }
+
+        private void EjecutarBusqueda()
         {
             string texto = txtBuscar.Text.Trim();
-            if (string.IsNullOrEmpty(texto)) return;
+            if (texto.Length < 2) return;
             try
             {
                 int? idInst = SesionActiva.EsSuperAdmin ? null : SesionActiva.InstitucionActual?.IdInstitucion;
                 var lista = new EstudianteRepository().Buscar(texto, idInst);
                 lstResultados.ItemsSource = lista;
                 lstResultados.DisplayMemberPath = "NombreCompleto";
-                if (lista.Count == 0)
-                    CustomMessageBox.Show("No se encontraron estudiantes.", "Búsqueda",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                if (lista.Count == 1)
+                {
+                    popupResultados.IsOpen = false;
+                    lstResultados.SelectedIndex = 0;
+                }
+                else if (lista.Count > 1)
+                {
+                    popupResultados.IsOpen = true;
+                }
+                else
+                {
+                    popupResultados.IsOpen = false;
+                }
             }
             catch (Exception ex)
             {
@@ -79,6 +112,7 @@ namespace CSMBiometricoWPF.Views.Pages
         private void LstResultados_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (lstResultados.SelectedItem is not Estudiante est) return;
+            popupResultados.IsOpen = false;
             _estudianteSeleccionado = est;
             pnlInfoEstudiante.Visibility = Visibility.Visible;
             lblNombreEst.Text = est.NombreCompleto;
@@ -98,7 +132,7 @@ namespace CSMBiometricoWPF.Views.Pages
                 lblHuellaEst.Foreground = new SolidColorBrush(Color.FromRgb(119, 119, 119));
                 pnlInfoEstudiante.Background = new SolidColorBrush(Color.FromRgb(232, 245, 233));
                 btnIniciar.IsEnabled    = true;
-                lblInstruccion.Text     = "Seleccione un estudiante e inicie el enrolamiento.";
+                lblInstruccion.Text     = "Presione 'Iniciar Enrolamiento' para comenzar.";
             }
         }
 
@@ -190,13 +224,12 @@ namespace CSMBiometricoWPF.Views.Pages
             {
                 if (resultado.Template != null)
                 {
-                    // Enrolamiento completo — guardar template
+                    // Enrolamiento completo — guardar automáticamente
                     _templateFinal = resultado.Template;
-                    MarcarPasoCompletado(_pasoActual); // el último paso
-                    btnGuardar.IsEnabled    = true;
-                    btnReintentar.IsEnabled = true;
-                    btnCancelar.IsEnabled   = false;
-                    lblInstruccion.Text = "¡Enrolamiento completado! Presione 'Guardar Huella'.";
+                    MarcarPasoCompletado(_pasoActual);
+                    btnCancelar.IsEnabled = false;
+                    lblInstruccion.Text = "Guardando huella…";
+                    GuardarHuellaAuto();
                     return;
                 }
 
@@ -216,6 +249,48 @@ namespace CSMBiometricoWPF.Views.Pages
         }
 
         // ── Botones adicionales ───────────────────────────────
+
+        private void GuardarHuellaAuto()
+        {
+            if (_templateFinal == null || _estudianteSeleccionado == null) return;
+            try
+            {
+                var huella = new HuellaDigital
+                {
+                    IdEstudiante       = _estudianteSeleccionado.IdEstudiante,
+                    TemplateBiometrico = _templateFinal,
+                    Calidad            = 90,
+                    Dedo               = TipoDedo.INDICE_D,
+                    Activo             = true,
+                    RegistradoPor      = SesionActiva.UsuarioActual?.IdUsuario
+                };
+                new HuellaRepository().Guardar(huella);
+                CacheHuellas.Invalidar();
+
+                new LogRepository().Registrar(TipoEvento.ENROLAMIENTO,
+                    $"Huella enrolada: {_estudianteSeleccionado.NombreCompleto} ({_estudianteSeleccionado.Identificacion})");
+
+                CustomMessageBox.Show(
+                    $"Huella de {_estudianteSeleccionado.NombreCompleto} guardada correctamente.",
+                    "Enrolamiento exitoso", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                ResetearPasos();
+                Restaurar();
+                _templateFinal             = null;
+                _estudianteSeleccionado    = null;
+                pnlInfoEstudiante.Visibility = Visibility.Collapsed;
+                lstResultados.ItemsSource  = null;
+                popupResultados.IsOpen     = false;
+                txtBuscar.Clear();
+                txtBuscar.Focus();
+            }
+            catch (Exception ex)
+            {
+                lblInstruccion.Text = "Error al guardar: " + ex.Message;
+                btnGuardar.IsEnabled    = true;
+                btnReintentar.IsEnabled = true;
+            }
+        }
 
         private void BtnCancelar_Click(object sender, RoutedEventArgs e)
         {

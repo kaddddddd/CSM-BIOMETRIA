@@ -38,7 +38,7 @@ namespace CSMBiometricoWPF.Views.Pages
             => Dispatcher.Invoke(() => lblMensaje.Text = msg);
 
         private void OnImagenCapturada(object? sender, System.Drawing.Bitmap bmp)
-            => Dispatcher.Invoke(() => imgHuella.Source = BitmapToImageSource(bmp));
+            => Dispatcher.Invoke(() => { if (bmp != null) imgHuella.Source = BitmapToImageSource(bmp); });
 
         private void BtnIniciar_Click(object sender, RoutedEventArgs e)
         {

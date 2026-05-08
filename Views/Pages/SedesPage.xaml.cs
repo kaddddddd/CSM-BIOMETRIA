@@ -85,7 +85,7 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             var dlg = new EditarSedeDialog(sede) { Owner = Window.GetWindow(this) };
             if (dlg.ShowDialog() == true)
-   ane         {
+            {
                 new LogRepository().Registrar(TipoEvento.CRUD,
                     sede == null ? "Nueva sede creada" : $"Sede editada: {sede.NombreSede}");
                 Cargar();

@@ -132,14 +132,26 @@ namespace CSMBiometricoWPF.Views.Dialogs
                 CargarSedes(inst.IdInstitucion);
         }
 
+        private void CmbSede_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_cargandoCombos) return;
+            CargarGrupo();
+        }
+
         private void CmbGrado_Changed(object sender, SelectionChangedEventArgs e)
         {
+            if (_cargandoCombos) return;
+            CargarGrupo();
+        }
+
+        private void CargarGrupo()
+        {
             cmbGrupo.Items.Clear();
-            if (cmbGrado.SelectedItem is Grado g)
+            if (cmbSede.SelectedItem is Sede sede && cmbGrado.SelectedItem is Grado g)
             {
                 try
                 {
-                    var gr = _grupoRepo.ObtenerPorGrado(g.IdGrado);
+                    var gr = _grupoRepo.ObtenerPorSedeGrado(sede.IdSede, g.IdGrado);
                     if (gr != null)
                     {
                         cmbGrupo.Items.Add(gr);

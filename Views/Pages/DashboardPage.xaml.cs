@@ -308,9 +308,18 @@ namespace CSMBiometricoWPF.Views.Pages
                 foreach (var dia in diasRango)
                 {
                     string diaStr = DiaSemanaStr(dia.DayOfWeek);
-                    int slotsEsperados = slotsPorSedeYDia.TryGetValue((e.IdSede, diaStr), out int sl) ? sl : 1;
-                    var nombresFranjas = nombresFranjasPorSedeYDia.TryGetValue((e.IdSede, diaStr), out var nf)
-                        ? nf : new List<string>();
+                    // Prioridad: horario específico del grado → horario general de la sede
+                    int slotsEsperados;
+                    if (!slotsPorSedeYDia.TryGetValue((e.IdSede, (int?)e.IdGrado, diaStr), out slotsEsperados))
+                        slotsPorSedeYDia.TryGetValue((e.IdSede, null, diaStr), out slotsEsperados);
+
+                    // Sin horario configurado para este día → no es día lectivo, no cuenta falta
+                    if (slotsEsperados == 0) continue;
+
+                    List<string> nombresFranjas;
+                    if (!nombresFranjasPorSedeYDia.TryGetValue((e.IdSede, (int?)e.IdGrado, diaStr), out nombresFranjas))
+                        if (!nombresFranjasPorSedeYDia.TryGetValue((e.IdSede, null, diaStr), out nombresFranjas))
+                            nombresFranjas = new List<string>();
 
                     if (regsPorEstDia.TryGetValue((e.IdEstudiante, dia), out var regs))
                     {
@@ -473,12 +482,16 @@ namespace CSMBiometricoWPF.Views.Pages
             cmbGrupo.Items.Add(new Grupo { NombreGrupo = "Todos los grupos" });
             if (cmbGrado.SelectedItem is Grado g && g.IdGrado > 0)
             {
-                try
+                int? idSede = (cmbSede.SelectedItem as Sede)?.IdSede is int s && s > 0 ? s : (int?)null;
+                if (idSede.HasValue)
                 {
-                    var gr = _repoGrupo.ObtenerPorGrado(g.IdGrado);
-                    if (gr != null) cmbGrupo.Items.Add(gr);
+                    try
+                    {
+                        var gr = _repoGrupo.ObtenerPorSedeGrado(idSede.Value, g.IdGrado);
+                        if (gr != null) cmbGrupo.Items.Add(gr);
+                    }
+                    catch { }
                 }
-                catch { }
                 cmbGrupo.IsEnabled = true;
             }
             else
@@ -525,40 +538,6 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             if (tabGraficas?.IsSelected == true)
                 DibujarGraficas();
-            if (tabGradosGrupos?.IsSelected == true)
-                CargarGradosGrupos();
-        }
-
-        private void CargarGradosGrupos()
-        {
-            try
-            {
-                var instEfectiva = InstFiltroEfectivo;
-                int? idSede = (cmbSede.SelectedItem as Sede)?.IdSede is int s && s > 0 ? s : (int?)null;
-
-                var todos = _repoEst.ObtenerTodos(idInstitucion: instEfectiva, estado: "ACTIVO");
-                if (idSede.HasValue) todos = todos.FindAll(e => e.IdSede == idSede);
-
-                var grados = _repoGrado.ObtenerTodos();
-
-                var vms = grados.Select(g =>
-                {
-                    var grupo = _repoGrupo.ObtenerPorGrado(g.IdGrado);
-                    int count = todos.Count(e => e.IdGrado == g.IdGrado);
-                    return new GradoGrupoVM
-                    {
-                        NombreGrado      = g.NombreGrado,
-                        NombreGrupo      = grupo?.NombreGrupo ?? "—",
-                        TotalEstudiantes = count
-                    };
-                }).ToList();
-
-                gridGradosGrupos.ItemsSource = vms;
-            }
-            catch (Exception ex)
-            {
-                CustomMessageBox.Show("CargarGradosGrupos: " + ex.Message, "Error");
-            }
         }
 
         private void CanvasDias_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -779,14 +758,4 @@ namespace CSMBiometricoWPF.Views.Pages
         public string Tooltip    { get; set; } = "";
     }
 
-    public class GradoGrupoVM
-    {
-        public string NombreGrado      { get; set; } = "";
-        public string NombreGrupo      { get; set; } = "";
-        public int    TotalEstudiantes { get; set; }
-        public string EstudiantesLabel => TotalEstudiantes == 0 ? "Sin estudiantes" : TotalEstudiantes.ToString();
-        public Brush  EstudiantesColor => TotalEstudiantes == 0
-            ? new SolidColorBrush(Color.FromRgb(170, 170, 170))
-            : new SolidColorBrush(Color.FromRgb(40,  40,  40));
-    }
 }

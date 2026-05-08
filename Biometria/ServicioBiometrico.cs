@@ -506,12 +506,12 @@ namespace CSMBiometricoWPF.Biometria
                         var captureResult = _lector.Capture(
                             Constants.Formats.Fid.ANSI,
                             Constants.CaptureProcessing.DP_IMG_PROC_DEFAULT,
-                            1500,  // timeout: 1.5 s — detecta desconexión más rápido que 3 s
+                            500,   // timeout: 0.5 s — respuesta más rápida al dedo
                             500);  // resolución: 500 dpi (U.are.U 5300)
                         if (!_capturando) break;
                         _erroresConsecutivos = 0;
                         OnCapturedHandler(captureResult);
-                        if (_capturando) Thread.Sleep(300);
+                        if (_capturando) Thread.Sleep(50);
                     }
                     catch (Exception ex)
                     {

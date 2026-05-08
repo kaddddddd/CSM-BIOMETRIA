@@ -19,7 +19,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="&#xE825;" FontFamily="Segoe MDL2 Assets" FontSize="20"
                                Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                    <TextBlock Text="Institución" Style="{StaticResource LblTituloHeader}"
+                    <TextBlock Text="Institucion" Style="{StaticResource LblTituloHeader}"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,16,0">
@@ -29,7 +29,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                        Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Nueva Institución" VerticalAlignment="Center"/>
+                            <TextBlock Text="Nueva Institucion" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource BtnSecundario}"
@@ -45,8 +45,51 @@
         </Border>
 
         <!-- Contenido scrollable -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20">
-            <StackPanel x:Name="pnlContenido" HorizontalAlignment="Stretch"/>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,24">
+
+                <!-- Filtro por institución: solo SuperAdmin -->
+                <Border x:Name="pnlFiltroInst" Visibility="Collapsed"
+                        Background="White" CornerRadius="8"
+                        Margin="0,0,0,16" Padding="16,12,16,12"
+                        BorderThickness="1" BorderBrush="#E0E8E5">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE825;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#007864" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Institucion:" FontSize="13" FontFamily="Segoe UI Semibold"
+                                   Foreground="#37474F" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="cmbFiltroInst"
+                                  Style="{StaticResource CmbBase}"
+                                  DisplayMemberPath="Nombre"
+                                  Width="280" Height="32"
+                                  SelectionChanged="CmbFiltroInst_SelectionChanged"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tarjeta de la institución (generada en código) -->
+                <StackPanel x:Name="pnlInstHeader"/>
+
+                <!-- Filtro por sede — debajo de la información de la institución -->
+                <Border Background="White" CornerRadius="8"
+                        Margin="0,16,0,0" Padding="18,14,18,14"
+                        BorderThickness="1" BorderBrush="#E0E8E5">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                   Foreground="#007864" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Buscar sede:" FontSize="13" FontFamily="Segoe UI Semibold"
+                                   Foreground="#37474F" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="cmbBuscarSede"
+                                  Style="{StaticResource CmbBase}"
+                                  DisplayMemberPath="NombreSede"
+                                  Width="240" Height="32"
+                                  SelectionChanged="CmbBuscarSede_SelectionChanged"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Sedes (generadas en código) -->
+                <StackPanel x:Name="pnlContenido"/>
+
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </Page>

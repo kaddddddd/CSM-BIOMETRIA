@@ -33,26 +33,26 @@
                                Margin="0,0,0,12"/>
 
                     <!-- Búsqueda -->
-                    <TextBox x:Name="txtBuscar" Height="32"
-                             Style="{StaticResource TxtBase}"
-                             ToolTip="Nombre o identificación"
-                             Margin="0,0,0,8"/>
-                    <Button Style="{StaticResource BtnPrimario}"
-                            Height="32" Margin="0,0,0,12"
-                            Click="BtnBuscar_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                       Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Buscar" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-
-                    <!-- Lista de resultados -->
-                    <TextBlock Text="Resultados:" FontSize="11" Foreground="#888" Margin="0,0,0,4"/>
-                    <ListBox x:Name="lstResultados" Height="160"
-                             BorderBrush="#BDBDBD" BorderThickness="1"
-                             SelectionChanged="LstResultados_SelectionChanged"
-                             FontSize="12"/>
+                    <Grid Margin="0,0,0,8">
+                        <TextBox x:Name="txtBuscar" Height="32"
+                                 Style="{StaticResource TxtBase}"
+                                 ToolTip="Nombre o identificación — busca automáticamente"
+                                 TextChanged="TxtBuscar_TextChanged"
+                                 KeyDown="TxtBuscar_KeyDown"/>
+                        <Popup x:Name="popupResultados"
+                               PlacementTarget="{Binding ElementName=txtBuscar}"
+                               Placement="Bottom" StaysOpen="False">
+                            <Border Background="White" BorderBrush="#B2DFDB" BorderThickness="1">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.15"/>
+                                </Border.Effect>
+                                <ListBox x:Name="lstResultados" MaxHeight="200" MinWidth="300"
+                                         DisplayMemberPath="NombreCompleto"
+                                         SelectionChanged="LstResultados_SelectionChanged"
+                                         FontSize="12"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
 
                     <!-- Info del estudiante seleccionado -->
                     <Border x:Name="pnlInfoEstudiante" Visibility="Collapsed"

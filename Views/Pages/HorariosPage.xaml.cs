@@ -129,11 +129,11 @@ namespace CSMBiometricoWPF.Views.Pages
         {
             cmbGrupo.Items.Clear();
             cmbGrupo.Items.Add(new Grupo { IdGrupo = 0, NombreGrupo = "Todos los grupos" });
-            if (_idGradoActual.HasValue)
+            if (_idGradoActual.HasValue && _idSedeActual > 0)
             {
                 try
                 {
-                    var gr = _grupoRepo.ObtenerPorGrado(_idGradoActual.Value);
+                    var gr = _grupoRepo.ObtenerPorSedeGrado(_idSedeActual, _idGradoActual.Value);
                     if (gr != null) cmbGrupo.Items.Add(gr);
                 }
                 catch { }
@@ -153,9 +153,11 @@ namespace CSMBiometricoWPF.Views.Pages
 
         private void OcultarHorarios()
         {
-            pnlHorarios.Visibility = Visibility.Collapsed;
+            pnlHorarios.Visibility     = Visibility.Collapsed;
             lblSeleccioneSede.Visibility = Visibility.Visible;
             btnVerExcepciones.Visibility = Visibility.Collapsed;
+            // Mostrar aviso de selección de grado solo si ya hay una sede elegida
+            lblAvisoGrado.Visibility = _idSedeActual > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void CargarHorarios()

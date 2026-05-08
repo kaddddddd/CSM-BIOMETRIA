@@ -57,7 +57,8 @@
                           SelectionChanged="CmbInstitucion_Changed"/>
 
                 <TextBlock Text="Sede *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
-                <ComboBox x:Name="cmbSede" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"/>
+                <ComboBox x:Name="cmbSede" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"
+                          SelectionChanged="CmbSede_Changed"/>
 
                 <TextBlock Text="Grado *" FontSize="11" Foreground="#757575" Margin="0,0,0,4"/>
                 <ComboBox x:Name="cmbGrado" Height="32" Style="{StaticResource CmbBase}" Margin="0,0,0,10"

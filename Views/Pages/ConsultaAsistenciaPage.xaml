@@ -39,7 +39,8 @@
                     <TextBox x:Name="txtDocumento" Height="34"
                              Style="{StaticResource TxtBase}" FontSize="13"
                              ToolTip="Nombre o número de documento"
-                             KeyDown="TxtDocumento_KeyDown"/>
+                             KeyDown="TxtDocumento_KeyDown"
+                             TextChanged="TxtDocumento_TextChanged"/>
                     <Popup x:Name="popupResultados"
                            PlacementTarget="{Binding ElementName=txtDocumento}"
                            Placement="Bottom" StaysOpen="False">

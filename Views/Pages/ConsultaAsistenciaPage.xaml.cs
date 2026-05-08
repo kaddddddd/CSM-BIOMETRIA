@@ -138,30 +138,80 @@ namespace CSMBiometricoWPF.Views.Pages
             if (_estudianteActual == null) return;
             if (dpDesde.SelectedDate == null || dpHasta.SelectedDate == null) return;
 
-            var desde = dpDesde.SelectedDate.Value;
-            var hasta = dpHasta.SelectedDate.Value;
+            var desde = dpDesde.SelectedDate.Value.Date;
+            var hasta = dpHasta.SelectedDate.Value.Date;
             if (desde > hasta) return;
 
             var registros = _repoReg.ObtenerPorEstudianteYRango(_estudianteActual.IdEstudiante, desde, hasta);
 
-            int asistencias = registros.Count(r => r.EstadoIngreso == EstadoIngreso.A_TIEMPO);
-            int tardanzas   = registros.Count(r => r.EstadoIngreso == EstadoIngreso.TARDE);
-            int faltas      = registros.Count(r => r.EstadoIngreso == EstadoIngreso.FUERA_DE_HORARIO);
+            // Calcular días lectivos esperados y agregar ausencias reales al grid
+            var slots = new HorarioRepository().ObtenerSlotsPorSedes(new[] { _estudianteActual.IdSede });
+
+            var diasRango = Enumerable
+                .Range(0, (hasta - desde).Days + 1)
+                .Select(d => desde.AddDays(d).Date)
+                .Where(d => d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday)
+                .ToList();
+
+            var diasConRegistro = registros
+                .Select(r => r.FechaIngreso.Date)
+                .Distinct()
+                .ToHashSet();
+
+            var ausentes = new List<RegistroIngreso>();
+            foreach (var dia in diasRango)
+            {
+                string diaStr = DiaSemanaStr(dia.DayOfWeek);
+                int slotsEsp;
+                if (!slots.TryGetValue((_estudianteActual.IdSede, (int?)_estudianteActual.IdGrado, diaStr), out slotsEsp))
+                    slots.TryGetValue((_estudianteActual.IdSede, null, diaStr), out slotsEsp);
+                if (slotsEsp == 0) continue; // día sin clase
+                if (!diasConRegistro.Contains(dia))
+                    ausentes.Add(new RegistroIngreso
+                    {
+                        FechaIngreso     = dia,
+                        EstadoIngreso    = EstadoIngreso.FUERA_DE_HORARIO,
+                        NombreEstudiante = _estudianteActual.NombreCompleto,
+                        Identificacion   = _estudianteActual.Identificacion,
+                        NombreSede       = _estudianteActual.NombreSede,
+                        NombreGrado      = _estudianteActual.NombreGrado,
+                        NombreGrupo      = _estudianteActual.NombreGrupo,
+                    });
+            }
+
+            var todos = registros.Concat(ausentes)
+                                 .OrderBy(r => r.FechaIngreso)
+                                 .ToList();
+
+            int asistencias = todos.Count(r => r.EstadoIngreso == EstadoIngreso.A_TIEMPO);
+            int tardanzas   = todos.Count(r => r.EstadoIngreso == EstadoIngreso.TARDE);
+            int faltas      = ausentes.Count;
 
             lblTotalAsistencias.Text = asistencias.ToString();
             lblTotalTardanzas.Text   = tardanzas.ToString();
             lblTotalFaltas.Text      = faltas.ToString();
 
-            var view = CollectionViewSource.GetDefaultView(registros);
+            var view = CollectionViewSource.GetDefaultView(todos);
             view.GroupDescriptions.Clear();
             view.GroupDescriptions.Add(new PropertyGroupDescription("FechaIngreso"));
 
             grid.ItemsSource = view;
 
-            lblTotal.Text = registros.Count > 0
-                ? $"{registros.Count} registro(s) · {desde:dd/MM/yyyy} → {hasta:dd/MM/yyyy}"
+            lblTotal.Text = todos.Count > 0
+                ? $"{todos.Count} registro(s) · {desde:dd/MM/yyyy} → {hasta:dd/MM/yyyy}"
                 : $"Sin registros entre {desde:dd/MM/yyyy} y {hasta:dd/MM/yyyy}";
         }
+
+        private static string DiaSemanaStr(DayOfWeek dow) => dow switch
+        {
+            DayOfWeek.Monday    => "LUNES",
+            DayOfWeek.Tuesday   => "MARTES",
+            DayOfWeek.Wednesday => "MIERCOLES",
+            DayOfWeek.Thursday  => "JUEVES",
+            DayOfWeek.Friday    => "VIERNES",
+            DayOfWeek.Saturday  => "SABADO",
+            _                   => "DOMINGO"
+        };
 
         // ── Otros ─────────────────────────────────────────────────
 
@@ -190,6 +240,28 @@ namespace CSMBiometricoWPF.Views.Pages
         private void TxtDocumento_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter) BtnBuscar_Click(sender, null);
+        }
+
+        private void TxtDocumento_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string texto = txtDocumento.Text.Trim();
+            if (texto.Length < 2)
+            {
+                popupResultados.IsOpen = false;
+                return;
+            }
+
+            int? idInst = SesionActiva.EsSuperAdmin ? (int?)null : SesionActiva.InstitucionActual?.IdInstitucion;
+            var resultados = _repoEst.Buscar(texto, idInst);
+
+            if (resultados.Count == 0)
+            {
+                popupResultados.IsOpen = false;
+                return;
+            }
+
+            lstResultados.ItemsSource = resultados;
+            popupResultados.IsOpen = true;
         }
     }
 }
