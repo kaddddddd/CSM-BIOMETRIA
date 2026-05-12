@@ -1,0 +1,96 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>CSMPanelEntrada</AssemblyName>
+    <!--
+      RootNamespace coincide con el del proyecto principal para que los
+      archivos vinculados (Views, Models, etc.) compilen sin cambios.
+    -->
+    <RootNamespace>CSMBiometricoWPF</RootNamespace>
+    <Platforms>x86</Platforms>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>12</LangVersion>
+    <ApplicationIcon></ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- ── NuGet (mismos que el proyecto principal, sin ClosedXML) ── -->
+  <ItemGroup>
+    <PackageReference Include="MySqlConnector"                          Version="2.3.7" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.5" />
+    <PackageReference Include="System.Drawing.Common"                   Version="10.0.5" />
+    <PackageReference Include="System.Management"                       Version="10.0.5" />
+    <PackageReference Include="System.Speech"                           Version="8.0.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.5" />
+  </ItemGroup>
+
+  <!-- ── Archivos compartidos vinculados desde el proyecto principal ── -->
+  <ItemGroup>
+    <Compile Include="..\CSMBiometricoWPF\Models\Entidades.cs"
+             Link="Models\Entidades.cs" />
+    <Compile Include="..\CSMBiometricoWPF\Data\ConexionDB.cs"
+             Link="Data\ConexionDB.cs" />
+    <Compile Include="..\CSMBiometricoWPF\Data\DatabaseInitializer.cs"
+             Link="Data\DatabaseInitializer.cs" />
+    <Compile Include="..\CSMBiometricoWPF\Repositories\Repositorios.cs"
+             Link="Repositories\Repositorios.cs" />
+    <Compile Include="..\CSMBiometricoWPF\Services\Servicios.cs"
+             Link="Services\Servicios.cs" />
+    <Compile Include="..\CSMBiometricoWPF\Biometria\ServicioBiometrico.cs"
+             Link="Biometria\ServicioBiometrico.cs" />
+  </ItemGroup>
+
+  <!-- ── Vista vinculada desde el proyecto principal ── -->
+  <ItemGroup>
+    <Page Include="..\CSMBiometricoWPF\Views\PanelEntradaWindow.xaml"
+          Link="Views\PanelEntradaWindow.xaml"
+          SubType="Designer"
+          Generator="MSBuild:Compile" />
+    <Compile Include="..\CSMBiometricoWPF\Views\PanelEntradaWindow.xaml.cs"
+             Link="Views\PanelEntradaWindow.xaml.cs"
+             DependentUpon="PanelEntradaWindow.xaml" />
+  </ItemGroup>
+
+  <!-- ── DLLs nativas del SDK DigitalPersona ── -->
+  <ItemGroup>
+    <Reference Include="DPUruNet">
+      <HintPath>..\CSMBiometricoWPF\libs\DPUruNet.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DPCtlUruNet">
+      <HintPath>..\CSMBiometricoWPF\libs\DPCtlUruNet.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- ── Copiar DLLs nativas al directorio de salida ── -->
+  <ItemGroup>
+    <Content Include="..\CSMBiometricoWPF\libs\DPXUru.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DPXUru.dll</Link>
+    </Content>
+    <Content Include="..\CSMBiometricoWPF\libs\DPCtlXUru.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DPCtlXUru.dll</Link>
+    </Content>
+  </ItemGroup>
+
+  <!-- ── Logo (se carga por ruta en runtime) ── -->
+  <ItemGroup>
+    <Content Include="..\CSMBiometricoWPF\Images\csm-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Images\csm-logo.png</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

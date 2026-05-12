@@ -1,0 +1,162 @@
+<Window x:Class="CSMBiometricoWPF.Views.Dialogs.CustomMessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        SizeToContent="Height"
+        Width="400">
+
+    <Window.Resources>
+        <!-- Botón primario (fondo sólido teal) -->
+        <Style x:Key="MsgBtnPrimary" TargetType="Button">
+            <Setter Property="Background"      Value="#007864"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderBrush"     Value="#007864"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Height"          Value="34"/>
+            <Setter Property="MinWidth"        Value="80"/>
+            <Setter Property="Padding"         Value="22,0"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Margin"          Value="5,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.70"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botón secundario (mismo verde oscuro) -->
+        <Style x:Key="MsgBtnSecondary" TargetType="Button" BasedOn="{StaticResource MsgBtnPrimary}"/>
+
+        <!-- Estilo ProgressBar teal -->
+        <Style x:Key="TealProgress" TargetType="ProgressBar">
+            <Setter Property="Height"     Value="20"/>
+            <Setter Property="Foreground" Value="#007864"/>
+            <Setter Property="Background" Value="#E0F2F1"/>
+            <Setter Property="BorderBrush" Value="#B2DFDB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3">
+                            <Grid>
+                                <Rectangle x:Name="PART_Track"/>
+                                <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                    <Border Background="{TemplateBinding Foreground}" CornerRadius="3"/>
+                                </Decorator>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Marco exterior rectangular con borde de color según tipo -->
+    <Border x:Name="OuterBorder" Background="White" CornerRadius="0" BorderThickness="2">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44"/>   <!-- Cabecera -->
+                <RowDefinition Height="Auto"/> <!-- Cuerpo: icono + mensaje -->
+                <RowDefinition Height="Auto"/> <!-- Extra: input / progress / wait -->
+                <RowDefinition Height="60"/>   <!-- Botones -->
+            </Grid.RowDefinitions>
+
+            <!-- ── Cabecera ─────────────────────────────────────────────── -->
+            <Border x:Name="HeaderBorder" Grid.Row="0"
+                    Background="#007864" CornerRadius="0" Padding="16,0"
+                    MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown"
+                    Cursor="SizeAll">
+                <TextBlock x:Name="TitleText"
+                           FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold"
+                           Foreground="White" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- ── Cuerpo: icono + mensaje ────────────────────────────── -->
+            <Grid Grid.Row="1" Margin="20,16,20,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="ColIcon" Width="62"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid x:Name="IconGrid" Grid.Column="0"
+                      Width="46" Height="46" VerticalAlignment="Center">
+                    <Ellipse x:Name="IconEllipse" Width="46" Height="46"/>
+                    <TextBlock x:Name="IconText"
+                               FontFamily="Segoe UI" FontWeight="Bold" FontSize="22"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <TextBlock x:Name="MessageText" Grid.Column="1"
+                           FontFamily="Segoe UI" FontSize="13"
+                           Foreground="#222222" TextWrapping="Wrap"
+                           VerticalAlignment="Center" LineHeight="20"/>
+            </Grid>
+
+            <!-- ── Área extra: input / progress / wait ────────────────── -->
+            <Grid Grid.Row="2" Margin="20,0,20,14">
+
+                <!-- Prompt de una línea -->
+                <TextBox x:Name="SingleInput" Height="32" Visibility="Collapsed"
+                         FontFamily="Segoe UI" FontSize="13" Padding="8,4"
+                         BorderBrush="#BDBDBD" BorderThickness="1"
+                         VerticalContentAlignment="Center"/>
+
+                <!-- Prompt multilínea -->
+                <TextBox x:Name="MultiInput" Height="90" Visibility="Collapsed"
+                         FontFamily="Segoe UI" FontSize="13" Padding="8,6"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         BorderBrush="#BDBDBD" BorderThickness="1"/>
+
+                <!-- Barra de progreso determinada -->
+                <StackPanel x:Name="ProgressPanel" Visibility="Collapsed">
+                    <ProgressBar x:Name="TheProgressBar" Style="{StaticResource TealProgress}"
+                                 Minimum="0" Maximum="100" Value="0"/>
+                    <TextBlock x:Name="ProgressLabel"
+                               FontFamily="Segoe UI" FontSize="11" Foreground="#555"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Barra de espera indeterminada -->
+                <ProgressBar x:Name="WaitBar" Style="{StaticResource TealProgress}"
+                             IsIndeterminate="True" Visibility="Collapsed"/>
+            </Grid>
+
+            <!-- ── Separador + Botones ────────────────────────────────── -->
+            <Border x:Name="BtnSeparator" Grid.Row="3"
+                    BorderThickness="0,1,0,0" BorderBrush="#E0E0E0"/>
+            <StackPanel x:Name="ButtonsPanel" Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
+        </Grid>
+    </Border>
+</Window>
