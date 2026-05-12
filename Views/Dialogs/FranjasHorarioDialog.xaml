@@ -1,0 +1,156 @@
+<Window x:Class="CSMBiometricoWPF.Views.Dialogs.FranjasHorarioDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Franjas adicionales"
+        Width="560" Height="580"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F5F7FA"
+        Loaded="Window_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52"/>   <!-- Header -->
+            <RowDefinition Height="Auto"/> <!-- Formulario agregar -->
+            <RowDefinition Height="*"/>    <!-- Lista franjas -->
+            <RowDefinition Height="56"/>   <!-- Botón cerrar -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#007864" Padding="18,0">
+            <TextBlock x:Name="lblTitulo" Text="Franjas adicionales"
+                       FontFamily="Segoe UI Light" FontSize="18"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Formulario para agregar nueva franja -->
+        <Border Grid.Row="1" Background="White" Padding="20,16" Margin="0,0,0,1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.10" Direction="270"/>
+            </Border.Effect>
+            <StackPanel>
+                <!-- Título sección -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <Border Width="4" CornerRadius="2" Background="#007864" Margin="0,0,8,0"/>
+                    <TextBlock Text="Agregar nueva franja" FontSize="13" FontWeight="SemiBold"
+                               Foreground="#007864" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Fila 1: Nombre + Hora de entrada -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Nombre de la franja" FontSize="11" Foreground="#555"
+                                   FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtNuevoNombre" Height="34"
+                                 Style="{StaticResource TxtBase}" Text="Jornada tarde"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Hora de entrada  (HH:mm)" FontSize="11" Foreground="#555"
+                                   FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtNuevoEntrada" Height="34"
+                                 Style="{StaticResource TxtBase}" MaxLength="5"
+                                 ToolTip="Solo números y el signo :  (ej: 07:30)"
+                                 PreviewTextInput="TimeInput_PreviewTextInput"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Fila 2: Límite tardanza + Cierre ingreso -->
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Límite tardanza  (HH:mm)" FontSize="11" Foreground="#555"
+                                   FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtNuevoTarde" Height="34"
+                                 Style="{StaticResource TxtBase}" MaxLength="5"
+                                 ToolTip="Solo números y el signo :  (ej: 08:00)"
+                                 PreviewTextInput="TimeInput_PreviewTextInput"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Cierre de ingreso  (HH:mm)" FontSize="11" Foreground="#555"
+                                   FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtNuevoCierre" Height="34"
+                                 Style="{StaticResource TxtBase}" MaxLength="5"
+                                 ToolTip="Solo números y el signo :  (ej: 08:30)"
+                                 PreviewTextInput="TimeInput_PreviewTextInput"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Nota de orden y botón -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="Las horas deben ir en orden: Entrada ≤ Límite tardanza ≤ Cierre."
+                               FontSize="10.5" Foreground="#999" VerticalAlignment="Center"
+                               TextWrapping="Wrap"/>
+                    <Button Grid.Column="1" Content="+ Agregar franja" Height="36" Padding="18,0"
+                            Style="{StaticResource BtnPrimario}" Click="BtnAgregar_Click"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Lista de franjas configuradas -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38"/>  <!-- Título lista -->
+                <RowDefinition Height="*"/>   <!-- Scroll -->
+            </Grid.RowDefinitions>
+
+            <!-- Título sección lista -->
+            <Border Grid.Row="0" Background="#F0F4F3" Padding="20,0"
+                    BorderThickness="0,0,0,1" BorderBrush="#DDE8E5">
+                <TextBlock x:Name="lblConteoFranjas" Text="Franjas configuradas"
+                           FontSize="12" FontWeight="SemiBold" Foreground="#005040"
+                           VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Contenido lista -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,10">
+                <StackPanel>
+                    <!-- Encabezado de columnas -->
+                    <Border Background="#E8F5F1" CornerRadius="4" Padding="10,7" Margin="0,0,0,4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="36"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Nombre"          FontWeight="SemiBold" FontSize="11" Foreground="#005040"/>
+                            <TextBlock Grid.Column="1" Text="Hora entrada"    FontWeight="SemiBold" FontSize="11" Foreground="#005040" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Límite tardanza" FontWeight="SemiBold" FontSize="11" Foreground="#005040" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="Cierre ingreso"  FontWeight="SemiBold" FontSize="11" Foreground="#005040" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Filas dinámicas -->
+                    <StackPanel x:Name="pnlFranjas"/>
+
+                    <TextBlock x:Name="lblSinFranjas"
+                               Text="Aún no hay franjas. Complete el formulario de arriba para agregar una."
+                               FontSize="12" Foreground="#BDBDBD" Margin="4,12,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Pie -->
+        <Border Grid.Row="3" Background="White" Padding="16,0"
+                BorderThickness="0,1,0,0" BorderBrush="#E0E0E0">
+            <Button Content="Cerrar" Style="{StaticResource BtnSecundario}"
+                    Width="100" Height="34" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Click="BtnCerrar_Click"/>
+        </Border>
+    </Grid>
+</Window>
