@@ -7,23 +7,24 @@ Sistema de control de asistencia biométrica para instituciones educativas. Iden
 ## Índice
 
 1. [Stack tecnológico](#stack-tecnológico)
-2. [Arquitectura general](#arquitectura-general)
-3. [Modos de operación](#modos-de-operación)
-4. [Flujo de inicio (App.xaml.cs)](#flujo-de-inicio)
-5. [Base de datos](#base-de-datos)
-6. [Capa de modelos](#capa-de-modelos)
-7. [Capa de repositorios](#capa-de-repositorios)
-8. [Capa de servicios](#capa-de-servicios)
-9. [Servicio biométrico](#servicio-biométrico)
-10. [Vistas y ventanas](#vistas-y-ventanas)
-11. [Páginas de administración](#páginas-de-administración)
-12. [Diálogos](#diálogos)
-13. [Sistema de horarios](#sistema-de-horarios)
-14. [Sistema de asistencia](#sistema-de-asistencia)
-15. [Roles y permisos](#roles-y-permisos)
-16. [Seguridad](#seguridad)
-17. [Modo offline](#modo-offline)
-18. [Requisitos e instalación](#requisitos-e-instalación)
+2. [Estructura de la solución](#estructura-de-la-solución)
+3. [Arquitectura general](#arquitectura-general)
+4. [Modos de operación](#modos-de-operación)
+5. [Flujo de inicio](#flujo-de-inicio)
+6. [Base de datos](#base-de-datos)
+7. [Modo offline](#modo-offline)
+8. [Capa de modelos](#capa-de-modelos)
+9. [Capa de repositorios](#capa-de-repositorios)
+10. [Capa de servicios](#capa-de-servicios)
+11. [Servicio biométrico](#servicio-biométrico)
+12. [Vistas y ventanas](#vistas-y-ventanas)
+13. [Páginas de administración](#páginas-de-administración)
+14. [Diálogos](#diálogos)
+15. [Sistema de horarios](#sistema-de-horarios)
+16. [Sistema de asistencia](#sistema-de-asistencia)
+17. [Roles y permisos](#roles-y-permisos)
+18. [Seguridad](#seguridad)
+19. [Requisitos e instalación](#requisitos-e-instalación)
 
 ---
 
@@ -34,12 +35,30 @@ Sistema de control de asistencia biométrica para instituciones educativas. Iden
 | Framework | .NET 8.0 WPF (`net8.0-windows`) |
 | Lenguaje | C# 12 |
 | Plataforma objetivo | **x86** (obligatorio por el SDK biométrico nativo) |
-| Base de datos | SQLite — archivo `csm_biometrico.db` local junto al ejecutable |
+| BD principal | MySQL — servidor en red local |
+| BD offline local | SQLite — archivo `csm_biometrico.db` junto al ejecutable |
 | Lector biométrico | DigitalPersona U.are.U 5300 (USB) |
 | SDK biométrico | `DPUruNet.dll` / `DPCtlUruNet.dll` (incluidas en `/libs`) |
 | Exportación Excel | ClosedXML 0.104.2 |
 | Síntesis de voz | System.Speech 8.0.0 |
-| ORM / acceso BD | Microsoft.Data.Sqlite 8.0.0 (sin ORM, queries directas parametrizadas) |
+| Acceso MySQL | MySqlConnector 2.3.7 (sin ORM, queries directas parametrizadas) |
+| Acceso SQLite | Microsoft.Data.Sqlite 8.0.11 (sin ORM, queries directas parametrizadas) |
+
+---
+
+## Estructura de la solución
+
+La solución contiene dos proyectos independientes:
+
+```
+CSM/
+├── CSMBiometricoWPF/       — Aplicación principal (admin, enrolamiento, reportes)
+│   └── CSMBiometricoWPF.sln
+└── CSMPanelEntrada/        — Panel de entrada / kiosko (pantalla secundaria)
+    └── CSMPanelEntrada.sln
+```
+
+Cada proyecto tiene su propio `.sln` y se abre por separado en Visual Studio.
 
 ---
 
@@ -57,23 +76,26 @@ El proyecto sigue una **arquitectura en capas** sin dependencias inversas entre 
 │             Services                    │  ← Lógica de negocio
 │  AuthService · AsistenciaService        │
 │  OfflineService · CacheHuellas          │
+│  SyncService                            │
 └────────────────┬────────────────────────┘
                  │ usa
 ┌────────────────▼────────────────────────┐
 │            Repositories                 │  ← Acceso a datos
-│  15+ repositorios con queries SQLite    │
+│  Repositorios MySQL + métodos offline   │
 └────────────────┬────────────────────────┘
                  │ usa
 ┌────────────────▼────────────────────────┐
 │          Data / Models                  │  ← Infraestructura
-│  ConexionDB · DatabaseInitializer       │
+│  ConexionDB (MySQL)                     │
+│  ConexionSQLite (SQLite local)          │
+│  DatabaseInitializer (esquema MySQL)    │
+│  SQLiteInitializer (esquema SQLite)     │
 │  Entidades (POCOs)                      │
 └─────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────┐
 │           Biometria (transversal)       │
 │  ServicioBiometrico (Singleton)         │
-│  Interactúa con Views y Services        │
 └─────────────────────────────────────────┘
 ```
 
@@ -81,42 +103,41 @@ El proyecto sigue una **arquitectura en capas** sin dependencias inversas entre 
 
 ```
 CSMBiometricoWPF/
-├── App.xaml / App.xaml.cs          — Punto de entrada, selección de modo
+├── App.xaml / App.xaml.cs              — Punto de entrada, arranque online/offline
 ├── Models/
-│   └── Entidades.cs                — Todos los POCOs del dominio
+│   └── Entidades.cs                    — Todos los POCOs del dominio
 ├── Data/
-│   ├── ConexionDB.cs               — Gestor de conexión SQLite
-│   └── DatabaseInitializer.cs      — Creación de esquema y migraciones
+│   ├── ConexionDB.cs                   — Conexión MySQL
+│   ├── ConexionSQLite.cs               — Conexión SQLite local (offline)
+│   ├── DatabaseInitializer.cs          — Crea/migra esquema MySQL
+│   └── SQLiteInitializer.cs            — Crea tablas SQLite para cache offline
 ├── Repositories/
-│   └── Repositorios.cs             — Todos los repositorios (único archivo)
+│   └── Repositorios.cs                 — Todos los repositorios (métodos MySQL + offline)
 ├── Services/
-│   └── Servicios.cs                — AuthService, AsistenciaService, OfflineService, CacheHuellas
+│   ├── Servicios.cs                    — AuthService, AsistenciaService, OfflineService, CacheHuellas
+│   └── SyncService.cs                  — Sincronización MySQL ↔ SQLite
 ├── Biometria/
-│   └── ServicioBiometrico.cs       — Wrapper del SDK DigitalPersona (Singleton)
+│   └── ServicioBiometrico.cs           — Wrapper del SDK DigitalPersona (Singleton)
 ├── Views/
 │   ├── LoginWindow.xaml(.cs)
 │   ├── MainWindow.xaml(.cs)
-│   ├── KioskWindow.xaml(.cs)
-│   ├── PanelEntradaWindow.xaml(.cs)
-│   ├── Pages/                      — 14 páginas navegables
-│   └── Dialogs/                    — 10 diálogos modales
-├── libs/                           — DLLs nativas DigitalPersona
-└── Images/                         — Recursos gráficos (logo, fondo)
+│   ├── Pages/                          — Páginas navegables (Dashboard, Estudiantes, etc.)
+│   └── Dialogs/                        — Diálogos modales
+├── libs/                               — DLLs nativas DigitalPersona
+└── Images/                             — Recursos gráficos (logo, fondo)
 ```
 
 ---
 
 ## Modos de operación
 
-El mismo ejecutable soporta tres modos distintos según los argumentos de inicio:
+### CSMBiometricoWPF (aplicación principal)
 
-```
-CSMBiometricoWPF.exe              → Modo Admin   (login + panel completo)
-CSMBiometricoWPF.exe --kiosk      → Modo Kiosk   (identificación sin login)
-CSMBiometricoWPF.exe --panel      → Modo Panel   (visualización de ingresos)
-```
+Siempre arranca con pantalla de login. Permite administrar instituciones, sedes, horarios, estudiantes, enrolamiento de huellas, reportes y consulta de asistencia.
 
-Cada modo abre una ventana diferente y activa un subconjunto distinto de funcionalidades.
+### CSMPanelEntrada (panel kiosko)
+
+Pantalla de identificación desatendida. Captura huellas en tiempo real, registra ingresos y muestra el resultado en pantalla con síntesis de voz. Se ejecuta como aplicación separada y puede funcionar sin conexión a MySQL (modo offline).
 
 ---
 
@@ -125,20 +146,21 @@ Cada modo abre una ventana diferente y activa un subconjunto distinto de funcion
 `App.xaml.cs` controla el arranque completo:
 
 1. **Cultura**: fija `es-CO` para formato de fechas y números.
-2. **Inicialización de BD**: llama a `DatabaseInitializer.InicializarSiNecesario()`, que crea las tablas, vistas e índices si la base no existe, y ejecuta las migraciones pendientes.
-3. **Verificación de conexión**: si SQLite no responde, el usuario puede continuar en modo offline.
-4. **Selección de ventana** según el argumento de línea de comandos:
-   - Sin argumento → `LoginWindow`
-   - `--kiosk` → `KioskWindow`
-   - `--panel` → `PanelEntradaWindow`
+2. **Inicialización SQLite**: `SQLiteInitializer.InicializarSiNecesario()` crea las tablas locales de cache si no existen.
+3. **Conexión MySQL**: intenta conectar. Si falla, el sistema arranca en **modo offline** con aviso al usuario.
+4. **Sync inicial** (si hay MySQL): `SyncService.SincronizarTodo()` descarga datos MySQL → SQLite y envía registros pendientes → MySQL.
+5. **Inicialización de esquema MySQL**: `DatabaseInitializer.InicializarSiNecesario()` aplica migraciones pendientes.
+6. **Apertura de ventana**: `LoginWindow` (admin) o ventana de panel según el proyecto.
 
 ---
 
 ## Base de datos
 
-La base de datos es un único archivo SQLite (`csm_biometrico.db`) ubicado junto al ejecutable. No requiere instalación de servidor.
+### MySQL (principal)
 
-### Tablas principales
+Servidor centralizado accesible desde todas las PCs de la red. Contiene todos los datos del sistema.
+
+**Tablas principales:**
 
 ```
 roles                    — Roles del sistema (SUPERADMIN, ADMINISTRADOR, DOCENTE)
@@ -147,32 +169,57 @@ instituciones            — Entidades educativas
 sedes                    — Sedes físicas de cada institución
 grados                   — Grados académicos (1°, 2°, ... 11°)
 grupos                   — Grupos dentro de un grado (A, B, C...)
-periodos_academicos      — Períodos definidos por institución (inicio/fin por mes y día)
+periodos_academicos      — Períodos definidos por institución
 
 estudiantes              — Datos personales + id_sede + id_grado + id_grupo
-huellas_digitales        — Templates biométricos binarios (1..10 por estudiante, por TipoDedo)
+huellas_digitales        — Templates biométricos binarios (hasta 10 por estudiante)
 
 horarios                 — Horario base por sede/grado/grupo/día de semana
-franjas_horario          — Jornadas adicionales dentro de un horario (ej: entrada AM + entrada PM)
+franjas_horario          — Jornadas dentro de un horario (AM, PM, Media Técnica, etc.)
 horario_excepciones      — Excepciones por fecha (reemplaza el horario base ese día)
 franjas_excepcion        — Franjas dentro de una excepción
 
-registros_ingreso        — Cada ingreso registrado con estado, hora, franja y observaciones
+registros_ingreso        — Cada ingreso con estado, hora, franja y observaciones
 logs_sistema             — Auditoría de todas las acciones del sistema
 ```
 
-### Vistas SQL
+**Vistas SQL:**
 
 | Vista | Propósito |
 |---|---|
 | `v_registros_ingreso_detalle` | Une registros con datos de estudiante, sede, grado y grupo |
 | `v_estadisticas_hoy` | Totales del día (presentes, tardanzas, ausentes) por sede |
 
-### Inicialización y migraciones
+### SQLite (cache offline)
 
-`DatabaseInitializer` crea el esquema si no existe y aplica **migraciones incrementales** (ADD COLUMN con IF NOT EXISTS). Esto permite actualizar instalaciones existentes sin perder datos. Al finalizar, inserta el usuario `SUPERADMIN` por defecto si la tabla de usuarios está vacía.
+Archivo local `csm_biometrico.db` junto al ejecutable. Se sincroniza desde MySQL al arrancar y se usa cuando MySQL no está disponible.
 
-> **Credenciales por defecto:** usuario `admin` / contraseña `Admin123!`
+**Tablas SQLite:**
+
+```
+cache_huellas            — Templates biométricos para identificación offline
+cache_estudiantes        — Datos básicos de estudiantes
+cache_sedes              — Datos de sedes
+cache_horarios           — Horarios y sus parámetros
+cache_franjas            — Franjas de los horarios
+cache_excepciones        — Excepciones de horario
+cache_franjas_excepcion  — Franjas de las excepciones
+registros_pendientes     — Ingresos registrados offline, pendientes de subir a MySQL
+```
+
+---
+
+## Modo offline
+
+Cuando MySQL no está disponible:
+
+1. `ConexionDB.EstaConectado` devuelve `false`.
+2. `CacheHuellas` carga los templates desde SQLite.
+3. La identificación biométrica funciona con los datos de `cache_huellas` y `cache_estudiantes`.
+4. `AsistenciaService.RegistrarIngreso` guarda en `registros_pendientes` (SQLite).
+5. Los horarios y franjas se resuelven desde `cache_horarios`, `cache_franjas`, `cache_excepciones`.
+
+Al recuperar la conexión MySQL, `SyncService.SincronizarTodo()` sube los `registros_pendientes` a MySQL y refresca el cache local.
 
 ---
 
@@ -198,7 +245,7 @@ Activo
 ### Horario
 ```csharp
 IdHorario, IdSede, IdGrado?, IdGrupo?
-DiaSemana   // enum: LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO
+DiaSemana   // LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO
 HoraInicio, HoraLimiteTarde, HoraCierreIngreso  // TimeSpan
 Activo
 ```
@@ -208,14 +255,13 @@ Activo
 IdRegistro, IdEstudiante, IdSede
 FechaIngreso (DateTime), HoraIngreso (TimeSpan)
 EstadoIngreso  // enum: A_TIEMPO, TARDE, FUERA_DE_HORARIO, YA_REGISTRADO
-NombreFranja?  // nombre de la franja/excepción que aplicó
+NombreFranja?  // nombre de la franja que aplicó
 PuntajeBiometrico (float)
 Observaciones?
-Sincronizado (bool)  // para modo offline
 ```
 
 ### SesionActiva
-Singleton estático que mantiene el estado de la sesión en curso:
+Singleton estático con el estado de la sesión en curso:
 ```csharp
 SesionActiva.UsuarioActual       // Usuario logueado
 SesionActiva.InstitucionActual   // Institución seleccionada
@@ -226,33 +272,31 @@ SesionActiva.EsSuperAdmin        // true si rol == "SUPERADMIN"
 
 ## Capa de repositorios
 
-Todos los repositorios están en `Repositories/Repositorios.cs`. Cada uno encapsula las operaciones CRUD de una entidad usando **queries SQLite parametrizadas** directas (sin ORM).
+Todos los repositorios están en `Repositories/Repositorios.cs`. Usan **queries MySQL parametrizadas** directas. Cada método con potencial offline tiene una variante `*Offline` que consulta SQLite y se invoca automáticamente como fallback.
 
 | Repositorio | Responsabilidad |
 |---|---|
-| `UsuarioRepository` | Autenticación, CRUD de usuarios, roles |
+| `UsuarioRepository` | Autenticación, CRUD de usuarios |
 | `InstitucionRepository` | CRUD de instituciones |
 | `SedeRepository` | CRUD de sedes, filtro por institución |
 | `GradoRepository` | CRUD de grados |
 | `GrupoRepository` | CRUD de grupos |
 | `EstudianteRepository` | CRUD + búsqueda por nombre/documento |
 | `HuellaRepository` | Guardar/obtener/desactivar templates biométricos |
-| `HorarioRepository` | CRUD de horarios, consulta por día de semana, franjas por sede |
+| `HorarioRepository` | CRUD de horarios, resolución de franjas por sede/grado/día |
 | `FranjaHorarioRepository` | CRUD de franjas adicionales dentro de un horario |
 | `HorarioExcepcionRepository` | CRUD de excepciones + sus franjas, resolución por prioridad |
-| `RegistroIngresoRepository` | Guardar, consultar, actualizar registros de asistencia |
+| `RegistroIngresoRepository` | Guardar, consultar y actualizar registros de asistencia |
 | `LogRepository` | Insertar y consultar logs de auditoría |
 | `PeriodoAcademicoRepository` | CRUD de períodos académicos |
 
 ### Patrón de consulta
 
-Todos los métodos abren una conexión nueva por operación (no hay conexión persistente) y ejecutan PRAGMA `foreign_keys = ON` al abrirla:
-
 ```csharp
 public Entidad Obtener(int id)
 {
-    using var conn = ConexionDB.ObtenerConexion();
-    using var cmd  = new SqliteCommand("SELECT ... WHERE id=@id", conn);
+    using var conn = ConexionDB.ObtenerConexion(); // MySQL
+    using var cmd  = new MySqlCommand("SELECT ... WHERE id=@id", conn);
     cmd.Parameters.AddWithValue("@id", id);
     using var dr = cmd.ExecuteReader();
     if (dr.Read()) return Mapear(dr);
@@ -260,42 +304,44 @@ public Entidad Obtener(int id)
 }
 ```
 
+### Fallback offline automático
+
+Los métodos que lo requieren capturan excepciones de conexión y delegan a su versión SQLite:
+
+```csharp
+catch { return ObtenerPorFechaOffline(fecha, idSede, idInstitucion); }
+```
+
 ---
 
 ## Capa de servicios
 
 ### AuthService
-Gestiona el login y los permisos por módulo.
+Gestiona el login y permisos por módulo.
 
-**Login:**
 1. Hashea la contraseña en SHA-256.
-2. Consulta la tabla `usuarios` (estado=1, bloqueado=0).
+2. Consulta `usuarios` en MySQL (estado=1, bloqueado=0).
 3. Verifica que el usuario pertenezca a la institución seleccionada (excepto SUPERADMIN).
-4. Carga `SesionActiva` con el usuario e institución.
+4. Carga `SesionActiva`.
 5. Registra en log.
 
-**TienePermiso(modulo):** tabla de permisos por rol definida en código:
-- `SUPERADMIN` → acceso total.
-- `ADMINISTRADOR` → gestión académica (horarios, estudiantes, reportes, etc.).
-- `DOCENTE` → solo consulta, verificación y dashboard.
+**TienePermiso(modulo):** tabla de permisos por rol definida en código (ver [Roles y permisos](#roles-y-permisos)).
 
 ---
 
 ### AsistenciaService
 
-Núcleo del registro de asistencia. El método principal es `RegistrarIngreso(estudiante, puntaje)`:
+Núcleo del registro de asistencia. Método principal: `RegistrarIngreso(estudiante, puntaje)`:
 
 ```
 1. Obtener franjas vigentes para (sede, grado, grupo) del estudiante
    └─ ObtenerFranjasVigentes()
        ├─ ¿Hay excepción para hoy? → usa franjas de la excepción
        └─ No hay excepción → usa horario semanal normal
-           ├─ ¿Tiene franjas configuradas? → usa cada franja
-           └─ No tiene franjas → usa HoraInicio/LimiteTarde/Cierre del horario base
 
 2. Determinar franja activa en este momento
    ├─ ¿Estamos dentro de alguna franja? → franjaActiva
-   └─ ¿Llegó hasta 60 min antes de la próxima? → esLlegadaAnticipada = true
+   └─ ¿Llegó hasta 60 min antes de la próxima? → esLlegadaAnticipada
 
 3. Verificar duplicado
    ├─ Con franja activa: YaRegistroEnFranja(inicio, cierre)
@@ -307,53 +353,50 @@ Núcleo del registro de asistencia. El método principal es `RegistrarIngreso(es
    ├─ hora <= franja.LimiteTarde       → TARDE
    └─ hora > franja.LimiteTarde        → FUERA_DE_HORARIO
 
-5. Guardar en BD (online) o en offline_records.json (offline)
+5. Guardar en MySQL (online) o en registros_pendientes SQLite (offline)
 
-6. Disparar evento IngresoRegistrado (el PanelEntradaWindow escucha este evento)
+6. Disparar evento IngresoRegistrado
 ```
 
 ---
 
 ### OfflineService
 
-Cuando `ConexionDB.EstaConectado` es `false`, los registros se serializan en JSON:
+Gestiona los registros pendientes en SQLite cuando MySQL no está disponible.
 
-```
-offline_records.json   (junto al ejecutable)
-[
-  { "IdEstudiante": 5, "EstadoIngreso": "A_TIEMPO", "Sincronizado": false, ... },
-  ...
-]
-```
+- `GuardarOffline(registro)` → inserta en `registros_pendientes`.
+- `SincronizarPendientes(conn)` → sube los pendientes a MySQL y los marca como sincronizados.
 
-Al recuperar la conexión, `SincronizarConMySQL()` (nombre heredado) envía los registros pendientes a SQLite y marca `Sincronizado = true`.
+---
+
+### SyncService
+
+Orquesta la sincronización bidireccional MySQL ↔ SQLite al arrancar:
+
+1. Sube `registros_pendientes` (offline) → MySQL.
+2. Descarga huellas, estudiantes, sedes, horarios, franjas y excepciones → SQLite.
 
 ---
 
 ### CacheHuellas
 
-Mantiene en memoria las plantillas biométricas para que la identificación 1:N no haga consultas a disco en cada lectura.
+Mantiene en memoria los templates biométricos para identificación 1:N sin consultas repetidas a disco.
 
 - **Expiración**: 30 minutos.
-- **Filtrado por institución**: cada institución tiene su propia entrada en el caché. El SUPERADMIN tiene un caché global separado.
-- **Invalidación manual**: se llama a `Invalidar()` o `InvalidarInstitucion(id)` tras enrolar o modificar huellas.
-
-```
-ObtenerCache(idInstitucion?)
-  ├─ Con idInstitucion → caché por institución (carga solo sus huellas)
-  └─ Sin idInstitucion → caché global (todas las huellas activas)
-```
+- **Filtrado por institución**: cada institución tiene su propia entrada en el cache.
+- **Fuente**: MySQL online; SQLite si MySQL no está disponible.
+- **Invalidación**: `Invalidar()` o `InvalidarInstitucion(id)` tras enrolar o modificar huellas.
 
 ---
 
 ## Servicio biométrico
 
-`Biometria/ServicioBiometrico.cs` es un **Singleton** (`ServicioBiometrico.Compartido`) que gestiona todo el ciclo de vida del lector.
+`Biometria/ServicioBiometrico.cs` es un **Singleton** (`ServicioBiometrico.Compartido`) que gestiona el ciclo de vida del lector.
 
 ### Inicialización
 1. Abre el primer dispositivo USB disponible vía `DPUruNet`.
 2. Configura la calidad mínima de captura.
-3. Registra **WMI watchers** para detectar conexión/desconexión del dispositivo en caliente.
+3. Registra **WMI watchers** para detectar conexión/desconexión en caliente.
 4. Si el dispositivo se desconecta, intenta reinicializar automáticamente.
 
 ### Ciclo de captura (identificación)
@@ -366,7 +409,7 @@ IniciarCaptura(idInstitucion?)
           2. Si calidad OK → busca en CacheHuellas con Parallel.ForEach
           3. Si puntaje ≥ umbral → dispara OnEstudianteIdentificado(estudiante, puntaje)
           4. Si no coincide → dispara OnIdentificacionFallida
-          5. Siempre dispara OnImagenCapturada(bitmap) para mostrar la imagen en UI
+          5. Siempre dispara OnImagenCapturada(bitmap)
 ```
 
 ### Ciclo de enrolamiento
@@ -374,7 +417,6 @@ IniciarCaptura(idInstitucion?)
 ```
 IniciarEnrolamiento(estudiante, tipoDedo)
   └─ 4 capturas secuenciales (centro, derecha, izquierda, centro)
-      └─ Cada captura exitosa dispara OnHuellaCapturada(muestra, paso)
       └─ Al completar 4 → GenerarTemplate(muestras) → OnTemplateGenerado(template)
 ```
 
@@ -397,118 +439,84 @@ IniciarEnrolamiento(estudiante, tipoDedo)
 ## Vistas y ventanas
 
 ### LoginWindow
-
-Pantalla inicial en modo Admin:
-
-1. Carga el listado de instituciones activas en un `ComboBox`.
+Pantalla inicial del modo admin:
+1. Carga instituciones activas en un `ComboBox`.
 2. El usuario ingresa username y contraseña.
 3. Llama a `AuthService.Login()`.
-4. Si es SUPERADMIN, no requiere seleccionar institución.
-5. En éxito: abre `MainWindow` y se cierra.
-6. Incluye opción de restablecer contraseña (abre `RestablecerPasswordDialog`).
-
----
+4. En éxito: abre `MainWindow` y se cierra.
 
 ### MainWindow
+Ventana principal en modo admin:
+- Menú de navegación lateral con botones por módulo.
+- Frame central donde se cargan las páginas.
+- Los botones se muestran u ocultan según `AuthService.TienePermiso(modulo)`.
+- Botón de logout que vuelve a `LoginWindow`.
 
-Ventana principal en modo Admin. Contiene:
-
-- **Menú de navegación lateral** con botones por módulo.
-- **Frame central** donde se cargan las páginas (`Page`).
-- Los botones del menú se muestran u ocultan según `AuthService.TienePermiso(modulo)`.
-- Botón de logout que llama a `AuthService.Logout()` y vuelve a `LoginWindow`.
-
----
-
-### KioskWindow
-
-Ventana de operación desatendida (pantalla de entrada):
-
-1. **Selector de sede**: si la institución tiene una sola sede, la selecciona automáticamente; si tiene varias, pide selección manual al inicio.
-2. **Reloj en tiempo real** actualizado cada segundo.
-3. **Indicador de franja activa**: muestra el nombre de la jornada en curso (o la próxima).
-4. **Captura continua**: inicia `ServicioBiometrico.IniciarCaptura(idInstitucion)`.
-5. Al identificar un estudiante:
-   - Llama a `AsistenciaService.RegistrarIngreso()`.
-   - Muestra panel de resultado con color según estado:
-     - Verde → `A_TIEMPO`
-     - Naranja → `TARDE`
-     - Rojo → `FUERA_DE_HORARIO`
-     - Gris → `YA_REGISTRADO`
-   - Síntesis de voz (TTS) anuncia el nombre y estado.
-6. **Salida**: `Ctrl+Alt+Q`.
-
----
-
-### PanelEntradaWindow
-
-Vista de supervisión en tiempo real (para docente o pantalla secundaria):
-
+### CSMPanelEntrada (proyecto separado)
+Ventana de panel de entrada:
 1. Selector de institución y sede.
-2. Grid con los ingresos del día, ordenados por hora.
-3. **Actualización automática** cada 30 segundos + actualización inmediata al suscribirse a `AsistenciaService.IngresoRegistrado`.
-4. **Estadísticas del día**: presentes, tardanzas, ausentes.
-5. Indicador online/offline.
-6. `F5` para forzar recarga, `Escape` para cerrar.
+2. Captura continua de huella.
+3. Al identificar → llama a `AsistenciaService.RegistrarIngreso()`.
+4. Muestra resultado con color según estado (verde / naranja / rojo / gris).
+5. Síntesis de voz anuncia nombre y estado.
+6. Grid con ingresos del día actualizado en tiempo real.
+7. Funciona en modo offline si MySQL no está disponible.
 
 ---
 
 ## Páginas de administración
 
 ### Dashboard
-- KPIs del período seleccionado: Total estudiantes, Presentes, Ausentes, Tardanzas, Parciales (falta una franja), Huellas enroladas.
+- KPIs del período: Total estudiantes, Presentes, Ausentes, Tardanzas, Huellas enroladas.
 - Filtros: institución, sede, grado, grupo, período (hoy / 1 semana / 15 días / 30 días / período académico / personalizado).
-- Grid expandible con el detalle de faltas por estudiante.
-- SUPERADMIN ve todas las instituciones; otros roles solo ven la suya.
+- Grid con detalle de faltas por estudiante.
 
 ### Estudiantes
-- Listado con búsqueda por nombre o documento.
+- Listado con búsqueda por nombre completo o documento.
 - Agregar / editar / desactivar estudiantes.
-- Vista de huellas enroladas por estudiante.
 - Filtrado por sede/grado/grupo.
 
 ### Enrolamiento
-Proceso guiado de 4 pasos para registrar la huella de un estudiante:
-
+Proceso guiado de 4 capturas para registrar la huella de un estudiante:
 ```
 Paso 1: Centro del sensor
 Paso 2: Inclinado a la derecha
 Paso 3: Inclinado a la izquierda
 Paso 4: Centro (confirmación)
 ```
-
-Cada paso muestra la imagen capturada. Al terminar el paso 4, el SDK genera el template consolidado y se guarda en `huellas_digitales`. El caché se invalida automáticamente.
+Al terminar, el SDK genera el template consolidado y se guarda en `huellas_digitales`. El cache se invalida automáticamente.
 
 ### Verificación
-Permite verificar manualmente la identidad de una persona: busca el estudiante, luego captura una huella y compara contra sus templates registrados.
+Busca un estudiante, captura una huella y compara contra sus templates registrados.
 
 ### Consulta de Asistencia
-- Búsqueda de estudiante por documento o nombre.
-- Selector de período (mismo sistema que el Dashboard).
-- Grid agrupado por fecha con todos los registros del estudiante.
+- Búsqueda por documento o nombre (incluye búsqueda por nombre completo).
+- Selector de período.
+- Grid agrupado por fecha con todos los registros.
+- Muestra ausencias calculadas automáticamente según el horario configurado.
 - Contadores de asistencias, tardanzas y faltas.
-- **Doble clic** sobre un registro abre `JustificarAsistenciaDialog` para corregir el estado o agregar observaciones.
+- **Doble clic** sobre un registro abre `JustificarAsistenciaDialog`.
 
 ### Horarios
-Gestión de horarios semanales (ver [Sistema de horarios](#sistema-de-horarios)).
+Gestión de horarios semanales por sede/grado/grupo con soporte de franjas múltiples y excepciones por fecha.
 
 ### Instituciones / Sedes / Grados / Grupos
-CRUD estándar de las entidades maestras. Cada uno tiene su diálogo de edición.
+CRUD estándar de las entidades maestras.
 
 ### Usuarios
-CRUD de usuarios con asignación de rol e institución. Incluye opción de restablecer contraseña.
+CRUD de usuarios con asignación de rol e institución.
 
 ### Periodos Académicos
-Define períodos con nombre, mes/día de inicio y mes/día de fin, asociados a una institución. Se usan como filtro en Dashboard y Consulta de Asistencia.
+Define períodos con nombre y rango (mes/día de inicio y fin) por institución.
 
 ### Reportes
-Genera reportes de asistencia filtrados y los exporta a Excel (`.xlsx`) con ClosedXML.
+Exporta reportes de asistencia a Excel (`.xlsx`) con ClosedXML.
 
 ### Logs
-Tabla de auditoría con todos los eventos del sistema, filtrable por nivel (`INFO`, `ADVERTENCIA`, `ERROR`, `CRITICO`) e institución.
+Auditoría de todos los eventos del sistema, filtrable por nivel e institución.
 
 ### Prueba de Lector
-Página de diagnóstico: permite comprobar que el lector biométrico funciona correctamente capturando una huella de prueba y mostrando su imagen y calidad.
+Diagnóstico del lector biométrico: captura una huella de prueba y muestra imagen y calidad.
 
 ---
 
@@ -523,7 +531,7 @@ Página de diagnóstico: permite comprobar que el lector biométrico funciona co
 | `EditarGrupoDialog` | Crear / editar grupo |
 | `EditarUsuarioDialog` | Crear / editar usuario y asignar rol |
 | `RestablecerPasswordDialog` | Cambiar contraseña de un usuario |
-| `HorariosSedeDialog` | Ver/editar horarios desde un contexto de sede |
+| `HorariosSedeDialog` | Ver/editar horarios de una sede |
 | `FranjasHorarioDialog` | Gestionar franjas adicionales de un horario |
 | `ExcepcionesSedeDialog` | Gestionar excepciones de horario por fecha |
 | `JustificarAsistenciaDialog` | Corregir estado de un registro de asistencia |
@@ -533,7 +541,7 @@ Página de diagnóstico: permite comprobar que el lector biométrico funciona co
 
 ## Sistema de horarios
 
-El sistema permite definir horarios con **tres niveles de granularidad** y resuelve cuál aplica con el siguiente orden de prioridad (de mayor a menor):
+Define horarios con **tres niveles de granularidad**, resueltos por prioridad:
 
 ```
 1. Sede + Grado + Grupo específico  (ej: sede Norte, 5°, Grupo A)
@@ -551,22 +559,17 @@ Cada horario tiene **tres horas clave** por día:
 
 ### Franjas adicionales
 
-Un horario puede tener múltiples **franjas** (ej: entrada de la mañana + entrada de la tarde). Cada franja tiene las mismas tres horas clave. Se configuran desde `FranjasHorarioDialog`.
-
-Si un horario **no tiene franjas**, se usa el horario base directamente como una única ventana.
+Un horario puede tener múltiples **franjas** (ej: entrada mañana + entrada tarde de Media Técnica). Cada franja tiene sus propias tres horas clave. La franja que aparece en el registro se resuelve buscando primero el horario del grado específico del estudiante, luego el genérico de la sede.
 
 ### Excepciones
 
-Una **excepción** reemplaza completamente el horario de un día específico. Se define para una fecha concreta y puede tener sus propias franjas. La prioridad de resolución es:
-
+Reemplazan completamente el horario de un día específico. Prioridad de resolución:
 ```
 1. Sede + Grado específico
 2. Sede genérica
 3. Grado en todas las sedes de la institución
-4. Institución completa (todas las sedes y grados)
+4. Institución completa
 ```
-
-Si una excepción existe pero **no tiene franjas configuradas**, se ignora y se usa el horario normal.
 
 ---
 
@@ -578,18 +581,18 @@ Si una excepción existe pero **no tiene franjas configuradas**, se ignora y se 
 |---|---|
 | `A_TIEMPO` | Dentro del horario, antes del límite de tardanza (o llegada anticipada ≤60 min antes) |
 | `TARDE` | Después de `HoraInicio` pero antes de `HoraLimiteTarde` |
-| `FUERA_DE_HORARIO` | Después de `HoraCierreIngreso` o sin franja activa para ese momento |
-| `YA_REGISTRADO` | El estudiante ya tiene un registro en esa franja ese día |
+| `FUERA_DE_HORARIO` | Después de `HoraCierreIngreso` o sin franja activa |
+| `YA_REGISTRADO` | El estudiante ya tiene registro en esa franja ese día |
 
 ### Detección de duplicados
 
-- **Con franja activa**: verifica duplicados solo dentro de la ventana horaria de esa franja (`YaRegistroEnFranja`).
-- **Sin franja / llegada anticipada**: verifica duplicados en todo el día (`YaRegistroHoy`). Esto evita que un estudiante que llega antes de la franja pueda registrarse de nuevo al entrar a la franja.
+- **Con franja activa**: verifica solo dentro de la ventana de esa franja (`YaRegistroEnFranja`).
+- **Sin franja / llegada anticipada**: verifica en todo el día (`YaRegistroHoy`).
 
 ### Justificación de asistencia
 
-Desde `ConsultaAsistenciaPage`, haciendo doble clic en un registro se puede:
-- Cambiar el estado de `TARDE` o `FUERA_DE_HORARIO` a `A_TIEMPO`.
+Desde `ConsultaAsistenciaPage`, doble clic en un registro permite:
+- Cambiar el estado a `A_TIEMPO`, `TARDE`, etc.
 - Editar el nombre de la franja asociada.
 - Agregar observaciones (máx. 200 caracteres).
 
@@ -618,23 +621,11 @@ Desde `ConsultaAsistenciaPage`, haciendo doble clic en un registro se puede:
 
 ## Seguridad
 
-- **Contraseñas**: hash SHA-256 (sin salt — considerar mejora a bcrypt en futuras versiones).
-- **SQL Injection**: todas las queries usan `Parameters.AddWithValue()`, ninguna concatenación de strings.
+- **Contraseñas**: hash SHA-256.
+- **SQL Injection**: todas las queries usan `Parameters.AddWithValue()`, sin concatenación de strings.
 - **Bloqueo de cuenta**: tras 5 intentos fallidos de login, la cuenta se bloquea 30 segundos.
-- **Sesión**: `SesionActiva` (singleton estático) se limpia completamente en logout.
-- **Auditoría**: cada acción relevante (login, logout, CRUD, enrolamiento, registro de asistencia, errores) se registra en `logs_sistema` con nivel, usuario y timestamp.
-- **Foreign keys**: `PRAGMA foreign_keys = ON` en cada conexión.
-
----
-
-## Modo offline
-
-Cuando SQLite no está disponible (raro en un escenario de archivo local, pero posible en rutas de red):
-
-1. `ConexionDB.EstaConectado` devuelve `false`.
-2. `AsistenciaService.RegistrarIngreso` llama a `OfflineService.GuardarOffline()`.
-3. Los registros se acumulan en `offline_records.json` junto al ejecutable.
-4. Al restaurar la conexión, `OfflineService.SincronizarConMySQL()` envía los registros pendientes y marca `Sincronizado = true`.
+- **Sesión**: `SesionActiva` se limpia completamente en logout.
+- **Auditoría**: cada acción relevante se registra en `logs_sistema`.
 
 ---
 
@@ -644,22 +635,33 @@ Cuando SQLite no está disponible (raro en un escenario de archivo local, pero p
 
 - **SO**: Windows 10 / 11 (x86 o x64 con WOW64 habilitado)
 - **Runtime**: .NET 8.0 Desktop Runtime
+- **MySQL**: servidor MySQL 8.x accesible en la red (configurar en `App.config`)
 - **Hardware**: Lector DigitalPersona U.are.U 5300 conectado por USB
 - **Driver**: DigitalPersona OneTouch for Windows (debe instalarse antes de ejecutar)
-- **Espacio en disco**: ~50 MB para la aplicación + crecimiento del archivo `.db`
+
+### Configuración de conexión
+
+Editar `App.config`:
+
+```xml
+<add name="MySqlConnection"
+     connectionString="Server=IP_DEL_SERVIDOR;Port=3306;Database=csm_biometrico;
+                       User ID=usuario;Password=contraseña;CharSet=utf8mb4;SslMode=None;"
+     providerName="MySqlConnector" />
+```
 
 ### Primeros pasos
 
 1. Instalar el driver de DigitalPersona.
-2. Conectar el lector biométrico.
-3. Ejecutar `CSMBiometricoWPF.exe` — la base de datos se crea automáticamente.
+2. Configurar la cadena de conexión MySQL en `App.config`.
+3. Ejecutar `CSMBiometricoWPF.exe` — el esquema MySQL y el cache SQLite se crean automáticamente.
 4. Iniciar sesión con `admin` / `Admin123!`.
 5. Cambiar la contraseña del SUPERADMIN desde **Usuarios**.
-6. Crear la institución → sede → horarios → grados y grupos → estudiantes → enrolar huellas.
+6. Crear institución → sede → horarios → grados y grupos → estudiantes → enrolar huellas.
 
 ### Compilación
 
-El proyecto **debe compilarse en x86** por limitación del SDK nativo de DigitalPersona. En Visual Studio:
+El proyecto **debe compilarse en x86** por limitación del SDK nativo de DigitalPersona:
 
 ```
 Plataforma: x86

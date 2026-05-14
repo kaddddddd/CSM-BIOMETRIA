@@ -45,7 +45,7 @@ namespace CSMPanelEntrada {
         /// </summary>
         [System.STAThreadAttribute()]
         [System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.7.0")]
+        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.8.0")]
         public static void Main() {
             CSMPanelEntrada.App app = new CSMPanelEntrada.App();
             app.Run();

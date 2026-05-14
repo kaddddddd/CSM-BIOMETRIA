@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CSMPanelEntrada")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6909899229186b4fd3272943d0182710fd9d4a11")]
 [assembly: System.Reflection.AssemblyProductAttribute("CSMPanelEntrada")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CSMPanelEntrada")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

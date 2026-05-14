@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using CSMBiometricoWPF.Data;
+using CSMBiometricoWPF.Services;
 using CSMBiometricoWPF.Views;
 
 namespace CSMPanelEntrada
@@ -11,29 +12,34 @@ namespace CSMPanelEntrada
         {
             base.OnStartup(e);
 
-            // Verificar conexión con MySQL antes de abrir la ventana
-            try
+            // Inicializar SQLite local (siempre, sin importar si hay red)
+            try { SQLiteInitializer.InicializarSiNecesario(); }
+            catch { /* Si SQLite falla tampoco podemos operar */ }
+
+            bool hayMySQL = ConexionDB.VerificarConexion();
+
+            if (hayMySQL)
             {
-                DatabaseInitializer.InicializarSiNecesario();
+                // Conexión disponible: inicializar BD y sincronizar caché local
+                try { DatabaseInitializer.InicializarSiNecesario(); } catch { }
+                try { SyncService.SincronizarDeMySQL(); }              catch { }
+                try { SyncService.SincronizarHaciaMySQL(); }           catch { }
             }
-            catch (Exception ex)
+            else
             {
+                // Sin conexión: continuar en modo offline usando caché SQLite
                 MessageBox.Show(
-                    $"No se pudo conectar al servidor MySQL.\n\n" +
-                    $"Verifique que:\n" +
-                    $"  • El servidor MySQL esté encendido en la PC de la oficina\n" +
-                    $"  • La IP configurada en App.config sea correcta\n" +
-                    $"  • Ambas PCs estén en la misma red\n\n" +
-                    $"Detalle técnico:\n{ex.Message}",
-                    "Error de conexión — CSM Panel Entrada",
+                    "No se detectó conexión al servidor MySQL.\n\n" +
+                    "El panel funcionará en MODO OFFLINE.\n" +
+                    "Los registros se sincronizarán automáticamente\n" +
+                    "cuando se restablezca la conexión.\n\n" +
+                    "Verifique que ambas PCs estén en la misma red.",
+                    "Modo Offline — CSM Panel Entrada",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                Shutdown(1);
-                return;
+                    MessageBoxImage.Warning);
             }
 
-            var panel = new PanelEntradaWindow();
-            panel.Show();
+            new PanelEntradaWindow().Show();
         }
     }
 }

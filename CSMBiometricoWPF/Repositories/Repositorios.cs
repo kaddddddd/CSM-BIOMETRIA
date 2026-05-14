@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Data.Sqlite;
 using MySqlConnector;
 using CSMBiometricoWPF.Data;
 using CSMBiometricoWPF.Models;
@@ -617,24 +618,60 @@ namespace CSMBiometricoWPF.Repositories
 
         public Estudiante ObtenerPorId(int id)
         {
-            using (var conn = ConexionDB.ObtenerConexion())
+            try
             {
-                string sql = @"SELECT e.*, i.nombre as nombre_inst, s.nombre_sede, 
-                                      g.nombre_grado, gr.nombre_grupo,
-                                      0 as tiene_huella
-                               FROM estudiantes e
-                               INNER JOIN instituciones i ON e.id_institucion = i.id_institucion
-                               INNER JOIN sedes s ON e.id_sede = s.id_sede
-                               INNER JOIN grados g ON e.id_grado = g.id_grado
-                               INNER JOIN grupos gr ON e.id_grupo = gr.id_grupo
-                               WHERE e.id_estudiante=@id";
-                using (var cmd = new MySqlCommand(sql, conn))
+                using (var conn = ConexionDB.ObtenerConexion())
                 {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    using (var dr = cmd.ExecuteReader())
-                        if (dr.Read()) return MapearEstudiante(dr);
+                    string sql = @"SELECT e.*, i.nombre as nombre_inst, s.nombre_sede,
+                                          g.nombre_grado, gr.nombre_grupo,
+                                          0 as tiene_huella
+                                   FROM estudiantes e
+                                   INNER JOIN instituciones i ON e.id_institucion = i.id_institucion
+                                   INNER JOIN sedes s ON e.id_sede = s.id_sede
+                                   INNER JOIN grados g ON e.id_grado = g.id_grado
+                                   INNER JOIN grupos gr ON e.id_grupo = gr.id_grupo
+                                   WHERE e.id_estudiante=@id";
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        using (var dr = cmd.ExecuteReader())
+                            if (dr.Read()) return MapearEstudiante(dr);
+                    }
                 }
             }
+            catch { return ObtenerPorIdOffline(id); }
+            return null;
+        }
+
+        private Estudiante ObtenerPorIdOffline(int id)
+        {
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM cache_estudiantes WHERE id_estudiante=@id LIMIT 1";
+                cmd.Parameters.AddWithValue("@id", id);
+                using var dr = cmd.ExecuteReader();
+                if (dr.Read())
+                    return new Estudiante
+                    {
+                        IdEstudiante      = Convert.ToInt32(dr["id_estudiante"]),
+                        Identificacion    = dr["identificacion"].ToString(),
+                        Nombre            = dr["nombre"].ToString(),
+                        Apellidos         = dr["apellidos"].ToString(),
+                        IdInstitucion     = Convert.ToInt32(dr["id_institucion"]),
+                        IdSede            = Convert.ToInt32(dr["id_sede"]),
+                        IdGrado           = Convert.ToInt32(dr["id_grado"]),
+                        IdGrupo           = Convert.ToInt32(dr["id_grupo"]),
+                        NombreInstitucion = dr["nombre_institucion"].ToString(),
+                        NombreSede        = dr["nombre_sede"].ToString(),
+                        NombreGrado       = dr["nombre_grado"].ToString(),
+                        NombreGrupo       = dr["nombre_grupo"].ToString(),
+                        Foto              = dr["foto"] == DBNull.Value ? null : (byte[])dr["foto"],
+                        Estado            = "ACTIVO"
+                    };
+            }
+            catch { }
             return null;
         }
 
@@ -694,7 +731,9 @@ namespace CSMBiometricoWPF.Repositories
                                INNER JOIN sedes s ON e.id_sede = s.id_sede
                                INNER JOIN grados g ON e.id_grado = g.id_grado
                                INNER JOIN grupos gr ON e.id_grupo = gr.id_grupo
-                               WHERE (e.identificacion LIKE @texto OR e.nombre LIKE @texto OR e.apellidos LIKE @texto)";
+                               WHERE (e.identificacion LIKE @texto OR e.nombre LIKE @texto OR e.apellidos LIKE @texto
+                                      OR CONCAT(e.nombre, ' ', e.apellidos) LIKE @texto
+                                      OR CONCAT(e.apellidos, ' ', e.nombre) LIKE @texto)";
                 if (idInstitucion.HasValue) sql += " AND e.id_institucion=@inst";
                 sql += " ORDER BY e.apellidos, e.nombre LIMIT 100";
                 using (var cmd = new MySqlCommand(sql, conn))
@@ -871,9 +910,13 @@ namespace CSMBiometricoWPF.Repositories
     {
         public bool Guardar(RegistroIngreso r)
         {
-            // Usamos hora local explícita para evitar desfase UTC vs. hora local del servidor.
-            string fechaLocal = DateTime.Now.ToString("yyyy-MM-dd");
-            string horaLocal  = DateTime.Now.ToString("HH:mm:ss");
+            // Si el registro ya trae fecha/hora (ej. al sincronizar desde offline), usarlas.
+            string fechaLocal = r.FechaIngreso == default
+                ? DateTime.Now.ToString("yyyy-MM-dd")
+                : r.FechaIngreso.ToString("yyyy-MM-dd");
+            string horaLocal = r.HoraIngreso == default
+                ? DateTime.Now.ToString("HH:mm:ss")
+                : r.HoraIngreso.ToString(@"hh\:mm\:ss");
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 string sql = @"INSERT INTO registros_ingreso
@@ -923,9 +966,49 @@ namespace CSMBiometricoWPF.Repositories
             return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
         }
 
+        // ── Variantes offline (consultan SQLite registros_pendientes) ────
+
+        public bool YaRegistroHoyOffline(int idEstudiante)
+        {
+            string hoy = DateTime.Today.ToString("yyyy-MM-dd");
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM registros_pendientes WHERE id_estudiante=@id AND fecha_ingreso=@hoy";
+                cmd.Parameters.AddWithValue("@id",  idEstudiante);
+                cmd.Parameters.AddWithValue("@hoy", hoy);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+            catch { return false; }
+        }
+
+        public bool YaRegistroEnFranjaOffline(int idEstudiante, TimeSpan franjaInicio, TimeSpan franjaCierre)
+        {
+            string hoy    = DateTime.Today.ToString("yyyy-MM-dd");
+            string inicio = franjaInicio.ToString(@"hh\:mm\:ss");
+            string cierre = franjaCierre.ToString(@"hh\:mm\:ss");
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = @"SELECT COUNT(*) FROM registros_pendientes
+                                    WHERE id_estudiante=@id AND fecha_ingreso=@hoy
+                                    AND hora_ingreso >= @inicio AND hora_ingreso <= @cierre";
+                cmd.Parameters.AddWithValue("@id",     idEstudiante);
+                cmd.Parameters.AddWithValue("@hoy",    hoy);
+                cmd.Parameters.AddWithValue("@inicio", inicio);
+                cmd.Parameters.AddWithValue("@cierre", cierre);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+            catch { return false; }
+        }
+
         public List<RegistroIngreso> ObtenerPorFecha(DateTime fecha, int? idSede = null, int? idInstitucion = null)
         {
             var lista = new List<RegistroIngreso>();
+            try
+            {
             using (var conn = ConexionDB.ObtenerConexion())
             {
                 // JOIN con registros_ingreso y sedes para poder filtrar por sede e institución
@@ -960,6 +1043,59 @@ namespace CSMBiometricoWPF.Repositories
                             });
                 }
             }
+            } // cierre try
+            catch { return ObtenerPorFechaOffline(fecha, idSede, idInstitucion); }
+            return lista;
+        }
+
+        /// <summary>
+        /// Versión offline: lee registros_pendientes de SQLite uniendo con cache_estudiantes.
+        /// Se invoca automáticamente desde ObtenerPorFecha cuando MySQL no está disponible.
+        /// </summary>
+        public List<RegistroIngreso> ObtenerPorFechaOffline(DateTime fecha, int? idSede = null, int? idInstitucion = null)
+        {
+            var lista = new List<RegistroIngreso>();
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                string sql = @"
+                    SELECT rp.*,
+                           ce.nombre || ' ' || ce.apellidos AS nombre_completo,
+                           ce.identificacion,
+                           ce.nombre_sede,
+                           ce.nombre_grado,
+                           ce.nombre_grupo,
+                           ce.id_institucion
+                    FROM registros_pendientes rp
+                    LEFT JOIN cache_estudiantes ce ON rp.id_estudiante = ce.id_estudiante
+                    WHERE rp.fecha_ingreso = @fecha";
+                if (idSede.HasValue)        sql += " AND rp.id_sede = @sede";
+                if (idInstitucion.HasValue) sql += " AND ce.id_institucion = @inst";
+                sql += " ORDER BY rp.hora_ingreso DESC";
+                cmd.CommandText = sql;
+                cmd.Parameters.AddWithValue("@fecha", fecha.ToString("yyyy-MM-dd"));
+                if (idSede.HasValue)        cmd.Parameters.AddWithValue("@sede", idSede.Value);
+                if (idInstitucion.HasValue) cmd.Parameters.AddWithValue("@inst", idInstitucion.Value);
+                using var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                    lista.Add(new RegistroIngreso
+                    {
+                        IdEstudiante     = Convert.ToInt32(dr["id_estudiante"]),
+                        IdSede           = dr["id_sede"] == DBNull.Value ? 0 : Convert.ToInt32(dr["id_sede"]),
+                        FechaIngreso     = fecha,
+                        HoraIngreso      = TimeSpan.Parse(dr["hora_ingreso"].ToString()),
+                        EstadoIngreso    = (EstadoIngreso)Enum.Parse(typeof(EstadoIngreso), dr["estado_ingreso"].ToString()),
+                        PuntajeBiometrico = Convert.ToSingle(dr["puntaje_biometrico"]),
+                        NombreFranja     = dr["nombre_franja"] == DBNull.Value ? null : dr["nombre_franja"].ToString(),
+                        NombreEstudiante = dr["nombre_completo"]?.ToString() ?? "",
+                        Identificacion   = dr["identificacion"]?.ToString() ?? "",
+                        NombreSede       = dr["nombre_sede"]?.ToString() ?? "",
+                        NombreGrado      = dr["nombre_grado"]?.ToString() ?? "",
+                        NombreGrupo      = dr["nombre_grupo"]?.ToString() ?? ""
+                    });
+            }
+            catch { }
             return lista;
         }
 
@@ -1075,6 +1211,7 @@ namespace CSMBiometricoWPF.Repositories
                                         ON e2.id_estudiante = ri.id_estudiante
                                 WHERE h.id_sede = e2.id_sede
                                   AND h.activo  = 1
+                                  AND (h.id_grado = e2.id_grado OR h.id_grado IS NULL)
                                   AND h.dia_semana = CASE DAYOFWEEK(v.fecha_ingreso)
                                         WHEN 2 THEN 'LUNES'   WHEN 3 THEN 'MARTES'
                                         WHEN 4 THEN 'MIERCOLES' WHEN 5 THEN 'JUEVES'
@@ -1082,6 +1219,7 @@ namespace CSMBiometricoWPF.Repositories
                                         ELSE 'DOMINGO' END
                                   AND TIME(v.hora_ingreso) BETWEEN TIME(f.hora_inicio)
                                                                AND TIME(f.hora_cierre_ingreso)
+                                ORDER BY (h.id_grado IS NOT NULL) DESC
                                 LIMIT 1)
                            ) AS nombre_franja
                     FROM v_registros_ingreso_detalle v
@@ -1242,6 +1380,73 @@ namespace CSMBiometricoWPF.Repositories
                 }
             }
             return null;
+        }
+
+        /// <summary>Versión offline de ObtenerHoy: consulta la cache SQLite local.</summary>
+        public Horario ObtenerHoyOffline(int idSede, int? idGrado = null, int? idGrupo = null)
+        {
+            string diaEsp = ObtenerDiaEspanol();
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                // 1. grupo + grado
+                if (idGrado.HasValue && idGrupo.HasValue)
+                {
+                    var h = BuscarHorarioSQLite(conn, idSede, idGrado.Value, idGrupo.Value, diaEsp);
+                    if (h != null) return h;
+                }
+                // 2. grado sin grupo
+                if (idGrado.HasValue)
+                {
+                    var h = BuscarHorarioSQLite(conn, idSede, idGrado.Value, null, diaEsp);
+                    if (h != null) return h;
+                }
+                // 3. sede general
+                return BuscarHorarioSQLite(conn, idSede, null, null, diaEsp);
+            }
+            catch { return null; }
+        }
+
+        private static Horario BuscarHorarioSQLite(SqliteConnection conn, int idSede, int? idGrado, int? idGrupo, string dia)
+        {
+            var cmd = conn.CreateCommand();
+            if (idGrado.HasValue && idGrupo.HasValue)
+                cmd.CommandText = "SELECT * FROM cache_horarios WHERE id_sede=@sede AND id_grado=@grado AND id_grupo=@grupo AND dia_semana=@dia LIMIT 1";
+            else if (idGrado.HasValue)
+                cmd.CommandText = "SELECT * FROM cache_horarios WHERE id_sede=@sede AND id_grado=@grado AND id_grupo IS NULL AND dia_semana=@dia LIMIT 1";
+            else
+                cmd.CommandText = "SELECT * FROM cache_horarios WHERE id_sede=@sede AND id_grado IS NULL AND id_grupo IS NULL AND dia_semana=@dia LIMIT 1";
+
+            cmd.Parameters.AddWithValue("@sede", idSede);
+            cmd.Parameters.AddWithValue("@dia",  dia);
+            if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+            if (idGrupo.HasValue) cmd.Parameters.AddWithValue("@grupo", idGrupo.Value);
+
+            using var dr = cmd.ExecuteReader();
+            if (!dr.Read()) return null;
+            return new Horario
+            {
+                IdHorario         = Convert.ToInt32(dr["id_horario"]),
+                IdSede            = Convert.ToInt32(dr["id_sede"]),
+                IdGrado           = dr["id_grado"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_grado"]),
+                IdGrupo           = dr["id_grupo"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_grupo"]),
+                DiaSemana         = (DiaSemana)Enum.Parse(typeof(DiaSemana), dr["dia_semana"].ToString()),
+                HoraInicio        = TimeSpan.Parse(dr["hora_inicio"].ToString()),
+                HoraLimiteTarde   = TimeSpan.Parse(dr["hora_limite_tarde"].ToString()),
+                HoraCierreIngreso = TimeSpan.Parse(dr["hora_cierre_ingreso"].ToString()),
+                Activo            = true
+            };
+        }
+
+        private static string ObtenerDiaEspanol()
+        {
+            var mapa = new System.Collections.Generic.Dictionary<string, string>
+            {
+                {"Monday","LUNES"},{"Tuesday","MARTES"},{"Wednesday","MIERCOLES"},
+                {"Thursday","JUEVES"},{"Friday","VIERNES"},{"Saturday","SABADO"},{"Sunday","DOMINGO"}
+            };
+            string dia = DateTime.Now.DayOfWeek.ToString();
+            return mapa.TryGetValue(dia, out string esp) ? esp : dia.ToUpper();
         }
 
         /// <summary>
@@ -1523,6 +1728,33 @@ namespace CSMBiometricoWPF.Repositories
             }
         }
 
+        public List<FranjaHorario> ObtenerPorHorarioOffline(int idHorario)
+        {
+            var lista = new List<FranjaHorario>();
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM cache_franjas WHERE id_horario=@id ORDER BY orden, id_franja";
+                cmd.Parameters.AddWithValue("@id", idHorario);
+                using var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                    lista.Add(new FranjaHorario
+                    {
+                        IdFranja          = Convert.ToInt32(dr["id_franja"]),
+                        IdHorario         = Convert.ToInt32(dr["id_horario"]),
+                        Nombre            = dr["nombre"].ToString(),
+                        HoraInicio        = TimeSpan.Parse(dr["hora_inicio"].ToString()),
+                        HoraLimiteTarde   = TimeSpan.Parse(dr["hora_limite_tarde"].ToString()),
+                        HoraCierreIngreso = TimeSpan.Parse(dr["hora_cierre_ingreso"].ToString()),
+                        Orden             = Convert.ToInt32(dr["orden"]),
+                        Activo            = true
+                    });
+            }
+            catch { }
+            return lista;
+        }
+
         private static FranjaHorario MapearFranja(MySqlDataReader dr) => new FranjaHorario
         {
             IdFranja          = Convert.ToInt32(dr["id_franja"]),
@@ -1613,6 +1845,107 @@ namespace CSMBiometricoWPF.Repositories
                 }
             }
             return null;
+        }
+
+        /// <summary>Versión offline de ObtenerHoy: consulta la cache SQLite local.</summary>
+        public HorarioExcepcion ObtenerHoyOffline(int idSede, int? idGrado = null, int? idInstitucion = null)
+        {
+            string hoy = DateTime.Today.ToString("yyyy-MM-dd");
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                // 1. sede + grado
+                if (idGrado.HasValue)
+                {
+                    var exc = BuscarExcepcionSQLite(conn, hoy, idSede, idGrado.Value);
+                    if (exc != null) return exc;
+                }
+                // 2. sede sin grado
+                {
+                    var exc = BuscarExcepcionSQLite(conn, hoy, idSede, null);
+                    if (exc != null) return exc;
+                }
+                // 3. institución
+                if (idInstitucion.HasValue)
+                {
+                    if (idGrado.HasValue)
+                    {
+                        var exc = BuscarExcepcionInstSQLite(conn, hoy, idInstitucion.Value, idGrado.Value);
+                        if (exc != null) return exc;
+                    }
+                    {
+                        var exc = BuscarExcepcionInstSQLite(conn, hoy, idInstitucion.Value, null);
+                        if (exc != null) return exc;
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private HorarioExcepcion BuscarExcepcionSQLite(SqliteConnection conn, string fecha, int idSede, int? idGrado)
+        {
+            var cmd = conn.CreateCommand();
+            if (idGrado.HasValue)
+                cmd.CommandText = "SELECT * FROM cache_excepciones WHERE id_sede=@sede AND fecha_excepcion=@fecha AND id_grado=@grado AND id_institucion IS NULL LIMIT 1";
+            else
+                cmd.CommandText = "SELECT * FROM cache_excepciones WHERE id_sede=@sede AND fecha_excepcion=@fecha AND id_grado IS NULL AND id_institucion IS NULL LIMIT 1";
+            cmd.Parameters.AddWithValue("@sede",  idSede);
+            cmd.Parameters.AddWithValue("@fecha", fecha);
+            if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+            using var dr = cmd.ExecuteReader();
+            if (!dr.Read()) return null;
+            var exc = MapearExcepcionSQLite(dr);
+            exc.Franjas = CargarFranjasExcepcionSQLite(conn, exc.IdExcepcion);
+            return exc;
+        }
+
+        private HorarioExcepcion BuscarExcepcionInstSQLite(SqliteConnection conn, string fecha, int idInstitucion, int? idGrado)
+        {
+            var cmd = conn.CreateCommand();
+            if (idGrado.HasValue)
+                cmd.CommandText = "SELECT * FROM cache_excepciones WHERE id_sede IS NULL AND id_institucion=@inst AND fecha_excepcion=@fecha AND id_grado=@grado LIMIT 1";
+            else
+                cmd.CommandText = "SELECT * FROM cache_excepciones WHERE id_sede IS NULL AND id_institucion=@inst AND fecha_excepcion=@fecha AND id_grado IS NULL LIMIT 1";
+            cmd.Parameters.AddWithValue("@inst",  idInstitucion);
+            cmd.Parameters.AddWithValue("@fecha", fecha);
+            if (idGrado.HasValue) cmd.Parameters.AddWithValue("@grado", idGrado.Value);
+            using var dr = cmd.ExecuteReader();
+            if (!dr.Read()) return null;
+            var exc = MapearExcepcionSQLite(dr);
+            exc.Franjas = CargarFranjasExcepcionSQLite(conn, exc.IdExcepcion);
+            return exc;
+        }
+
+        private static HorarioExcepcion MapearExcepcionSQLite(SqliteDataReader dr) => new HorarioExcepcion
+        {
+            IdExcepcion     = Convert.ToInt32(dr["id_excepcion"]),
+            IdSede          = dr["id_sede"]        == DBNull.Value ? 0 : Convert.ToInt32(dr["id_sede"]),
+            IdGrado         = dr["id_grado"]       == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_grado"]),
+            IdInstitucion   = dr["id_institucion"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["id_institucion"]),
+            FechaExcepcion  = DateTime.Parse(dr["fecha_excepcion"].ToString()),
+            Activo          = true
+        };
+
+        private static List<FranjaExcepcion> CargarFranjasExcepcionSQLite(SqliteConnection conn, int idExcepcion)
+        {
+            var lista = new List<FranjaExcepcion>();
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM cache_franjas_excepcion WHERE id_excepcion=@id ORDER BY orden, id_franja";
+            cmd.Parameters.AddWithValue("@id", idExcepcion);
+            using var dr = cmd.ExecuteReader();
+            while (dr.Read())
+                lista.Add(new FranjaExcepcion
+                {
+                    IdFranjaExc       = Convert.ToInt32(dr["id_franja"]),
+                    IdExcepcion       = idExcepcion,
+                    Nombre            = dr["nombre"].ToString(),
+                    HoraInicio        = TimeSpan.Parse(dr["hora_inicio"].ToString()),
+                    HoraLimiteTarde   = TimeSpan.Parse(dr["hora_limite_tarde"].ToString()),
+                    HoraCierreIngreso = TimeSpan.Parse(dr["hora_cierre_ingreso"].ToString()),
+                    Orden             = Convert.ToInt32(dr["orden"])
+                });
+            return lista;
         }
 
         private HorarioExcepcion BuscarExcepcion(MySqlConnection conn, string fecha, int idSede, int? idGrado, int? idInstitucion)

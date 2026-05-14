@@ -46,3 +46,4 @@ C:\Users\Karen\source\repos\CSM\CSMPanelEntrada\obj\x86\Debug\net8.0-windows\ref
 C:\Users\Karen\source\repos\CSM\CSMPanelEntrada\obj\x86\Debug\net8.0-windows\CSMPanelEntrada.pdb
 C:\Users\Karen\source\repos\CSM\CSMPanelEntrada\obj\x86\Debug\net8.0-windows\CSMPanelEntrada.genruntimeconfig.cache
 C:\Users\Karen\source\repos\CSM\CSMPanelEntrada\obj\x86\Debug\net8.0-windows\ref\CSMPanelEntrada.dll
+C:\Users\Karen\source\repos\CSM\CSMPanelEntrada\obj\x86\Debug\net8.0-windows\CSMPanelEntrada.sourcelink.json

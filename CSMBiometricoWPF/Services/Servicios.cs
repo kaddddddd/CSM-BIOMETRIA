@@ -1,13 +1,13 @@
 // ============================================================
 // CSMBiometricoWPF.Services - Capa de Servicios
 // ============================================================
+using CSMBiometricoWPF.Data;
 using CSMBiometricoWPF.Models;
 using CSMBiometricoWPF.Repositories;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
 
 namespace CSMBiometricoWPF.Services
 {
@@ -152,10 +152,21 @@ namespace CSMBiometricoWPF.Services
                         "🔒 Plataforma cerrada — el ingreso no está disponible en este momento.",
                         null);
 
-                // Verificar duplicado dentro de la franja activa.
-                bool yaRegistrado = esLlegadaAnticipada
-                    ? _registroRepo.YaRegistroHoy(estudiante.IdEstudiante)
-                    : _registroRepo.YaRegistroEnFranja(estudiante.IdEstudiante, franjaActiva.Inicio, franjaActiva.Cierre);
+                // Verificar duplicado: MySQL cuando hay conexión, SQLite cuando no.
+                bool online = ConexionDB.EstaConectado;
+                bool yaRegistrado;
+                if (online)
+                {
+                    yaRegistrado = esLlegadaAnticipada
+                        ? _registroRepo.YaRegistroHoy(estudiante.IdEstudiante)
+                        : _registroRepo.YaRegistroEnFranja(estudiante.IdEstudiante, franjaActiva.Inicio, franjaActiva.Cierre);
+                }
+                else
+                {
+                    yaRegistrado = esLlegadaAnticipada
+                        ? _registroRepo.YaRegistroHoyOffline(estudiante.IdEstudiante)
+                        : _registroRepo.YaRegistroEnFranjaOffline(estudiante.IdEstudiante, franjaActiva.Inicio, franjaActiva.Cierre);
+                }
 
                 if (yaRegistrado)
                     return (EstadoIngreso.YA_REGISTRADO,
@@ -171,25 +182,26 @@ namespace CSMBiometricoWPF.Services
                 else if (ahora <= franjaActiva.LimiteTarde)
                     estado = EstadoIngreso.TARDE;
                 else
-                    estado = EstadoIngreso.TARDE; // entre LimiteTarde y CierreIngreso → TARDE
+                    estado = EstadoIngreso.TARDE;
 
                 var registro = new RegistroIngreso
                 {
                     IdEstudiante      = estudiante.IdEstudiante,
                     IdSede            = estudiante.IdSede,
+                    FechaIngreso      = DateTime.Today,
+                    HoraIngreso       = DateTime.Now.TimeOfDay,
                     EstadoIngreso     = estado,
                     PuntajeBiometrico = puntajeBiometrico,
                     NombreFranja      = franjaActiva?.EsFranja == true ? franjaActiva.Nombre : null
                 };
 
-                if (Data.ConexionDB.EstaConectado)
+                if (online)
                     _registroRepo.Guardar(registro);
                 else
                     _offlineService.GuardarOffline(registro);
 
                 IngresoRegistrado?.Invoke(this, EventArgs.Empty);
 
-                // Nombre de franja solo cuando es una franja extra (no el horario habitual)
                 string? nomFranja = franjaActiva?.EsFranja == true ? franjaActiva.Nombre : null;
 
                 string msg = estado switch
@@ -200,13 +212,13 @@ namespace CSMBiometricoWPF.Services
                     _                              => ""
                 };
 
-                _logRepo.Registrar(TipoEvento.REGISTRO_ASISTENCIA,
-                    $"Ingreso: {estudiante.Identificacion} - {estado}");
+                try { _logRepo.Registrar(TipoEvento.REGISTRO_ASISTENCIA, $"Ingreso: {estudiante.Identificacion} - {estado}"); }
+                catch { }
                 return (estado, msg, nomFranja);
             }
             catch (Exception ex)
             {
-                _logRepo.Registrar(TipoEvento.ERROR_DB, ex.Message, NivelLog.ERROR);
+                try { _logRepo.Registrar(TipoEvento.ERROR_DB, ex.Message, NivelLog.ERROR); } catch { }
                 throw;
             }
         }
@@ -216,22 +228,36 @@ namespace CSMBiometricoWPF.Services
         private List<FranjaVigente> ObtenerFranjasVigentes(int idSede, int idGrado, int idGrupo)
         {
             var resultado = new List<FranjaVigente>();
+            bool online = ConexionDB.EstaConectado;
 
             // Obtener institución del estudiante para excepciones a nivel institución
             int? idInstitucion = null;
-            try
+            if (online)
             {
-                using var conn = Data.ConexionDB.ObtenerConexion();
-                using var cmd = new MySqlConnector.MySqlCommand(
-                    "SELECT id_institucion FROM sedes WHERE id_sede=@s LIMIT 1", conn);
-                cmd.Parameters.AddWithValue("@s", idSede);
-                var res = cmd.ExecuteScalar();
-                if (res != null) idInstitucion = Convert.ToInt32(res);
+                try
+                {
+                    using var conn = ConexionDB.ObtenerConexion();
+                    using var cmd = new MySqlConnector.MySqlCommand(
+                        "SELECT id_institucion FROM sedes WHERE id_sede=@s LIMIT 1", conn);
+                    cmd.Parameters.AddWithValue("@s", idSede);
+                    var res = cmd.ExecuteScalar();
+                    if (res != null) idInstitucion = Convert.ToInt32(res);
+                }
+                catch { online = false; }
             }
-            catch { }
+            if (!online)
+                idInstitucion = SyncService.ObtenerInstitucionDeSede(idSede);
 
             // 1. ¿Hay excepción para hoy? (con prioridad sede+grado > sede > institución)
-            var excepcion = _excepcionRepo.ObtenerHoy(idSede, idGrado, idInstitucion);
+            HorarioExcepcion excepcion = null;
+            if (online)
+            {
+                try { excepcion = _excepcionRepo.ObtenerHoy(idSede, idGrado, idInstitucion); }
+                catch { online = false; }
+            }
+            if (!online)
+                excepcion = _excepcionRepo.ObtenerHoyOffline(idSede, idGrado, idInstitucion);
+
             if (excepcion != null && excepcion.Franjas.Count > 0)
             {
                 foreach (var f in excepcion.Franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
@@ -240,14 +266,31 @@ namespace CSMBiometricoWPF.Services
             }
 
             // 2. Horario semanal normal (grupo+grado > grado > sede general)
-            var horario = _horarioRepo.ObtenerHoy(idSede, idGrado, idGrupo);
+            Horario horario = null;
+            if (online)
+            {
+                try { horario = _horarioRepo.ObtenerHoy(idSede, idGrado, idGrupo); }
+                catch { online = false; }
+            }
+            if (!online)
+                horario = _horarioRepo.ObtenerHoyOffline(idSede, idGrado, idGrupo);
+
             if (horario == null) return resultado;
 
-            // El horario base siempre es una ventana válida de entrada
             resultado.Add(new FranjaVigente(horario.HoraInicio, horario.HoraLimiteTarde, horario.HoraCierreIngreso, "Horario habitual", false));
 
-            // Las franjas adicionales (ej. media técnica) se suman al horario base
-            var franjas = _franjaRepo.ObtenerPorHorario(horario.IdHorario);
+            // Las franjas adicionales se suman al horario base
+            List<FranjaHorario> franjas;
+            if (online)
+            {
+                try { franjas = _franjaRepo.ObtenerPorHorario(horario.IdHorario); }
+                catch { franjas = _franjaRepo.ObtenerPorHorarioOffline(horario.IdHorario); }
+            }
+            else
+            {
+                franjas = _franjaRepo.ObtenerPorHorarioOffline(horario.IdHorario);
+            }
+
             foreach (var f in franjas.OrderBy(x => x.Orden).ThenBy(x => x.HoraInicio))
                 resultado.Add(new FranjaVigente(f.HoraInicio, f.HoraLimiteTarde, f.HoraCierreIngreso, f.Nombre, true));
 
@@ -256,56 +299,73 @@ namespace CSMBiometricoWPF.Services
     }
 
     // ═══════════════════════════════════════════════════
-    // SERVICIO OFFLINE (JSON local — usa System.Text.Json)
+    // SERVICIO OFFLINE (SQLite local)
     // ═══════════════════════════════════════════════════
     public class OfflineService
     {
-        private readonly string _archivoOffline;
-        private static readonly JsonSerializerOptions _jsonOpts = new() { WriteIndented = false };
-
-        public OfflineService()
-        {
-            _archivoOffline = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory, "offline_records.json");
-        }
-
         public void GuardarOffline(RegistroIngreso registro)
         {
-            var registros = CargarOffline();
-            registros.Add(registro);
-            File.WriteAllText(_archivoOffline, JsonSerializer.Serialize(registros, _jsonOpts));
+            try
+            {
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = @"INSERT INTO registros_pendientes
+                    (id_estudiante, id_sede, fecha_ingreso, hora_ingreso,
+                     estado_ingreso, puntaje_biometrico, nombre_franja, sincronizado)
+                    VALUES (@est,@sede,@fecha,@hora,@estado,@puntaje,@franja,0)";
+                cmd.Parameters.AddWithValue("@est",    registro.IdEstudiante);
+                cmd.Parameters.AddWithValue("@sede",   registro.IdSede);
+                cmd.Parameters.AddWithValue("@fecha",  registro.FechaIngreso.ToString("yyyy-MM-dd"));
+                cmd.Parameters.AddWithValue("@hora",   registro.HoraIngreso.ToString(@"hh\:mm\:ss"));
+                cmd.Parameters.AddWithValue("@estado", registro.EstadoIngreso.ToString());
+                cmd.Parameters.AddWithValue("@puntaje", registro.PuntajeBiometrico);
+                cmd.Parameters.AddWithValue("@franja", (object?)registro.NombreFranja ?? DBNull.Value);
+                cmd.ExecuteNonQuery();
+            }
+            catch { }
         }
 
         public List<RegistroIngreso> CargarOffline()
         {
-            if (!File.Exists(_archivoOffline)) return new List<RegistroIngreso>();
+            var lista = new List<RegistroIngreso>();
             try
             {
-                string json = File.ReadAllText(_archivoOffline);
-                return JsonSerializer.Deserialize<List<RegistroIngreso>>(json) ?? new List<RegistroIngreso>();
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM registros_pendientes WHERE sincronizado=0";
+                using var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                    lista.Add(MapearPendiente(dr));
             }
-            catch { return new List<RegistroIngreso>(); }
+            catch { }
+            return lista;
         }
 
-        public int SincronizarConMySQL()
+        public int SincronizarConMySQL() => SyncService.SincronizarHaciaMySQL();
+
+        public int ContarPendientes()
         {
-            var registros = CargarOffline().Where(r => !r.Sincronizado).ToList();
-            if (registros.Count == 0) return 0;
-
-            var repo = new RegistroIngresoRepository();
-            int sincronizados = 0;
-            foreach (var r in registros)
+            try
             {
-                try { r.Sincronizado = true; repo.Guardar(r); sincronizados++; }
-                catch { }
+                using var conn = ConexionSQLite.ObtenerConexion();
+                using var cmd  = conn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM registros_pendientes WHERE sincronizado=0";
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
-            var todos = CargarOffline();
-            todos.ForEach(r => r.Sincronizado = true);
-            File.WriteAllText(_archivoOffline, JsonSerializer.Serialize(todos, _jsonOpts));
-            return sincronizados;
+            catch { return 0; }
         }
 
-        public int ContarPendientes() => CargarOffline().Count(r => !r.Sincronizado);
+        private static RegistroIngreso MapearPendiente(SqliteDataReader dr) => new RegistroIngreso
+        {
+            IdEstudiante      = Convert.ToInt32(dr["id_estudiante"]),
+            IdSede            = Convert.ToInt32(dr["id_sede"]),
+            FechaIngreso      = DateTime.Parse(dr["fecha_ingreso"].ToString()),
+            HoraIngreso       = TimeSpan.Parse(dr["hora_ingreso"].ToString()),
+            EstadoIngreso     = (EstadoIngreso)Enum.Parse(typeof(EstadoIngreso), dr["estado_ingreso"].ToString()),
+            PuntajeBiometrico = Convert.ToSingle(dr["puntaje_biometrico"]),
+            NombreFranja      = dr["nombre_franja"] == DBNull.Value ? null : dr["nombre_franja"].ToString(),
+            Sincronizado      = false
+        };
     }
 
     // ═══════════════════════════════════════════════════
@@ -350,8 +410,17 @@ namespace CSMBiometricoWPF.Services
             {
                 _cacheTodas = new HuellaRepository().ObtenerTodasActivas();
                 _ultimaActualizacionTodas = DateTime.Now;
+                SyncService.PersistirHuellas(_cacheTodas);
             }
-            catch { }
+            catch
+            {
+                // MySQL no disponible: cargar desde SQLite
+                if (_cacheTodas.Count == 0)
+                {
+                    _cacheTodas = SyncService.CargarHuellasDeSQLite();
+                    _ultimaActualizacionTodas = DateTime.Now;
+                }
+            }
         }
 
         public static void ActualizarInstitucion(int idInstitucion)
@@ -360,8 +429,17 @@ namespace CSMBiometricoWPF.Services
             {
                 _cachePorInst[idInstitucion] = new HuellaRepository().ObtenerActivasPorInstitucion(idInstitucion);
                 _ultimaActualizacionPorInst[idInstitucion] = DateTime.Now;
+                SyncService.PersistirHuellas(_cachePorInst[idInstitucion], idInstitucion);
             }
-            catch { }
+            catch
+            {
+                // MySQL no disponible: cargar desde SQLite
+                if (!_cachePorInst.ContainsKey(idInstitucion) || _cachePorInst[idInstitucion].Count == 0)
+                {
+                    _cachePorInst[idInstitucion] = SyncService.CargarHuellasDeSQLite(idInstitucion);
+                    _ultimaActualizacionPorInst[idInstitucion] = DateTime.Now;
+                }
+            }
         }
 
         public static void Invalidar()

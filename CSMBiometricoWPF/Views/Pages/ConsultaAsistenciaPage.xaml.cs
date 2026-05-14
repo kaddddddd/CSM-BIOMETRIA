@@ -160,16 +160,6 @@ namespace CSMBiometricoWPF.Views.Pages
 
             var registros = _repoReg.ObtenerPorEstudianteYRango(_estudianteActual.IdEstudiante, desde, hasta);
 
-            if (registros.Count == 0)
-            {
-                grid.ItemsSource          = null;
-                lblTotalAsistencias.Text  = "0";
-                lblTotalTardanzas.Text    = "0";
-                lblTotalFaltas.Text       = "0";
-                lblTotal.Text = $"Sin registros entre {desde:dd/MM/yyyy} y {hasta:dd/MM/yyyy}";
-                return;
-            }
-
             // Calcular días lectivos esperados y agregar ausencias reales al grid
             var slots = new HorarioRepository().ObtenerSlotsPorSedes(new[] { _estudianteActual.IdSede });
 
